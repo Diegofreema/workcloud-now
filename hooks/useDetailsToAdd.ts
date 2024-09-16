@@ -4,12 +4,12 @@ type Props = {
   workspaceId: any;
   role: any;
   orgId: any;
-  getData: (role: any, workspaceId: any, orgId: any) => void;
+  getData: (orgId: any, role?: any, workspaceId?: any) => void;
 };
 
 export const useDetailsToAdd = create<Props>((set) => ({
   workspaceId: '',
   role: '',
   orgId: '',
-  getData: (role: any, workspaceId: any, orgId: any) => set({ role, workspaceId, orgId }),
+  getData: (orgId: any, role?: any, workspaceId?: any) => set({ role, workspaceId, orgId }),
 }));

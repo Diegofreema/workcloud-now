@@ -367,6 +367,7 @@ export type Database = {
           name: string | null;
           organizationId: number | null;
           service: boolean | null;
+          staff: string;
         };
         Insert: {
           created_at?: string;
@@ -377,6 +378,7 @@ export type Database = {
           name?: string | null;
           organizationId?: number | null;
           service?: boolean | null;
+          staff: string;
         };
         Update: {
           created_at?: string;
@@ -387,6 +389,7 @@ export type Database = {
           name?: string | null;
           organizationId?: number | null;
           service?: boolean | null;
+          staff?: string;
         };
         Relationships: [
           {

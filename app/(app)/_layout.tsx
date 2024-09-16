@@ -42,6 +42,9 @@ export default function AppLayout() {
             queryClient.invalidateQueries({ queryKey: ['organization'] });
             queryClient.invalidateQueries({ queryKey: ['assignedWk'] });
             queryClient.invalidateQueries({ queryKey: ['connections'] });
+            queryClient.invalidateQueries({ queryKey: ['request'] });
+            queryClient.invalidateQueries({ queryKey: ['pending_requests'] });
+            queryClient.invalidateQueries({ queryKey: ['pending_worker'] });
             onRefresh();
           }
           console.log('Change received!', payload);

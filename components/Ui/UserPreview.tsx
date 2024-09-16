@@ -40,9 +40,7 @@ export const UserPreview = ({
   navigate,
   name,
   roleText,
-  workspaceId,
-  personal,
-  hide,
+
   workPlace,
   profile,
   active,
@@ -58,11 +56,19 @@ export const UserPreview = ({
   return (
     <Pressable onPress={onPress}>
       <HStack gap={10} alignItems="center">
-        <Image
-          source={{ uri: imageUrl }}
-          style={{ width: 60, height: 60, borderRadius: 9999 }}
-          contentFit="cover"
-        />
+        {imageUrl ? (
+          <Image
+            source={{ uri: imageUrl }}
+            style={{ width: 60, height: 60, borderRadius: 9999 }}
+            contentFit="cover"
+          />
+        ) : (
+          <Image
+            source={require('~/assets/images/boy.png')}
+            style={{ width: 60, height: 60, borderRadius: 9999 }}
+            contentFit="cover"
+          />
+        )}
         <VStack>
           <MyText poppins="Bold" fontSize={16}>
             {name}
@@ -145,25 +151,31 @@ export const WorkPreview = ({ item }: { item: Requests }) => {
       return;
     }
     try {
-      const { error } = await supabase
-        .from('workspace')
-        .update({
-          salary,
-          responsibility,
-          workerId: to?.userId,
-        })
-        .eq('id', workspaceId);
+      if (workspaceId) {
+        const { error } = await supabase
+          .from('workspace')
+          .update({
+            salary,
+            responsibility,
+            workerId: to?.userId,
+          })
+          .eq('id', workspaceId);
+        if (error) {
+          toast.error('Something went wrong');
+          return;
+        }
+      }
 
       const { error: err } = await supabase
         .from('worker')
         .update({
           role,
           bossId: from?.userId,
-          workspaceId: +workspaceId,
+          workspaceId: +workspaceId || null,
           organizationId: from?.organizationId?.id,
         })
         .eq('id', to.workerId);
-      if (!error && !err) {
+      if (!err) {
         const { error } = await supabase.from('request').update({ accepted: true }).eq('id', id);
         if (error) {
           toast.error('Something went wrong');
@@ -173,10 +185,10 @@ export const WorkPreview = ({ item }: { item: Requests }) => {
           router.push('/organization');
         }
       }
-      if (error || err) {
+      if (err) {
         toast.error('Something went wrong');
 
-        console.log(error || err);
+        console.log(err);
       }
     } catch (error) {
       console.log(error);

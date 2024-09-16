@@ -8,14 +8,18 @@ import { Container } from '~/components/Ui/Container';
 import { DottedButton } from '~/components/Ui/DottedButton';
 import { ErrorComponent } from '~/components/Ui/ErrorComponent';
 import { LoadingComponent } from '~/components/Ui/LoadingComponent';
+import { useDetailsToAdd } from '~/hooks/useDetailsToAdd';
 import { useServicePoints } from '~/lib/queries';
 
 const Services = () => {
   const { id } = useLocalSearchParams<{ id: string }>();
-
+  const { getData } = useDetailsToAdd();
   const { data, isError, isPending, refetch } = useServicePoints(+id);
+  console.log(id);
+
   const onCreateServicePoint = () => {
-    router.push('/create-service');
+    getData(id);
+    router.push(`/create-service?id=${id}`);
   };
   if (isError) {
     return <ErrorComponent refetch={refetch} />;

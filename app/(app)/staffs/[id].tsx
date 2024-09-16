@@ -108,10 +108,15 @@ const Staffs = () => {
       text: 'Send message',
     },
 
-    {
-      icon: staff?.workspaceId?.locked ? 'unlock-alt' : 'lock',
-      text: staff?.workspaceId?.locked ? 'Unlock workspace' : 'Lock workspace',
-    },
+    staff?.workspaceId
+      ? {
+          icon: staff?.workspaceId?.locked ? 'unlock-alt' : 'lock',
+          text: staff?.workspaceId?.locked ? 'Unlock workspace' : 'Lock workspace',
+        }
+      : {
+          icon: 'industry',
+          text: 'Assign workspace',
+        },
     {
       icon: 'trash-o',
       text: 'Remove staff',

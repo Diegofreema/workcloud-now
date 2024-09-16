@@ -40,6 +40,7 @@ const CompleteRequest = () => {
   const queryClient = useQueryClient();
   const router = useRouter();
   const { data, isPaused, isPending, isError, refetch, isRefetchError } = useGetWorkerProfile(id);
+  console.log({ orgId, workspaceId });
 
   const {
     values,
@@ -60,16 +61,16 @@ const CompleteRequest = () => {
     },
     validationSchema,
     onSubmit: async (values) => {
-      const { responsibility, salary, qualities } = values;
+      const { responsibility, salary, qualities, role } = values;
       try {
         const { error } = await supabase.from('request').insert({
           from: isMe,
           to: data?.worker?.userId?.userId,
           responsibility,
           salary: `${salary}`,
-          role: workerRole,
-          workspaceId,
-          organizationId: orgId,
+          role: workerRole || role,
+          workspaceId: workspaceId || null,
+          organizationId: +orgId,
           qualities,
         });
 
@@ -83,7 +84,7 @@ const CompleteRequest = () => {
         }
 
         if (error) {
-          console.log(error);
+          console.log(JSON.stringify(error, null, 1));
           toast.error('Error, failed to send request');
         }
       } catch (error) {
@@ -126,7 +127,7 @@ const CompleteRequest = () => {
       <ScrollView
         showsVerticalScrollIndicator={false}
         contentContainerStyle={{ paddingBottom: 50 }}>
-        <View style={{ marginTop: 10 }}>
+        <View style={{ marginVertical: 10 }}>
           <UserPreview
             imageUrl={worker?.userId?.avatar}
             name={worker?.userId?.name}
@@ -136,14 +137,14 @@ const CompleteRequest = () => {
           />
         </View>
 
-        <VStack mt={30} gap={10}>
+        <VStack mt={30}>
           <>
             <InputComponent
               label="Role"
               value={role}
               onChangeText={handleChange('role')}
               placeholder="Assign a role"
-              keyboardType="email-address"
+              keyboardType="default"
             />
             {touched.role && errors.role && (
               <Text style={{ color: 'red', fontWeight: 'bold' }}>{errors.role}</Text>
@@ -185,7 +186,7 @@ const CompleteRequest = () => {
               value={salary}
               onChangeText={handleChange('salary')}
               placeholder="Input a salary range in naira"
-              keyboardType="numeric"
+              keyboardType="number-pad"
             />
             {touched.salary && errors.salary && (
               <Text style={{ color: 'red', fontWeight: 'bold' }}>{errors.salary}</Text>
@@ -204,6 +205,8 @@ const CompleteRequest = () => {
             backgroundColor: colors.dialPad,
             borderRadius: 5,
             marginTop: 25,
+            marginHorizontal: 10,
+            height: 60,
           }}
           onPress={() => handleSubmit()}>
           Send Request

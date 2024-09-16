@@ -7,7 +7,7 @@ import { HeaderNav } from '~/components/HeaderNav';
 import { Container } from '~/components/Ui/Container';
 import { ErrorComponent } from '~/components/Ui/ErrorComponent';
 import { LoadingComponent } from '~/components/Ui/LoadingComponent';
-import { UserPreview } from '~/components/Ui/UserPreview';
+import { UserPreviewWithBio } from '~/components/Ui/UserPreviewWithBio';
 import { Workers } from '~/constants/types';
 import { useDetailsToAdd } from '~/hooks/useDetailsToAdd';
 import { useGetOtherWorkers } from '~/lib/queries';
@@ -54,16 +54,17 @@ const AllStaffs = () => {
     <Container>
       <HeaderNav title="Add staff" />
       <FlatList
+        showsVerticalScrollIndicator={false}
         onRefresh={handleRefetch}
         refreshing={onRefreshing}
         data={data.worker}
         renderItem={({ item }) => (
-          <UserPreview
+          <UserPreviewWithBio
             id={item?.userId?.userId}
             imageUrl={item?.userId?.avatar}
             name={item?.userId?.name}
-            subText={item?.location}
-            navigate
+            bio={item?.experience!}
+            skills={item?.skills}
           />
         )}
         style={{ marginTop: 20 }}

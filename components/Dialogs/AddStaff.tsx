@@ -149,6 +149,9 @@ export const Menu = ({ isVisible, setIsVisible, array }: Props) => {
       case 'Lock workspace':
         onUnlockWorkspace();
         break;
+      case 'Assign workspace':
+        router.push(`/assignWorkspace/${item?.userId?.userId}`);
+        break;
       default:
         break;
     }

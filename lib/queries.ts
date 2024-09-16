@@ -208,7 +208,6 @@ export const useGetWaitList = (id: any) => {
 };
 
 export const useSearch = (value: string) => {
-  console.log('🚀 ~ useSearch ~ value:', value);
   const getOrgs = async () => {
     const { data, error } = await supabase
       .from('organization')
@@ -230,7 +229,6 @@ export const useSearch = (value: string) => {
   });
 };
 export const useSearchName = (value: string) => {
-  console.log('🚀 ~ useSearch ~ value:', value);
   const getOrgs = async () => {
     const { data, error } = await supabase.from('organization').select().textSearch('name', value, {
       type: 'websearch',

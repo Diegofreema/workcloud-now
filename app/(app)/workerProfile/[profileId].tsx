@@ -22,6 +22,16 @@ import { useDarkMode } from '~/hooks/useDarkMode';
 import { useGetRequests, useGetWorkerProfile } from '~/lib/queries';
 import { supabase } from '~/lib/supabase';
 
+export const formattedSkills = (text: string) => {
+  const arrayOfSkills = text?.split(',');
+  const finishedText = arrayOfSkills?.map((skill, index) => (
+    <MyText poppins="Bold" key={index} style={{ color: colors.nine }}>
+      {skill}
+    </MyText>
+  ));
+  return finishedText;
+};
+
 const Profile = () => {
   const { profileId } = useLocalSearchParams<{ profileId: string }>();
   // console.log('🚀 ~ Profile ~ profileId:', profileId);
@@ -72,15 +82,6 @@ const Profile = () => {
     router.push(`/chat/${channel.id}`);
   };
 
-  const formattedSkills = (text: string) => {
-    const arrayOfSkills = text?.split(',');
-    const finishedText = arrayOfSkills?.map((skill, index) => (
-      <MyText poppins="Bold" key={index} style={{ color: colors.nine }}>
-        {index + 1}. {skill}
-      </MyText>
-    ));
-    return finishedText;
-  };
   // const sendMessage = () => {};
   const cancelRequest = async () => {
     setCancelling(true);
@@ -131,7 +132,7 @@ const Profile = () => {
           />
         </View>
 
-        <HStack gap={20} mt={20}>
+        <HStack gap={20} mt={20} mb={5}>
           {worker?.bossId !== user?.id && (
             <Button
               onPress={handleRequest}

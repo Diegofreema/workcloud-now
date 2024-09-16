@@ -1,6 +1,6 @@
 import { IconNode } from '@rneui/base';
 import { Input } from '@rneui/themed';
-import { TextInputProps, View } from 'react-native';
+import { KeyboardTypeOptions, TextInputProps, View } from 'react-native';
 
 import { useDarkMode } from '~/hooks/useDarkMode';
 
@@ -9,7 +9,7 @@ type Props = TextInputProps & {
   value: string;
   onChangeText?: (text: string) => void;
   secureTextEntry?: boolean;
-  keyboardType?: 'default' | 'numeric' | 'email-address' | 'phone-pad';
+  keyboardType?: KeyboardTypeOptions;
   label?: string;
   setToggle?: () => void;
   password?: boolean;
@@ -54,6 +54,7 @@ export const InputComponent = ({
           fontSize: 13,
           textAlignVertical: textarea ? 'top' : 'center',
           height: textarea ? 100 : 60,
+          paddingVertical: textarea ? 10 : 0,
         }}
         value={value}
         onChangeText={onChangeText}

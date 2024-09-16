@@ -24,8 +24,6 @@ const Messages = () => {
     router.push(`/chat/${id}`);
   };
 
-  console.log(userId);
-
   return (
     <ChannelList
       additionalFlatListProps={{

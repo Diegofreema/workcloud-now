@@ -1,4 +1,3 @@
-import { useAuth, useUser } from '@clerk/clerk-expo';
 import { EvilIcons, Feather, FontAwesome } from '@expo/vector-icons';
 import { Avatar } from '@rneui/themed';
 import { router, useLocalSearchParams } from 'expo-router';
@@ -25,7 +24,6 @@ import { MyText } from '~/components/Ui/MyText';
 import VStack from '~/components/Ui/VStack';
 import { colors } from '~/constants/Colors';
 import { useDarkMode } from '~/hooks/useDarkMode';
-import { useData } from '~/hooks/useData';
 import { useGetWorkerProfile } from '~/lib/queries';
 
 const SingleChat = () => {
@@ -162,7 +160,7 @@ const CustomHeaderComponent = () => {
   const { workerId } = useLocalSearchParams<{ workerId: string }>();
 
   const { isOnline } = useChatContext();
-  const { data, isPending, isError, isPaused, error } = useGetWorkerProfile(workerId);
+  const { data, isPending, isError, isPaused } = useGetWorkerProfile(workerId);
   const { darkMode } = useDarkMode();
 
   const handleBack = () => {
