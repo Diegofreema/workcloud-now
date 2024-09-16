@@ -10,7 +10,6 @@ import {
   EmptyStateProps,
 } from 'stream-chat-expo';
 
-import { defaultStyle } from '../../../constants/index';
 import { useDarkMode } from '../../../hooks/useDarkMode';
 
 import { MyText } from '~/components/Ui/MyText';
@@ -28,29 +27,22 @@ const Messages = () => {
   console.log(userId);
 
   return (
-    <View
-      style={{
-        flex: 1,
-        ...defaultStyle,
-        backgroundColor: darkMode === 'dark' ? 'black' : 'white',
-      }}>
-      <ChannelList
-        additionalFlatListProps={{
-          style: {
-            backgroundColor: darkMode === 'dark' ? 'black' : 'white',
-          },
-          contentContainerStyle: {
-            backgroundColor: darkMode === 'dark' ? 'black' : 'white',
-          },
-        }}
-        filters={{ members: { $in: [userId!] } }}
-        onSelect={(channel) => onSelect(channel.id)}
-        EmptyStateIndicator={EmptyComponent}
-        HeaderErrorIndicator={ErrorComponent}
-        Preview={Preview}
-        numberOfSkeletons={20}
-      />
-    </View>
+    <ChannelList
+      additionalFlatListProps={{
+        style: {
+          backgroundColor: darkMode === 'dark' ? 'black' : 'white',
+        },
+        contentContainerStyle: {
+          backgroundColor: darkMode === 'dark' ? 'black' : 'white',
+        },
+      }}
+      filters={{ members: { $in: [userId!] } }}
+      onSelect={(channel) => onSelect(channel.id)}
+      EmptyStateIndicator={EmptyComponent}
+      HeaderErrorIndicator={ErrorComponent}
+      Preview={Preview}
+      numberOfSkeletons={20}
+    />
   );
 };
 

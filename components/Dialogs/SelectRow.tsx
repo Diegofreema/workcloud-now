@@ -1,9 +1,10 @@
+import { useAuth } from '@clerk/clerk-expo';
 import { FontAwesome } from '@expo/vector-icons';
 import { Divider } from '@rneui/themed';
 import { useQueryClient } from '@tanstack/react-query';
 import { useRouter } from 'expo-router';
 import React from 'react';
-import { StyleSheet, Pressable, View, FlatList } from 'react-native';
+import { FlatList, Pressable, StyleSheet, View } from 'react-native';
 import Modal from 'react-native-modal';
 import { toast } from 'sonner-native';
 
@@ -15,7 +16,6 @@ import { MyText } from '../Ui/MyText';
 
 import { Profile } from '~/constants/types';
 import { useDarkMode } from '~/hooks/useDarkMode';
-import { useData } from '~/hooks/useData';
 
 const roles = [
   'Manager',
@@ -66,8 +66,7 @@ export const SelectRow = ({
   const queryClient = useQueryClient();
   const router = useRouter();
   const { darkMode } = useDarkMode();
-  const { id } = useData();
-  console.log(profile.id);
+  const { userId: id } = useAuth();
 
   const createWorkspace = async (role: string) => {
     if (!profile?.workerId?.id) {
@@ -84,7 +83,7 @@ export const SelectRow = ({
           role,
           ownerId: id,
           organizationId,
-          workerId: profile?.workerId?.userId,
+          workerId: profile?.workerId?.userId.toString(),
           personal: true,
           locked: false,
         })
@@ -98,7 +97,7 @@ export const SelectRow = ({
             workspaceId: data?.id,
             organizationId: profile?.organizationId?.id,
           })
-          .eq('userId', id);
+          .eq('userId', id!);
         if (!err) {
           toast.success('Workspace created successfully');
 

@@ -11,10 +11,10 @@ export const AuthTitle = ({ children }: Props): JSX.Element => {
   const { darkMode } = useDarkMode();
   return (
     <Text
-      h1
+      h2
       style={{
         fontFamily: 'PoppinsBold',
-        fontSize: 25,
+        fontSize: 20,
 
         color: darkMode === 'dark' ? 'white' : 'black',
         textAlign: 'center',

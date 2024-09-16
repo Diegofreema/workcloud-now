@@ -1,3 +1,4 @@
+import { useAuth } from '@clerk/clerk-expo';
 import { Button } from '@rneui/themed';
 import { useQueryClient } from '@tanstack/react-query';
 import React, { useState } from 'react';
@@ -10,7 +11,6 @@ import { HStack } from '../HStack';
 import { MyText } from '../Ui/MyText';
 
 import { useDarkMode } from '~/hooks/useDarkMode';
-import { useData } from '~/hooks/useData';
 import { useHandleStaff } from '~/hooks/useHandleStaffs';
 import { useRemoveUser } from '~/hooks/useRemoveUser';
 import { supabase } from '~/lib/supabase';
@@ -18,7 +18,7 @@ import { supabase } from '~/lib/supabase';
 export const RemoveUser = () => {
   const { onClose, isOpen } = useRemoveUser();
   const { darkMode } = useDarkMode();
-  const { id } = useData();
+  const { userId: id } = useAuth();
   const queryClient = useQueryClient();
   const [deleting, setDeleting] = useState(false);
   const { item } = useHandleStaff();

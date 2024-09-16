@@ -25,10 +25,9 @@ export const call = {
 export const BottomCard = ({ workId }: Props): JSX.Element => {
   const { signOut } = useAuth();
 
-  const logout = () => {
+  const logout = async () => {
     chatClient.disconnectUser();
     signOut();
-    router.replace('/');
   };
   const onPress = () => {
     if (workId) {

@@ -1,5 +1,13 @@
-import { RingingCallContent, StreamCall, useCalls } from '@stream-io/video-react-native-sdk';
+import {
+  CallContent,
+  IncomingCall,
+  OutgoingCall,
+  RingingCallContent,
+  StreamCall,
+  useCalls,
+} from '@stream-io/video-react-native-sdk';
 import { useRouter } from 'expo-router';
+import React from 'react';
 
 const Video = () => {
   const calls = useCalls();
@@ -14,7 +22,11 @@ const Video = () => {
 
   return (
     <StreamCall call={call}>
-      <RingingCallContent />
+      <RingingCallContent
+        IncomingCall={IncomingCall}
+        OutgoingCall={OutgoingCall}
+        CallContent={CallContent}
+      />
     </StreamCall>
   );
 };

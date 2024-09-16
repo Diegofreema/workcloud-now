@@ -1,9 +1,8 @@
 import { IconNode } from '@rneui/base';
 import { Input } from '@rneui/themed';
-import { TextInputProps } from 'react-native';
-import { RFValue } from 'react-native-responsive-fontsize';
+import { TextInputProps, View } from 'react-native';
 
-import { MyText } from './Ui/MyText';
+import { useDarkMode } from '~/hooks/useDarkMode';
 
 type Props = TextInputProps & {
   placeholder: string;
@@ -17,6 +16,7 @@ type Props = TextInputProps & {
   id?: string;
   numberOfLines?: number;
   rightIcon?: IconNode;
+  textarea?: boolean;
 };
 
 export const InputComponent = ({
@@ -30,51 +30,40 @@ export const InputComponent = ({
   password,
   label,
   numberOfLines,
-
+  textarea,
   ...props
 }: Props): JSX.Element => {
-  // const handleToggle = (inputId: string) => {
-  //   if (id === inputId) {
-  //     setToggle && setToggle();
-  //   }
-  // };
+  const { darkMode } = useDarkMode();
   return (
-    <>
-      {label && (
-        <MyText
-          poppins="Bold"
-          style={{
-            marginBottom: 15,
-            fontSize: RFValue(12),
-          }}>
-          {label}
-        </MyText>
-      )}
+    <View style={{ height: 'auto' }}>
       <Input
         {...props}
         placeholder={placeholder}
-        containerStyle={{
-          justifyContent: 'center',
-          height: 40,
-        }}
+        label={label}
         inputContainerStyle={{
           borderBottomColor: 'transparent',
           backgroundColor: '#E5E5E5',
           borderBottomWidth: 0,
-          marginHorizontal: -10,
-          padding: 8,
+          paddingHorizontal: 8,
           borderRadius: 5,
+          height: textarea ? 100 : 60,
         }}
         placeholderTextColor="grey"
         inputStyle={{
           fontFamily: 'PoppinsLight',
           fontSize: 13,
+          textAlignVertical: textarea ? 'top' : 'center',
+          height: textarea ? 100 : 60,
         }}
         value={value}
         onChangeText={onChangeText}
         keyboardType={keyboardType}
         secureTextEntry={secureTextEntry}
+        labelStyle={{
+          color: darkMode === 'dark' ? 'white' : 'black',
+          marginBottom: 5,
+        }}
       />
-    </>
+    </View>
   );
 };

@@ -30,9 +30,12 @@ export const createOrg = async (orgData: Org) => {
 
 export const createToken = async (userId: string) => {
   try {
-    const { data: axiosData } = await axios.post('http://192.168.154.144:8989/create-token', {
-      id: userId,
-    });
+    const { data: axiosData } = await axios.post(
+      'https://workcloud-server-1.onrender.com/create-token',
+      {
+        id: userId,
+      }
+    );
 
     return axiosData.streamToken;
   } catch (error) {

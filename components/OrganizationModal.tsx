@@ -36,9 +36,24 @@ export const OrganizationModal = (): JSX.Element => {
       isVisible={isOpen}
       onBackButtonPress={onClose}
       onBackdropPress={onClose}>
-      <View style={[styles.dialog, { backgroundColor: darkMode === 'dark' ? 'black' : 'white' }]}>
+      <View
+        style={[
+          styles.dialog,
+          {
+            backgroundColor: darkMode === 'dark' ? 'white' : '#1b1b1b',
+            borderRadius: 20,
+            padding: 20,
+          },
+        ]}>
         <View style={{ alignItems: 'center' }}>
-          <MyText poppins="Bold" fontSize={17} style={{ textAlign: 'center', marginTop: 15 }}>
+          <MyText
+            poppins="Bold"
+            fontSize={17}
+            style={{
+              textAlign: 'center',
+              marginTop: 15,
+              color: darkMode === 'dark' ? 'black' : 'white',
+            }}>
             Hi, start your journey on workcloud
           </MyText>
           <Pressable
@@ -47,7 +62,7 @@ export const OrganizationModal = (): JSX.Element => {
               { opacity: pressed ? 0.5 : 1 },
               { position: 'absolute', right: 15, top: -8 },
             ]}>
-            <Feather name="x" size={20} />
+            <Feather name="x" size={20} color={darkMode === 'dark' ? 'black' : 'white'} />
           </Pressable>
         </View>
         <View
@@ -65,29 +80,33 @@ export const OrganizationModal = (): JSX.Element => {
               onPress={createOrganization}
               titleStyle={{ fontFamily: 'PoppinsLight', color: 'white' }}
               title="Create An Organization"
+              radius={10}
             />
 
             <Button
               color="#C0D1FE"
               onPress={connectToOrganization}
-              titleStyle={{ fontFamily: 'PoppinsBold', fontSize: 12, color: colors.buttonBlue }}
+              titleStyle={{ fontFamily: 'PoppinsBold', color: colors.lightBlue }}
               containerStyle={{
                 width: '100%',
               }}
               title="Connect To An Organization"
+              radius={10}
             />
 
             <Button
               color={colors.lightBlue}
               onPress={createWorkerProfile}
-              titleStyle={{ fontFamily: 'PoppinsLight', color: colors.buttonBlue }}
+              titleStyle={{ fontFamily: 'PoppinsLight', color: colors.white }}
               title="Register as a worker"
+              radius={10}
             />
           </View>
         </View>
         <View style={{ justifyContent: 'center' }}>
           <Button
-            titleStyle={{ verticalAlign: 'middle', fontFamily: 'PoppinsBold', color: 'blue' }}
+            titleStyle={{ verticalAlign: 'middle', fontFamily: 'PoppinsBold', color: 'white' }}
+            radius={10}
             onPress={onClose}
             title="Cancel"
           />

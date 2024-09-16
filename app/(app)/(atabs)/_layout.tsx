@@ -51,7 +51,7 @@ export default function TabLayout() {
           },
         }}>
         <Tabs.Screen
-          name="home"
+          name="index"
           options={{
             title: 'Home',
             tabBarIcon: ({ focused, size }) => (
@@ -132,35 +132,6 @@ export default function TabLayout() {
             ),
           }}
         />
-        <Tabs.Screen
-          name="callList"
-          options={{
-            title: 'Call logs',
-            tabBarIcon: ({ focused, size }) => (
-              <TabBarIcon
-                name="phone"
-                color={focused ? colors.buttonBlue : colors.gray}
-                size={size}
-              />
-            ),
-            tabBarLabel: ({ focused }) => (
-              <Text
-                style={{
-                  color: focused ? colors.buttonBlue : colors.gray,
-                  fontFamily: fontFamily.Bold,
-                  fontSize: 7,
-                }}>
-                Call logs
-              </Text>
-            ),
-          }}
-        />
-        {/* <Tabs.Screen
-          name="call/videoCall"
-          options={{
-            href: null,
-          }}
-        /> */}
       </Tabs>
     </>
   );

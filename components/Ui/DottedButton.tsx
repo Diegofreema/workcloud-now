@@ -1,5 +1,6 @@
 import { AntDesign } from '@expo/vector-icons';
-import { Button } from '@rneui/themed';
+import { Button, Text } from '@rneui/themed';
+import { Pressable } from 'react-native';
 
 import { colors } from '~/constants/Colors';
 import { useDarkMode } from '~/hooks/useDarkMode';
@@ -13,25 +14,26 @@ type Props = {
 export const DottedButton = ({ onPress, text, isIcon = true }: Props): JSX.Element => {
   const { darkMode } = useDarkMode();
   return (
-    <Button
-      buttonStyle={{
+    <Pressable
+      style={{
         borderWidth: 1,
         borderColor: colors.gray10,
         borderRadius: 10,
         borderStyle: 'dashed',
         marginTop: 20,
-        flex: 1,
         height: 50,
+        flexDirection: 'row',
+        padding: 10,
+        gap: 3,
+        alignItems: 'center',
       }}
-      onPress={onPress}
-      icon={
-        isIcon && (
-          <AntDesign name="plus" size={20} color={darkMode === 'dark' ? 'white' : 'black'} />
-        )
-      }
-      iconRight
-      titleStyle={{ color: darkMode === 'dark' ? 'white' : 'black', fontFamily: 'PoppinsLight' }}
-      title={text}
-    />
+      onPress={onPress}>
+      <Text style={{ color: darkMode === 'dark' ? 'white' : 'black', fontFamily: 'PoppinsLight' }}>
+        {text}
+      </Text>
+      {isIcon && (
+        <AntDesign name="plus" size={20} color={darkMode === 'dark' ? 'white' : 'black'} />
+      )}
+    </Pressable>
   );
 };

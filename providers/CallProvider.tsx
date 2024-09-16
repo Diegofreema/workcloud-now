@@ -1,4 +1,4 @@
-import { useCalls } from '@stream-io/video-react-native-sdk';
+import { CallingState, useCalls } from '@stream-io/video-react-native-sdk';
 import { router, usePathname } from 'expo-router';
 import { PropsWithChildren, useEffect } from 'react';
 import { Pressable, Text } from 'react-native';
@@ -6,6 +6,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 export default function CallProvider({ children }: PropsWithChildren) {
   const calls = useCalls();
+
   const call = calls?.[0];
   const pathname = usePathname();
   const isNotOnVideoScreen = pathname !== '/video';
@@ -15,6 +16,12 @@ export default function CallProvider({ children }: PropsWithChildren) {
     if (isNotOnVideoScreen && call.state.callingState === 'ringing') {
       router.push('/video');
     }
+    return () => {
+      // cleanup the call on unmount if the call was not left already
+      if (call?.state.callingState !== CallingState.LEFT) {
+        call?.leave();
+      }
+    };
   }, [call]);
   const onGoToCall = () => {
     router.push(`/video`);

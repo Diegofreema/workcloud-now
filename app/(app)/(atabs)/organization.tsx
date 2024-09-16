@@ -72,10 +72,7 @@ const Organization = () => {
           <WorkCloudHeader />
         ) : (
           <View style={{ gap: 15 }}>
-            <WorkspaceItem
-              item={organization}
-              onPress={() => router.push(`/(app)/(organization)/${organization?.id}`)}
-            />
+            <WorkspaceItem item={organization} onPress={() => router.push(`/my-org`)} />
           </View>
         )}
       </View>
@@ -129,7 +126,7 @@ const Workspace = ({ item }: { item: WK }) => {
         justifyContent: 'space-between',
       }}>
       <HStack gap={10} alignItems="center">
-        <Avatar source={{ uri: imgUrl }} size={50} />
+        <Avatar rounded source={{ uri: imgUrl }} size={50} />
         <VStack>
           <MyText poppins="Bold" style={{ fontSize: 13 }}>
             {item?.role}

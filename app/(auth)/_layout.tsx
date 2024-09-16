@@ -2,19 +2,15 @@ import { useUser } from '@clerk/clerk-expo';
 import { Redirect, Stack } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 
-import { LoadingComponent } from '~/components/Ui/LoadingComponent';
 import { useDarkMode } from '~/hooks/useDarkMode';
 
 const AuthLayout = () => {
-  const { isSignedIn, isLoaded } = useUser();
+  const { isSignedIn } = useUser();
+
   const { darkMode } = useDarkMode();
 
-  if (!isLoaded) {
-    return <LoadingComponent />;
-  }
-
   if (isSignedIn) {
-    return <Redirect href="/home" />;
+    return <Redirect href="/(app)/(atabs)/" />;
   }
 
   return (

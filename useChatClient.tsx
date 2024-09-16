@@ -5,30 +5,32 @@ import { useEffect, useState } from 'react';
 import { StreamChat } from 'stream-chat';
 
 import { chatApiKey } from './chatConfig';
-import { useProfile } from './lib/queries';
+import { useAuth } from './hooks/useAuth';
 
 const chatClient = StreamChat.getInstance(chatApiKey);
 
 export const useChatClient = () => {
   const { user } = useUser();
-  const { data, isPending } = useProfile(user?.id);
+  const { data, isPending, error } = useAuth();
+  // const { data, isPending, error } = useProfile(user?.id);
+  console.log({ isPending, error });
 
   const userData = {
     id: user?.id as string,
     name: user?.fullName!,
     image: user?.imageUrl!,
   };
-  console.log(data?.profile?.streamToken, userData);
+  console.log(data?.streamToken, userData);
 
   const [clientIsReady, setClientIsReady] = useState(false);
+  console.log(clientIsReady);
+
   useEffect(() => {
-    if (!data?.profile?.streamToken) return;
+    if (!data?.streamToken) return;
     const setupClient = async () => {
       try {
-        chatClient.connectUser(userData, data?.profile?.streamToken);
-        if (!isPending) {
-          setClientIsReady(true);
-        }
+        chatClient.connectUser(userData, data?.streamToken);
+        setClientIsReady(true);
       } catch (error) {
         if (error instanceof Error) {
           console.error(`An error occurred while connecting the user: ${error.message}`);
@@ -41,7 +43,7 @@ export const useChatClient = () => {
     if (!chatClient.userID) {
       setupClient();
     }
-  }, [data?.profile?.streamToken, isPending]);
+  }, [data?.streamToken, isPending]);
   return {
     clientIsReady,
   };

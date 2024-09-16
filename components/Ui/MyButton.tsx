@@ -22,28 +22,27 @@ export const MyButton = ({
   style,
   labelStyle,
   loading,
+  containerStyle,
+  buttonStyle,
   ...props
 }: Props): JSX.Element => {
   return (
     <Button
       {...props}
       loading={loading}
-      buttonStyle={[{ height: 50, alignItems: 'center' }, contentStyle]}
+      buttonStyle={[{ height: 45, alignItems: 'center' }, buttonStyle]}
       titleStyle={[
         {
           color: textColor,
           fontFamily: fontFamily.Medium,
           fontSize: 14,
-
-          width: '100%',
         },
         labelStyle,
       ]}
       color={buttonColor}
+      containerStyle={[{ borderRadius: 10, minWidth: 150 }, containerStyle]}
       style={[
         {
-          borderRadius: 5,
-          height: 50,
           alignItems: 'center',
         },
         style,

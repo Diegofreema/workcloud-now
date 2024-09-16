@@ -35,7 +35,7 @@ export const TopCard = ({
   };
 
   const onEditProfile = () => {
-    router.push('/edit-profile');
+    router.push('/edit-new');
   };
   return (
     <View style={{ backgroundColor: darkMode === 'dark' ? 'black' : 'white' }}>

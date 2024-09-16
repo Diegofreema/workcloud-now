@@ -1,4 +1,4 @@
-import { ClerkProvider } from '@clerk/clerk-expo';
+import { ClerkLoaded, ClerkLoading, ClerkProvider } from '@clerk/clerk-expo';
 import FontAwesome from '@expo/vector-icons/FontAwesome';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { useFonts } from 'expo-font';
@@ -6,17 +6,16 @@ import { Slot, usePathname } from 'expo-router';
 import * as SecureStore from 'expo-secure-store';
 import * as SplashScreen from 'expo-splash-screen';
 import { StatusBar } from 'expo-status-bar';
+import * as Updates from 'expo-updates';
 import { useEffect } from 'react';
 import { PermissionsAndroid, Platform } from 'react-native';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { Toaster } from 'sonner-native';
 
+import { LoadingComponent } from '~/components/Ui/LoadingComponent';
 import { useDarkMode } from '~/hooks/useDarkMode';
 
-export const unstable_settings = {
-  // Ensure that reloading on `/modal` keeps a back button present.
-  initialRouteName: '(app)',
-};
 const tokenCache = {
   async getToken(key: string) {
     try {
@@ -46,6 +45,7 @@ SplashScreen.preventAutoHideAsync();
 
 export default function RootLayout() {
   const { darkMode } = useDarkMode();
+
   const pathname = usePathname();
   console.log('🚀 ~ RootLayoutNav ~ pathname:', pathname);
   const [loaded, error] = useFonts({
@@ -67,6 +67,22 @@ export default function RootLayout() {
     }
   }, [loaded]);
   useEffect(() => {
+    async function onFetchUpdateAsync() {
+      try {
+        const update = await Updates.checkForUpdateAsync();
+
+        if (update.isAvailable) {
+          await Updates.fetchUpdateAsync();
+          await Updates.reloadAsync();
+        }
+      } catch (error) {
+        // You can also add an alert() to see the error message in case of an error when fetching updates.
+        console.log(error);
+      }
+    }
+    onFetchUpdateAsync();
+  }, []);
+  useEffect(() => {
     const run = async () => {
       if (Platform.OS === 'android') {
         await PermissionsAndroid.requestMultiple([
@@ -80,6 +96,7 @@ export default function RootLayout() {
   if (!loaded) {
     return null;
   }
+
   const publishableKey = process.env.EXPO_PUBLIC_CLERK_PUBLISHABLE_KEY!;
 
   if (!publishableKey) {
@@ -87,18 +104,31 @@ export default function RootLayout() {
       'Missing Publishable Key. Please set EXPO_PUBLIC_CLERK_PUBLISHABLE_KEY in your .env'
     );
   }
+
   return (
     <ClerkProvider publishableKey={publishableKey} tokenCache={tokenCache}>
-      <QueryClientProvider client={queryClient}>
-        <GestureHandlerRootView style={{ flex: 1 }}>
-          <StatusBar
-            style={darkMode === 'dark' ? 'light' : 'dark'}
-            backgroundColor={darkMode === 'dark' ? 'black' : 'white'}
-          />
-          <Slot initialRouteName="(app)" />
-          <Toaster />
-        </GestureHandlerRootView>
-      </QueryClientProvider>
+      <ClerkLoaded>
+        <QueryClientProvider client={queryClient}>
+          <GestureHandlerRootView style={{ flex: 1 }}>
+            <StatusBar
+              style={darkMode === 'dark' ? 'light' : 'dark'}
+              backgroundColor={darkMode === 'dark' ? 'black' : 'white'}
+            />
+            <SafeAreaView
+              style={{
+                flex: 1,
+
+                backgroundColor: darkMode === 'dark' ? 'black' : 'white',
+              }}>
+              <Slot />
+            </SafeAreaView>
+            <Toaster />
+          </GestureHandlerRootView>
+        </QueryClientProvider>
+      </ClerkLoaded>
+      <ClerkLoading>
+        <LoadingComponent />
+      </ClerkLoading>
     </ClerkProvider>
   );
 }

@@ -22,7 +22,7 @@ const client = StreamChat.getInstance('cnvc46pm8uq9');
 export default function AppLayout() {
   const { clientIsReady } = useChatClient();
   const queryClient = useQueryClient();
-  const { isLoaded, isSignedIn } = useUser();
+  const { isSignedIn } = useUser();
   const { darkMode } = useDarkMode();
 
   const segment = useSegments();
@@ -41,6 +41,7 @@ export default function AppLayout() {
             queryClient.invalidateQueries({ queryKey: ['myStaffs'] });
             queryClient.invalidateQueries({ queryKey: ['organization'] });
             queryClient.invalidateQueries({ queryKey: ['assignedWk'] });
+            queryClient.invalidateQueries({ queryKey: ['connections'] });
             onRefresh();
           }
           console.log('Change received!', payload);
@@ -89,11 +90,12 @@ export default function AppLayout() {
       },
     },
   };
+
+  if (!isSignedIn) {
+    return <Redirect href="/(auth)/login" />;
+  }
   if (!clientIsReady) {
     return <LoadingComponent />;
-  }
-  if (isLoaded && !isSignedIn) {
-    return <Redirect href="/" />;
   }
 
   return (
@@ -108,7 +110,7 @@ export default function AppLayout() {
           <CallProvider>
             <OverlayProvider value={{ style: chatTheme }}>
               <Chat client={client}>
-                <Stack screenOptions={{ headerShown: false }} initialRouteName="(tabs)" />
+                <Stack screenOptions={{ headerShown: false }} initialRouteName="(atabs)" />
               </Chat>
             </OverlayProvider>
           </CallProvider>

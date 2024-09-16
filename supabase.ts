@@ -339,42 +339,54 @@ export type Database = {
           },
         ];
       };
-      servicePoint: {
+      roles: {
         Row: {
           created_at: string;
-          externalLink: boolean | null;
-          form: boolean | null;
-          formId: number | null;
           id: number;
-          link: string | null;
-          name: string | null;
-          organizationId: number | null;
-          service: boolean | null;
-          staffId: number | null;
+          role: string | null;
         };
         Insert: {
           created_at?: string;
-          externalLink?: boolean | null;
-          form?: boolean | null;
-          formId?: number | null;
           id?: number;
-          link?: string | null;
-          name?: string | null;
-          organizationId?: number | null;
-          service?: boolean | null;
-          staffId?: number | null;
+          role?: string | null;
         };
         Update: {
           created_at?: string;
+          id?: number;
+          role?: string | null;
+        };
+        Relationships: [];
+      };
+      servicePoint: {
+        Row: {
+          created_at: string;
+          description: string;
+          externalLink: boolean | null;
+          form: boolean | null;
+          id: number;
+          name: string | null;
+          organizationId: number | null;
+          service: boolean | null;
+        };
+        Insert: {
+          created_at?: string;
+          description: string;
           externalLink?: boolean | null;
           form?: boolean | null;
-          formId?: number | null;
           id?: number;
-          link?: string | null;
           name?: string | null;
           organizationId?: number | null;
           service?: boolean | null;
-          staffId?: number | null;
+        };
+        Update: {
+          created_at?: string;
+          description?: string;
+          externalLink?: boolean | null;
+          form?: boolean | null;
+          id?: number;
+          name?: string | null;
+          organizationId?: number | null;
+          service?: boolean | null;
         };
         Relationships: [
           {
@@ -382,13 +394,6 @@ export type Database = {
             columns: ['organizationId'];
             isOneToOne: false;
             referencedRelation: 'organization';
-            referencedColumns: ['id'];
-          },
-          {
-            foreignKeyName: 'public_servicePoint_staffId_fkey';
-            columns: ['staffId'];
-            isOneToOne: false;
-            referencedRelation: 'user';
             referencedColumns: ['id'];
           },
         ];

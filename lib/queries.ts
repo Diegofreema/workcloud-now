@@ -1,5 +1,6 @@
 import { useQuery } from '@tanstack/react-query';
 
+import { supabase } from './supabase';
 import {
   Connection,
   Followers,
@@ -16,9 +17,7 @@ import {
   Workers,
   connections,
 } from '../constants/types';
-import { supabase } from './supabase';
 
-const api = process.env.EXPO_PUBLIC_BACKEND_API!;
 export const useFollowers = () => {
   const getFollowers = async () => {
     const { data, error } = await supabase
@@ -448,5 +447,31 @@ export const useOrgsWorkers = (id: any) => {
   return useQuery({
     queryKey: ['single_orgs', id],
     queryFn: getOrg,
+  });
+};
+export const useRoles = () => {
+  const getRoles = async () => {
+    const { data, error } = await supabase.from('roles').select();
+    if (error) {
+      throw Error(error.message);
+    }
+    return data;
+  };
+  return useQuery({
+    queryKey: ['roles'],
+    queryFn: getRoles,
+  });
+};
+export const useServicePoints = (id: number) => {
+  const getServicePoints = async () => {
+    const { data, error } = await supabase.from('servicePoint').select().eq('organizationId', id);
+    if (error) {
+      throw Error(error.message);
+    }
+    return data;
+  };
+  return useQuery({
+    queryKey: ['service_points'],
+    queryFn: getServicePoints,
   });
 };

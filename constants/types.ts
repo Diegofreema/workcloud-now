@@ -337,3 +337,5 @@ export type WaitList = {
   workspace: number;
   customer: Profile;
 };
+
+export type ServicePointType = Database['public']['Tables']['servicePoint']['Row'];

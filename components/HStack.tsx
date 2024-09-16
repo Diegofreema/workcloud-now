@@ -15,7 +15,7 @@ type Props = {
   m?: number;
   style?: StyleProp<ViewStyle>;
   width?: DimensionValue;
-  mt?: number;
+  mt?: DimensionValue;
   mb?: number;
   mx?: number;
   pr?: number;
@@ -23,6 +23,10 @@ type Props = {
   bg?: string;
   px?: number;
   rounded?: number;
+  h?: number;
+  pb?: number;
+  my?: number;
+  flex?: number;
 };
 
 export const HStack = ({
@@ -42,6 +46,10 @@ export const HStack = ({
   bg,
   px,
   rounded,
+  h,
+  pb,
+  my,
+  flex,
 }: Props) => {
   return (
     <View
@@ -62,6 +70,10 @@ export const HStack = ({
           backgroundColor: bg,
           paddingHorizontal: px,
           borderRadius: rounded,
+          height: h,
+          paddingBottom: pb,
+          marginVertical: my,
+          flex,
         },
         style,
       ]}>

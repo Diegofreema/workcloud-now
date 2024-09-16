@@ -62,11 +62,11 @@
       "tsconfigPaths": true
     },
     "orientation": "portrait",
-    "icon": "./assets/icon.png",
+    "icon": "./assets/images/icon.png",
     "userInterfaceStyle": "light",
     "splash": {
-      "image": "./assets/splash.png",
-      "resizeMode": "contain",
+      "image": "./assets/images/splash.png",
+      "resizeMode": "cover",
       "backgroundColor": "#ffffff"
     },
     "assetBundlePatterns": [
@@ -74,14 +74,29 @@
     ],
     "ios": {
       "supportsTablet": true,
-      "bundleIdentifier": "com.diegodark.workcloud"
+      "bundleIdentifier": "com.diegodark.workcloud",
+      "bitcode": false
     },
     "android": {
       "adaptiveIcon": {
-        "foregroundImage": "./assets/adaptive-icon.png",
+        "foregroundImage": "./assets/images/appIcon.png",
         "backgroundColor": "#ffffff"
       },
-      "package": "com.diegodark.workcloud"
+      "package": "com.diegodark.workcloud",
+      "permissions": [
+        "android.permission.BLUETOOTH",
+        "android.permission.BLUETOOTH_CONNECT",
+        "android.permission.BLUETOOTH_ADMIN",
+        "android.permission.ACCESS_NETWORK_STATE",
+        "android.permission.CAMERA",
+        "android.permission.INTERNET",
+        "android.permission.MODIFY_AUDIO_SETTINGS",
+        "android.permission.RECORD_AUDIO",
+        "android.permission.SYSTEM_ALERT_WINDOW",
+        "android.permission.WAKE_LOCK",
+        "android.permission.READ_EXTERNAL_STORAGE",
+        "android.permission.WRITE_EXTERNAL_STORAGE"
+      ]
     },
     "extra": {
       "router": {
@@ -90,6 +105,12 @@
       "eas": {
         "projectId": "c6f4d0db-820e-41f4-9840-49346d4a94af"
       }
+    },
+    "runtimeVersion": {
+      "policy": "appVersion"
+    },
+    "updates": {
+      "url": "https://u.expo.dev/c6f4d0db-820e-41f4-9840-49346d4a94af"
     }
   }
 }

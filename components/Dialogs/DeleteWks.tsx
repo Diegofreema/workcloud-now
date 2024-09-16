@@ -1,3 +1,4 @@
+import { useAuth } from '@clerk/clerk-expo';
 import { Button } from '@rneui/themed';
 import { useQueryClient } from '@tanstack/react-query';
 import React, { useState } from 'react';
@@ -10,13 +11,12 @@ import { HStack } from '../HStack';
 import { MyText } from '../Ui/MyText';
 
 import { useDarkMode } from '~/hooks/useDarkMode';
-import { useData } from '~/hooks/useData';
 import { useDeleteWks } from '~/hooks/useDeleteWks';
 import { supabase } from '~/lib/supabase';
 
 export const DeleteWksSpaceModal = () => {
   const { onClose, id, isOpen } = useDeleteWks();
-  const { id: userId } = useData();
+  const { userId } = useAuth();
   const queryClient = useQueryClient();
   const [deleting, setDeleting] = useState(false);
   const { darkMode } = useDarkMode();

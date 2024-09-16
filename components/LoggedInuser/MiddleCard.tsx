@@ -1,3 +1,4 @@
+import { Avatar } from '@rneui/themed';
 import { useRouter } from 'expo-router';
 import { FlatList, Pressable, View } from 'react-native';
 
@@ -5,7 +6,6 @@ import { EmptyText } from '../EmptyText';
 import { HeadingText } from '../Ui/HeadingText';
 
 import { ConnectionType } from '~/constants/types';
-import { Avatar } from '@rneui/themed';
 
 export const MiddleCard = ({ connections }: { connections: ConnectionType[] }): JSX.Element => {
   const firstSix = (connections?.length && connections?.slice(0, 6)) || [];
@@ -40,7 +40,7 @@ const Images = ({ item }: { item: ConnectionType }) => {
   };
   return (
     <Pressable onPress={startChannel}>
-      <Avatar size={50} source={{ uri: item?.connectedTo?.avatar }} />
+      <Avatar rounded size={70} source={{ uri: item?.connectedTo?.avatar }} />
     </Pressable>
   );
 };

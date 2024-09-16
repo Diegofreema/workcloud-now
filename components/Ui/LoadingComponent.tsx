@@ -15,7 +15,11 @@ export const LoadingComponent = (): JSX.Element => {
         alignItems: 'center',
         backgroundColor: darkMode === 'dark' ? 'black' : 'white',
       }}>
-      <ActivityIndicator size="large" color={darkMode === 'dark' ? 'white' : 'black'} />
+      <ActivityIndicator
+        style={{ height: 200, width: 200 }}
+        color={darkMode === 'dark' ? 'white' : 'black'}
+        size="large"
+      />
     </View>
   );
 };
