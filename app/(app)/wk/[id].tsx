@@ -120,7 +120,6 @@ const Work = () => {
       setLeaving(false);
     }
   };
-  console.log(data?.wks.id, customerId);
 
   const onLeave = async () => {
     if (userId !== customerId) return;
@@ -256,7 +255,7 @@ const Work = () => {
 
   const onAddToCall = async (item: WaitList) => {
     getWorkspaceId(item?.id);
-    console.log({ workerId: wks?.workerId?.userId, customerId: item?.customer.userId });
+
     if (userId === wks?.workerId?.userId) {
       const call = client?.call('default', Crypto.randomUUID());
       await call?.getOrCreate({

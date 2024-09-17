@@ -34,7 +34,7 @@ export const formattedSkills = (text: string) => {
 
 const Profile = () => {
   const { profileId } = useLocalSearchParams<{ profileId: string }>();
-  // console.log('🚀 ~ Profile ~ profileId:', profileId);
+
   const { client } = useChatContext();
   const { user } = useUser();
   const { darkMode } = useDarkMode();
@@ -51,7 +51,6 @@ const Profile = () => {
     isPaused: isPausedData,
     refetch: refetchData,
   } = useGetRequests(user?.id as string, profileId);
-  console.log(pendingData, 'Pending Data');
 
   const queryClient = useQueryClient();
   useEffect(() => {
@@ -72,7 +71,6 @@ const Profile = () => {
   if (isPending || isPendingData) {
     return <LoadingComponent />;
   }
-  console.log(user?.id, profileId);
 
   const startChannel = async () => {
     const channel = client.channel('messaging', {
@@ -121,7 +119,7 @@ const Profile = () => {
     <Container>
       <ScrollView>
         <HeaderNav title="Profile" />
-        <View style={{ marginTop: 10 }}>
+        <View style={{ marginTop: 10, marginBottom: 20 }}>
           <UserPreview
             imageUrl={worker?.userId?.avatar}
             name={worker?.userId?.name}

@@ -11,9 +11,8 @@ const chatClient = StreamChat.getInstance(chatApiKey);
 
 export const useChatClient = () => {
   const { user } = useUser();
-  const { data, isPending, error } = useAuth();
+  const { data, isPending } = useAuth();
   // const { data, isPending, error } = useProfile(user?.id);
-  console.log({ isPending, error });
 
   const userData = {
     id: user?.id as string,

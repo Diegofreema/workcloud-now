@@ -190,10 +190,6 @@ const Edit = () => {
 
         const start = parse(data?.start?.trim()!, 'HH:mm', new Date());
         const end = parse(data?.end?.trim()!, 'HH:mm', new Date());
-        console.log(start, 'start', end, 'end');
-        console.log(data?.start, data?.end);
-        const time = isNaN(end.getTime());
-        console.log(time);
 
         setStartTime(start);
         setEndTime(end);
@@ -240,8 +236,6 @@ const Edit = () => {
     onDeleteImage(`logo/${path}`);
     console.log('deleted');
   };
-  console.log(values.startTime, 'start');
-  console.log(values.endTime, 'end');
 
   const {
     email,

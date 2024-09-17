@@ -2,7 +2,7 @@ import { useAuth } from '@clerk/clerk-expo';
 import { Button } from '@rneui/themed';
 import { useQueryClient } from '@tanstack/react-query';
 import { Image } from 'expo-image';
-import { router, useRouter } from 'expo-router';
+import { router } from 'expo-router';
 import { useState } from 'react';
 import { Pressable, View } from 'react-native';
 import { toast } from 'sonner-native';
@@ -32,6 +32,7 @@ type PreviewWorker = {
   profile?: boolean;
   active?: boolean;
   workspace?: boolean;
+  onPress?: () => void;
 };
 export const UserPreview = ({
   id,
@@ -45,16 +46,15 @@ export const UserPreview = ({
   profile,
   active,
   workspace,
-}: PreviewWorker) => {
-  const router = useRouter();
-  const onPress = () => {
+  onPress = () => {
     if (!navigate) return;
     router.push(`/workerProfile/${id}`);
-  };
-  console.log(id);
-
+  },
+}: PreviewWorker) => {
   return (
-    <Pressable onPress={onPress}>
+    <Pressable
+      onPress={() => onPress && onPress()}
+      style={({ pressed }) => ({ opacity: pressed ? 0.5 : 1 })}>
       <HStack gap={10} alignItems="center">
         {imageUrl ? (
           <Image
@@ -80,7 +80,7 @@ export const UserPreview = ({
           )}
           {roleText && (
             <MyText poppins="Medium" fontSize={14}>
-              {roleText} at {workPlace}
+              {roleText} {workPlace && `at ${workPlace}`}
             </MyText>
           )}
 
@@ -146,7 +146,6 @@ export const WorkPreview = ({ item }: { item: Requests }) => {
         workerId: isWorking?.workerId!,
         workspaceId: isWorking?.id.toString(),
       });
-      console.log(isWorking);
 
       return;
     }

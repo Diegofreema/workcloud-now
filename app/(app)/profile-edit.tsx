@@ -23,7 +23,7 @@ const ProfileEdit = () => {
     isPending: isPendingConnections,
     refetch: refetchConnections,
   } = useGetConnection(user?.id);
-  console.log(connections);
+
   const handleRefetch = async () => {
     refetch();
     refetchConnections();

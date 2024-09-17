@@ -27,8 +27,6 @@ export const AddRole = ({ onNavigate }: { onNavigate: (item: string) => void }):
         return;
       }
       if (data.length) {
-        console.log(data);
-
         toast('Could not add role', {
           description: 'Role already exists',
         });

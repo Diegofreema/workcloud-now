@@ -23,8 +23,6 @@ const PendingStaffs = () => {
     return <LoadingComponent />;
   }
 
-  console.log(data);
-
   return (
     <Container>
       <HeaderNav title="Pending Staffs" />

@@ -1,10 +1,9 @@
 import { useAuth } from '@clerk/clerk-expo';
 import { EvilIcons } from '@expo/vector-icons';
-import { useQueryClient } from '@tanstack/react-query';
 import { Image } from 'expo-image';
 import * as Linking from 'expo-linking';
 import { useLocalSearchParams } from 'expo-router';
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useMemo, useState } from 'react';
 import { Pressable, ScrollView, Text, View, useWindowDimensions } from 'react-native';
 import { toast } from 'sonner-native';
 
@@ -15,12 +14,11 @@ import { useDarkMode } from '../../../hooks/useDarkMode';
 import { useGetFollowers, useOrg, useServicePoints } from '../../../lib/queries';
 
 import { HeaderNav } from '~/components/HeaderNav';
+import { ServicePointLists } from '~/components/ServicePointLists';
 import { Container } from '~/components/Ui/Container';
 import { MyButton } from '~/components/Ui/MyButton';
 import { MyText } from '~/components/Ui/MyText';
 import { onFollow, onUnFollow } from '~/lib/helper';
-import { supabase } from '~/lib/supabase';
-import { ServicePointLists } from '~/components/ServicePointLists';
 
 type SubProps = {
   name: any;
@@ -74,11 +72,11 @@ export const OrganizationItems = ({ name, text, website }: SubProps) => {
 const Overview = () => {
   const { id } = useLocalSearchParams<{ id: string }>();
   const [following, setFollowing] = useState(false);
-  console.log(id);
+
   const { userId } = useAuth();
   const { darkMode } = useDarkMode();
   const [loading, setLoading] = useState(false);
-  const queryClient = useQueryClient();
+
   const { width } = useWindowDimensions();
   const { data, isPending, error, refetch, isPaused } = useOrg(id);
   const {
@@ -97,7 +95,7 @@ const Overview = () => {
   } = useGetFollowers(id);
   const isFollowingMemo = useMemo(() => {
     if (!followersData) return false;
-    console.log('changed');
+
     const isFollowing = followersData?.followers.find((f) => f?.followerId === userId);
     if (isFollowing) {
       return true;
@@ -105,29 +103,7 @@ const Overview = () => {
       return false;
     }
   }, [followersData]);
-  useEffect(() => {
-    const channel = supabase
-      .channel('workcloud')
-      .on(
-        'postgres_changes',
-        {
-          event: '*',
-          schema: 'public',
-          table: 'followers',
-        },
-        (payload) => {
-          if (payload) {
-            queryClient.invalidateQueries({ queryKey: ['followers'] });
-          }
-          console.log('FollowersChange received!', payload);
-        }
-      )
-      .subscribe();
 
-    return () => {
-      supabase.removeChannel(channel);
-    };
-  }, []);
   const handleRefetch = () => {
     refetch();
     refetchFollowers();

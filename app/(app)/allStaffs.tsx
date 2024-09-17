@@ -14,10 +14,8 @@ import { useDetailsToAdd } from '~/hooks/useDetailsToAdd';
 import { useGetOtherWorkers } from '~/lib/queries';
 
 const AllStaffs = () => {
-  const { role } = useDetailsToAdd();
   const { userId } = useAuth();
   const [staffs, setStaffs] = useState<Workers[]>();
-  console.log(role, 'role');
 
   const { data, isPending, isError, isPaused, refetch, isRefetching } = useGetOtherWorkers(userId);
 

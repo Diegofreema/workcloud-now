@@ -56,7 +56,6 @@ const Reception = () => {
     isPaused: isPausedWorkers,
   } = useOrgsWorkers(data?.org?.id);
   const { width } = useWindowDimensions();
-  console.log(data?.org?.ownerId, userId, workers?.workers?.[0]?.userId?.userId);
 
   useEffect(() => {
     if (!id || !userId || !workers?.workers) return;

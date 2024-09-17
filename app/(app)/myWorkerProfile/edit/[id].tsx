@@ -89,7 +89,6 @@ const CreateProfile = () => {
 
           toast.error('Something went wrong');
         }
-        console.log(data, 'Data');
 
         router.back();
       } catch (error: any) {

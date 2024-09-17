@@ -23,7 +23,6 @@ export default function TabOneScreen() {
   const { data, isError, isPending, refetch } = useProfile(userId);
 
   const loaded = !!SecureStore.getItem('loaded');
-  console.log(data);
 
   useEffect(() => {
     if (loaded) return;

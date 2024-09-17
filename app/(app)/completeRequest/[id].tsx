@@ -40,7 +40,6 @@ const CompleteRequest = () => {
   const queryClient = useQueryClient();
   const router = useRouter();
   const { data, isPaused, isPending, isError, refetch, isRefetchError } = useGetWorkerProfile(id);
-  console.log({ orgId, workspaceId });
 
   const {
     values,

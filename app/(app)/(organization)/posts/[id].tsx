@@ -30,7 +30,6 @@ const Posts = () => {
   }
 
   const { imgUrls } = data;
-  console.log(imgUrls, 'data');
 
   return (
     <>

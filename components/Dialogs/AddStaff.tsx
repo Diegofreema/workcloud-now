@@ -132,8 +132,6 @@ export const Menu = ({ isVisible, setIsVisible, array, onBottomOpen }: Props) =>
     }
   };
   const handlePress = (text: string) => {
-    console.log(text);
-
     switch (text) {
       case 'View profile':
         onViewProfile();

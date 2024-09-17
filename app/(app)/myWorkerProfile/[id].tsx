@@ -25,7 +25,6 @@ const Profile = () => {
 
   const router = useRouter();
   const { data, isPaused, isPending, isError, refetch, isRefetchError } = useGetWorkerProfile(id);
-  console.log('🚀 ~ Profile ~ data:', data);
 
   if (isError || isRefetchError || isPaused) {
     return <ErrorComponent refetch={refetch} />;
@@ -34,7 +33,7 @@ const Profile = () => {
   if (isPending) {
     return <LoadingComponent />;
   }
-  console.log(data);
+
   const { worker } = data;
   const formattedSkills = (text: string) => {
     const arrayOfSkills = text.split(',');
@@ -55,11 +54,12 @@ const Profile = () => {
         showsVerticalScrollIndicator={false}
         contentContainerStyle={{ paddingBottom: 50, flexGrow: 1 }}>
         <HeaderNav title="Profile" />
-        <View style={{ marginTop: 10 }}>
+        <View style={{ marginTop: 10, marginBottom: 20 }}>
           <UserPreview
             imageUrl={worker?.userId?.avatar}
             name={worker?.userId?.name}
             roleText={worker?.role}
+            workPlace={worker?.organizationId?.name}
             personal
           />
         </View>
@@ -71,7 +71,7 @@ const Profile = () => {
               Joined since {format(worker?.created_at, 'do MMMM yyyy')}
             </MyText>
           </HStack>
-          <HStack gap={5} alignItems="center">
+          <HStack gap={5} alignItems="center" mb={10}>
             <EvilIcons name="location" size={24} color={colors.grayText} />
             <MyText fontSize={12} poppins="Medium" style={{ color: colors.grayText }}>
               {worker?.location}

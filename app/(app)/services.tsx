@@ -15,7 +15,6 @@ const Services = () => {
   const { id } = useLocalSearchParams<{ id: string }>();
   const { getData } = useDetailsToAdd();
   const { data, isError, isPending, refetch } = useServicePoints(+id);
-  console.log(id);
 
   const onCreateServicePoint = () => {
     getData(id);
