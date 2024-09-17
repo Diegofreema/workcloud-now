@@ -1,16 +1,15 @@
 import { useAuth } from '@clerk/clerk-expo';
 import { router } from 'expo-router';
-import { FlatList, Pressable, View } from 'react-native';
+import { FlatList, View } from 'react-native';
 
 import { AuthHeader } from '~/components/AuthHeader';
 import { EmptyText } from '~/components/EmptyText';
-import { HStack } from '~/components/HStack';
 import { Container } from '~/components/Ui/Container';
 import { ErrorComponent } from '~/components/Ui/ErrorComponent';
 import { LoadingComponent } from '~/components/Ui/LoadingComponent';
 import { MyButton } from '~/components/Ui/MyButton';
 import { MyText } from '~/components/Ui/MyText';
-import { UserPreview } from '~/components/Ui/UserPreview';
+import { UserPreviewWithBio } from '~/components/Ui/UserPreviewWithBio';
 import { User, useSelect } from '~/hooks/useSelect';
 import { useGetMyStaffs } from '~/lib/queries';
 
@@ -43,25 +42,21 @@ const SelectStaff = () => {
         refreshing={isRefetching}
         data={staffs}
         renderItem={({ item }) => (
-          <HStack justifyContent="space-between" alignItems="center">
-            <Pressable
-              onPress={() =>
-                onSelectStaff({
-                  id: item.userId?.userId!,
-                  image: item.userId?.avatar!,
-                  name: item.userId?.name!,
-                  role: item.role,
-                })
-              }
-              style={({ pressed }) => ({ opacity: pressed ? 0.5 : 1 })}>
-              <UserPreview
-                id={item?.id}
-                imageUrl={item?.userId?.avatar}
-                name={item?.userId?.name}
-                subText={item?.role}
-              />
-            </Pressable>
-          </HStack>
+          <UserPreviewWithBio
+            id={item?.userId?.userId!}
+            imageUrl={item?.userId?.avatar!}
+            name={item?.userId?.name!}
+            bio={item.experience!}
+            skills={item.skills!}
+            onPress={() =>
+              onSelectStaff({
+                id: item?.userId?.userId!,
+                name: item?.userId?.name!,
+                image: item?.userId?.avatar!,
+                role: item.role,
+              })
+            }
+          />
         )}
         ListEmptyComponent={() => (
           <View style={{ alignItems: 'center', gap: 10 }}>

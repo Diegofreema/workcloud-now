@@ -3,7 +3,7 @@
 import { useQueryClient } from '@tanstack/react-query';
 import { router, useLocalSearchParams } from 'expo-router';
 import { useCallback, useState } from 'react';
-import { Pressable, StyleSheet } from 'react-native';
+import { Pressable, StyleSheet, View } from 'react-native';
 import { toast } from 'sonner-native';
 
 import { ServicePointModal } from '../Dialogs/ServicePointModal';
@@ -49,13 +49,19 @@ export const ServicePointForm = (): JSX.Element => {
         .single();
 
       if (error) {
+        console.log(error);
+
         return toast.error('Something went wrong', {
           description: 'Failed to create service point. Please try again',
         });
       }
-      const { error: err } = await supabase.from('worker').update({ servicePointId: data.id });
+      const { error: err } = await supabase
+        .from('worker')
+        .update({ servicePointId: data.id })
+        .eq('userId', user?.id!);
 
       if (err) {
+        console.log(err);
         await supabase.from('servicePoint').delete().eq('id', data.id);
         return toast.error('Something went wrong', {
           description: 'Failed to create service point. Please try again',
@@ -93,7 +99,9 @@ export const ServicePointForm = (): JSX.Element => {
       />
 
       {user ? (
-        <UserPreview name={user.name} imageUrl={user.image} roleText={user.role} />
+        <View style={{ marginHorizontal: 10 }}>
+          <UserPreview name={user.name} imageUrl={user.image} roleText={user.role} />
+        </View>
       ) : (
         <Pressable
           onPress={() => router.push('/select-staff')}

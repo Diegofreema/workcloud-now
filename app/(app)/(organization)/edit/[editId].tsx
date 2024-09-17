@@ -153,8 +153,7 @@ const Edit = () => {
           queryKey: ['organizations', 'organization'],
         });
 
-        // @ts-ignore
-        router.replace(`/(organization)/${editId}`);
+        router.replace(`/my-org`);
       }
 
       if (error) {
@@ -166,6 +165,7 @@ const Edit = () => {
       }
     },
   });
+
   const getOrgs = async () => {
     setError(false);
     try {
@@ -183,14 +183,17 @@ const Edit = () => {
           organizationName: data?.name!,
           description: data?.description!,
           websiteUrl: data?.website!,
-          startTime: data?.workDays!.split('-')[0],
-          endTime: data?.workDays!.split('-')[1],
+          startTime: data?.start!,
+          endTime: data?.end!,
           image: data?.avatar!,
         });
 
-        const start = parse(data?.start!, 'HH:mm', new Date());
-        const end = parse(data?.end!, 'HH:mm', new Date());
-        console.log(start, end);
+        const start = parse(data?.start?.trim()!, 'HH:mm', new Date());
+        const end = parse(data?.end?.trim()!, 'HH:mm', new Date());
+        console.log(start, 'start', end, 'end');
+        console.log(data?.start, data?.end);
+        const time = isNaN(end.getTime());
+        console.log(time);
 
         setStartTime(start);
         setEndTime(end);
@@ -237,6 +240,9 @@ const Edit = () => {
     onDeleteImage(`logo/${path}`);
     console.log('deleted');
   };
+  console.log(values.startTime, 'start');
+  console.log(values.endTime, 'end');
+
   const {
     email,
     category,

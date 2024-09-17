@@ -1,4 +1,5 @@
 import { useAuth } from '@clerk/clerk-expo';
+import { router } from 'expo-router';
 import React, { useEffect, useState } from 'react';
 import { FlatList, View } from 'react-native';
 
@@ -65,6 +66,7 @@ const AllStaffs = () => {
             name={item?.userId?.name}
             bio={item?.experience!}
             skills={item?.skills}
+            onPress={() => router.push(`/workerProfile/${item?.userId?.userId}`)}
           />
         )}
         style={{ marginTop: 20 }}

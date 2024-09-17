@@ -175,7 +175,7 @@ const CreateWorkSpace = () => {
             description: 'Organization created successfully',
           });
 
-          router.replace(`/(app)/(organization)/${id}`);
+          router.replace(`/my-org`);
         }
       }
 

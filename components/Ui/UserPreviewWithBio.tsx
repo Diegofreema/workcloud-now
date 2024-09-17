@@ -1,6 +1,5 @@
 /* eslint-disable prettier/prettier */
 import { Image } from 'expo-image';
-import { router } from 'expo-router';
 import { Pressable } from 'react-native';
 
 import { HStack } from '../HStack';
@@ -16,12 +15,20 @@ type Props = {
   bio: string;
   skills: string;
   id: string;
+  onPress: () => void;
 };
 
-export const UserPreviewWithBio = ({ bio, id, imageUrl, name, skills }: Props): JSX.Element => {
+export const UserPreviewWithBio = ({
+  bio,
+  id,
+  imageUrl,
+  name,
+  skills,
+  onPress,
+}: Props): JSX.Element => {
   return (
     <Pressable
-      onPress={() => router.push(`/workerProfile/${id}`)}
+      onPress={onPress}
       style={({ pressed }) => ({
         gap: 10,
         padding: 15,

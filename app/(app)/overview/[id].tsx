@@ -12,7 +12,7 @@ import { ErrorComponent } from '../../../components/Ui/ErrorComponent';
 import { LoadingComponent } from '../../../components/Ui/LoadingComponent';
 import { colors } from '../../../constants/Colors';
 import { useDarkMode } from '../../../hooks/useDarkMode';
-import { useGetFollowers, useOrg } from '../../../lib/queries';
+import { useGetFollowers, useOrg, useServicePoints } from '../../../lib/queries';
 
 import { HeaderNav } from '~/components/HeaderNav';
 import { Container } from '~/components/Ui/Container';
@@ -20,6 +20,7 @@ import { MyButton } from '~/components/Ui/MyButton';
 import { MyText } from '~/components/Ui/MyText';
 import { onFollow, onUnFollow } from '~/lib/helper';
 import { supabase } from '~/lib/supabase';
+import { ServicePointLists } from '~/components/ServicePointLists';
 
 type SubProps = {
   name: any;
@@ -81,6 +82,13 @@ const Overview = () => {
   const { width } = useWindowDimensions();
   const { data, isPending, error, refetch, isPaused } = useOrg(id);
   const {
+    data: servicePoints,
+    isPending: isPendingServicePoints,
+    refetch: refetchServicePoints,
+    isPaused: isPausedServicePoints,
+    isError: isErrorServicePoints,
+  } = useServicePoints(data?.organization?.id!);
+  const {
     data: followersData,
     isPending: isPendingFollowers,
     refetch: refetchFollowers,
@@ -123,12 +131,20 @@ const Overview = () => {
   const handleRefetch = () => {
     refetch();
     refetchFollowers();
+    refetchServicePoints();
   };
 
-  if (error || isPaused || isError || isPausedFollowers) {
+  if (
+    error ||
+    isPaused ||
+    isError ||
+    isPausedFollowers ||
+    isErrorServicePoints ||
+    isPausedServicePoints
+  ) {
     return <ErrorComponent refetch={handleRefetch} />;
   }
-  if (isPending || isPendingFollowers) {
+  if (isPending || isPendingFollowers || isPendingServicePoints) {
     return <LoadingComponent />;
   }
 
@@ -274,11 +290,12 @@ const Overview = () => {
             Members {followers?.length}
           </Text>
         </View>
-        <View style={{ marginTop: 10 }}>
+        <View style={{ marginTop: 10, marginBottom: 20 }}>
           <MyButton onPress={onHandleFollow} disabled={loading} contentStyle={{ height: 50 }}>
             {isFollowingMemo ? unfollowingText : followingText}
           </MyButton>
         </View>
+        <ServicePointLists data={servicePoints} />
       </ScrollView>
     </Container>
   );
