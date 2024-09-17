@@ -1,12 +1,15 @@
 import { useAuth } from '@clerk/clerk-expo';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
+import { BottomSheet, Divider } from '@rneui/themed';
 import { useQueryClient } from '@tanstack/react-query';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import React, { useEffect, useMemo, useState } from 'react';
 import { FlatList, Pressable, StyleSheet, View } from 'react-native';
+import { toast } from 'sonner-native';
 
 import { AuthHeader } from '~/components/AuthHeader';
 import { AddStaff, Menu } from '~/components/Dialogs/AddStaff';
+import { AddToWorkspace } from '~/components/Dialogs/AddToWorkspace';
 import { RemoveUser } from '~/components/Dialogs/RemoveUser';
 import { SelectNewRow } from '~/components/Dialogs/SelectNewRow';
 import { EmptyText } from '~/components/EmptyText';
@@ -21,7 +24,7 @@ import { colors } from '~/constants/Colors';
 import { WorkType } from '~/constants/types';
 import { useDarkMode } from '~/hooks/useDarkMode';
 import { useHandleStaff } from '~/hooks/useHandleStaffs';
-import { useGetMyStaffs } from '~/lib/queries';
+import { useGetMyStaffs, useWorkSpaceWithoutWorker } from '~/lib/queries';
 import { supabase } from '~/lib/supabase';
 
 const allRoles = [
@@ -35,7 +38,17 @@ const allRoles = [
 const Staffs = () => {
   const { id } = useLocalSearchParams<{ id: string }>();
   const { userId } = useAuth();
+  const [showBottom, setShowBottom] = useState(false);
+  const [showModal, setShowModal] = useState(false);
+  const [loading, setLoading] = useState(false);
+  const [workspaceId, setWorkspaceId] = useState<number | null>(null);
 
+  const {
+    data: workspaces,
+    isError: isErrorWorkspaces,
+    refetch: refetchWorkspaces,
+    isPending: isPendingWorkspace,
+  } = useWorkSpaceWithoutWorker(userId!);
   const [isVisible, setIsVisible] = useState(false);
   const queryClient = useQueryClient();
 
@@ -69,7 +82,7 @@ const Staffs = () => {
         },
         (payload) => {
           if (payload) {
-            queryClient.invalidateQueries({ queryKey: ['myStaffs', userId] });
+            queryClient.invalidateQueries({ queryKey: ['myStaffs'] });
             queryClient.invalidateQueries({ queryKey: ['assignedWk'] });
           }
           console.log('Change received!', payload);
@@ -81,13 +94,20 @@ const Staffs = () => {
       supabase.removeChannel(channel);
     };
   }, []);
-  if (isError || isRefetchError || isPaused) {
-    return <ErrorComponent refetch={refetch} />;
+  const handleRefetch = () => {
+    refetch();
+    refetchWorkspaces();
+  };
+  if (isError || isRefetchError || isPaused || isErrorWorkspaces) {
+    return <ErrorComponent refetch={handleRefetch} />;
   }
 
-  if (isPending) {
+  if (isPending || isPendingWorkspace) {
     return <LoadingComponent />;
   }
+
+  const onShowBottom = () => setShowBottom(true);
+  const onHideBottom = () => setShowBottom(false);
 
   const pendingStaffs = () => {
     router.push('/pending-staffs');
@@ -122,11 +142,80 @@ const Staffs = () => {
       text: 'Remove staff',
     },
   ];
+  const onBottomOpen = () => {
+    setIsVisible(false);
+    onShowBottom();
+  };
+  const onAddStaff = (id: number) => {
+    setWorkspaceId(id);
+    setShowModal(true);
+    onHideBottom();
+  };
+
+  const handleAdd = async () => {
+    setLoading(true);
+    try {
+      const { data, error } = await supabase
+        .from('workspace')
+        .update({
+          workerId: staff?.userId?.userId,
+        })
+        .eq('id', workspaceId!)
+        .select()
+        .single();
+
+      if (error) {
+        toast.error('Something went wrong', {
+          description: 'Failed to add staff to workspace',
+        });
+        return;
+      }
+
+      const { error: err } = await supabase
+        .from('worker')
+        .update({
+          workspaceId: data?.id,
+        })
+        .eq('userId', staff?.userId?.userId!);
+      if (err) {
+        toast.error('Something went wrong', {
+          description: 'Failed to add staff to workspace',
+        });
+        await supabase
+          .from('workspace')
+          .update({
+            workerId: null,
+          })
+          .eq('id', workspaceId!);
+
+        return;
+      }
+      toast.success('Success', {
+        description: 'Staff added successfully',
+      });
+      setShowModal(false);
+    } catch (error) {
+      console.log(error);
+    } finally {
+      setLoading(false);
+    }
+  };
   return (
     <Container>
       <AddStaff />
       <RemoveUser />
-      <Menu isVisible={isVisible} setIsVisible={setIsVisible} array={array} />
+      <AddToWorkspace
+        loading={loading}
+        isOpen={showModal}
+        onClose={() => setShowModal(false)}
+        onAdd={handleAdd}
+      />
+      <Menu
+        onBottomOpen={onBottomOpen}
+        isVisible={isVisible}
+        setIsVisible={setIsVisible}
+        array={array}
+      />
       <SelectNewRow id={id} />
       <AuthHeader path="Staffs" />
       <View style={{ marginBottom: 15 }}>
@@ -186,6 +275,45 @@ const Staffs = () => {
         )}
         ListEmptyComponent={() => <EmptyText text="No staffs found" />}
       />
+      <BottomSheet
+        modalProps={{}}
+        onBackdropPress={onHideBottom}
+        scrollViewProps={{
+          showsVerticalScrollIndicator: false,
+          style: {
+            backgroundColor: darkMode === 'dark' ? 'black' : 'white',
+            padding: 10,
+            borderTopRightRadius: 40,
+            borderTopLeftRadius: 40,
+            height: '40%',
+          },
+          contentContainerStyle: {
+            height: '100%',
+          },
+        }}
+        isVisible={showBottom}>
+        <FlatList
+          style={{ marginTop: 30 }}
+          showsVerticalScrollIndicator={false}
+          ItemSeparatorComponent={() => (
+            <Divider
+              style={{ height: StyleSheet.hairlineWidth, backgroundColor: 'gray', width: '100%' }}
+            />
+          )}
+          data={workspaces}
+          renderItem={({ item }) => (
+            <Pressable
+              onPress={() => onAddStaff(item.id)}
+              style={({ pressed }) => [{ opacity: pressed ? 0.5 : 1 }, styles.pressed]}>
+              <MyText poppins="Medium" fontSize={20}>
+                {item.role}
+              </MyText>
+            </Pressable>
+          )}
+          scrollEnabled={false}
+          ListEmptyComponent={() => <EmptyText text="No empty workspaces found" />}
+        />
+      </BottomSheet>
     </Container>
   );
 };
@@ -210,5 +338,8 @@ const styles = StyleSheet.create({
     padding: 3,
     paddingHorizontal: 5,
     borderRadius: 5,
+  },
+  pressed: {
+    padding: 5,
   },
 });

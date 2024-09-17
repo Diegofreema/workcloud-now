@@ -45,6 +45,7 @@ export default function AppLayout() {
             queryClient.invalidateQueries({ queryKey: ['request'] });
             queryClient.invalidateQueries({ queryKey: ['pending_requests'] });
             queryClient.invalidateQueries({ queryKey: ['pending_worker'] });
+            queryClient.invalidateQueries({ queryKey: ['workspace_no_worker'] });
             onRefresh();
           }
           console.log('Change received!', payload);

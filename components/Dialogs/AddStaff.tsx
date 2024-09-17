@@ -77,9 +77,10 @@ type Props = {
   isVisible: boolean;
   setIsVisible: (value: boolean) => void;
   array: { icon: any; text: any }[];
+  onBottomOpen: () => void;
 };
 
-export const Menu = ({ isVisible, setIsVisible, array }: Props) => {
+export const Menu = ({ isVisible, setIsVisible, array, onBottomOpen }: Props) => {
   const queryClient = useQueryClient();
   const { onOpen } = useRemoveUser();
   const { client } = useChatContext();
@@ -150,7 +151,7 @@ export const Menu = ({ isVisible, setIsVisible, array }: Props) => {
         onUnlockWorkspace();
         break;
       case 'Assign workspace':
-        router.push(`/assignWorkspace/${item?.userId?.userId}`);
+        onBottomOpen();
         break;
       default:
         break;

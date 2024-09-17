@@ -473,3 +473,21 @@ export const useServicePoints = (id: number) => {
     queryFn: getServicePoints,
   });
 };
+
+export const useWorkSpaceWithoutWorker = (id: string) => {
+  const getWorkspace = async () => {
+    const { data, error } = await supabase
+      .from('workspace')
+      .select()
+      .eq('ownerId', id)
+      .is('workerId', null);
+    if (error) {
+      throw Error(error.message);
+    }
+    return data;
+  };
+  return useQuery({
+    queryKey: ['workspace_no_worker', id],
+    queryFn: getWorkspace,
+  });
+};
