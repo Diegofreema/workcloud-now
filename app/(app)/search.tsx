@@ -6,6 +6,8 @@ import { FlatList, Pressable, StyleSheet, Text, View } from 'react-native';
 import { useDebounce } from 'use-debounce';
 
 import { HStack } from '~/components/HStack';
+import { RecentSearch } from '~/components/RecentSearch';
+import { TSearch } from '~/components/TopSearch';
 import { Container } from '~/components/Ui/Container';
 import { ErrorComponent } from '~/components/Ui/ErrorComponent';
 import { LoadingComponent } from '~/components/Ui/LoadingComponent';
@@ -13,12 +15,14 @@ import { MyText } from '~/components/Ui/MyText';
 import VStack from '~/components/Ui/VStack';
 import { Org } from '~/constants/types';
 import { useDarkMode } from '~/hooks/useDarkMode';
-import { useSearch, useSearchName } from '~/lib/queries';
+import { useSearch, useSearchName, useTopSearch } from '~/lib/queries';
 
 const Search = () => {
   const [value, setValue] = useState('');
   const [val] = useDebounce(value, 1000);
   const { data, refetch, isPaused, isPending, isError } = useSearch(val);
+
+  const { data: topSearch, isError: isErrorSearch, isPending: isPendingSearch } = useTopSearch();
   const {
     data: nameData,
     refetch: refetchName,
@@ -30,7 +34,7 @@ const Search = () => {
     refetchName();
     refetch();
   };
-  if (isError || isPaused || isErrorName || isPausedName) {
+  if (isError || isPaused || isErrorName || isPausedName || isErrorSearch) {
     return (
       <View style={styles.container}>
         <SearchHeader value={value} setValue={setValue} />
@@ -39,7 +43,7 @@ const Search = () => {
     );
   }
 
-  if (isPending || isPendingName) {
+  if (isPending || isPendingName || isPendingSearch) {
     return (
       <Container>
         <SearchHeader value={value} setValue={setValue} />
@@ -57,6 +61,8 @@ const Search = () => {
   return (
     <Container>
       <SearchHeader value={value} setValue={setValue} />
+      <TSearch data={topSearch} />
+      <RecentSearch />
       <FlatList
         ListHeaderComponent={() => (
           <MyText

@@ -36,7 +36,7 @@ import { supabase } from '~/lib/supabase';
 const Reception = () => {
   const { userId } = useAuth();
   const queryClient = useQueryClient();
-  const { id } = useLocalSearchParams<{ id: string }>();
+  const { id, search } = useLocalSearchParams<{ id: string; search: string }>();
   const { data, isPending, error, refetch, isPaused } = useGetOrg(id!);
 
   const {
@@ -56,6 +56,27 @@ const Reception = () => {
     isPaused: isPausedWorkers,
   } = useOrgsWorkers(data?.org?.id);
   const { width } = useWindowDimensions();
+
+  useEffect(() => {
+    const onIncreaseSearchCount = async () => {
+      if (data?.org?.search_count !== undefined) {
+        const { error } = await supabase
+          .from('organization')
+          .update({ search_count: data.org.search_count + 1 })
+          .eq('id', id);
+        queryClient.invalidateQueries({
+          queryKey: ['top_search'],
+        });
+        if (error) {
+          console.error('Error updating search count:', error);
+        }
+      }
+    };
+    if (search === 'true') {
+      console.log('search');
+      onIncreaseSearchCount();
+    }
+  }, [search, id, data?.org?.search_count]);
 
   useEffect(() => {
     if (!id || !userId || !workers?.workers) return;

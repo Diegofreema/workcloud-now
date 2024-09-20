@@ -90,6 +90,7 @@ export type Database = {
           logoId: string | null;
           name: string | null;
           ownerId: string | null;
+          search_count: number | null;
           start: string | null;
           subTitle: string | null;
           website: string | null;
@@ -110,6 +111,7 @@ export type Database = {
           logoId?: string | null;
           name?: string | null;
           ownerId?: string | null;
+          search_count?: number | null;
           start?: string | null;
           subTitle?: string | null;
           website?: string | null;
@@ -130,6 +132,7 @@ export type Database = {
           logoId?: string | null;
           name?: string | null;
           ownerId?: string | null;
+          search_count?: number | null;
           start?: string | null;
           subTitle?: string | null;
           website?: string | null;

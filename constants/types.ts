@@ -10,6 +10,7 @@ export type connections =
   | null;
 
 export type UserProfile = Database['public']['Tables']['user']['Row'];
+export type TopSearch = Database['public']['Tables']['organization']['Row'];
 export type Connection = {
   connectedTo: Org;
   created_at: string;
@@ -54,6 +55,7 @@ export type Org = {
   website: string;
   workDays: string;
   workspaces: number[];
+  search_count: number;
 };
 
 export type PostType = {

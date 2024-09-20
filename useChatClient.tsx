@@ -19,10 +19,8 @@ export const useChatClient = () => {
     name: user?.fullName!,
     image: user?.imageUrl!,
   };
-  console.log(data?.streamToken, userData);
 
   const [clientIsReady, setClientIsReady] = useState(false);
-  console.log(clientIsReady);
 
   useEffect(() => {
     if (!data?.streamToken) return;

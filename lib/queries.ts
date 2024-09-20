@@ -9,6 +9,7 @@ import {
   PostType,
   Profile,
   Requests,
+  TopSearch,
   WK,
   WaitList,
   Wks,
@@ -244,6 +245,22 @@ export const useSearchName = (value: string) => {
   return useQuery({
     queryKey: ['search_name', value],
     queryFn: async () => getOrgs(),
+  });
+};
+export const useTopSearch = () => {
+  const getOrgs = async () => {
+    const { data } = await supabase
+      .from('organization')
+      .select()
+      .order('search_count', { ascending: false })
+      .limit(5);
+
+    return data ?? [];
+  };
+
+  return useQuery<TopSearch[]>({
+    queryKey: ['top_search'],
+    queryFn: getOrgs,
   });
 };
 export const useWorkers = () => {
