@@ -11,6 +11,10 @@ export type connections =
 
 export type UserProfile = Database['public']['Tables']['user']['Row'];
 export type TopSearch = Database['public']['Tables']['organization']['Row'];
+export type ServicePoint = Database['public']['Tables']['servicePoint']['Row'];
+export type ServicePointWithOrg = ServicePoint & {
+  organizationId: Organization;
+};
 export type Connection = {
   connectedTo: Org;
   created_at: string;

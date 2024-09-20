@@ -211,15 +211,15 @@ export const useGetWaitList = (id: any) => {
 export const useSearch = (value: string) => {
   const getOrgs = async () => {
     const { data, error } = await supabase
-      .from('organization')
-      .select()
+      .from('servicePoint')
+      .select('*, organizationId(name, avatar, id, description, ownerId)')
       .textSearch('description', value, {
         type: 'websearch',
         config: 'english',
       });
 
     return {
-      organization: data as Org[],
+      organization: data,
       error,
     };
   };
@@ -231,13 +231,16 @@ export const useSearch = (value: string) => {
 };
 export const useSearchName = (value: string) => {
   const getOrgs = async () => {
-    const { data, error } = await supabase.from('organization').select().textSearch('name', value, {
-      type: 'websearch',
-      config: 'english',
-    });
+    const { data, error } = await supabase
+      .from('servicePoint')
+      .select('*, organizationId(name, avatar, id, description, ownerId)')
+      .textSearch('name', value, {
+        type: 'websearch',
+        config: 'english',
+      });
 
     return {
-      org: data as Org[],
+      org: data,
       error,
     };
   };

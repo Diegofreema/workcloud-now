@@ -2,7 +2,7 @@ import { AntDesign } from '@expo/vector-icons';
 import { Avatar, SearchBar } from '@rneui/themed';
 import { useRouter } from 'expo-router';
 import React, { useState } from 'react';
-import { FlatList, Pressable, StyleSheet, Text, View } from 'react-native';
+import { ActivityIndicator, FlatList, Pressable, StyleSheet, Text, View } from 'react-native';
 import { useDebounce } from 'use-debounce';
 
 import { HStack } from '~/components/HStack';
@@ -13,8 +13,9 @@ import { ErrorComponent } from '~/components/Ui/ErrorComponent';
 import { LoadingComponent } from '~/components/Ui/LoadingComponent';
 import { MyText } from '~/components/Ui/MyText';
 import VStack from '~/components/Ui/VStack';
-import { Org } from '~/constants/types';
+import { ServicePointWithOrg } from '~/constants/types';
 import { useDarkMode } from '~/hooks/useDarkMode';
+import { useStoreSearch } from '~/hooks/useStoreSearch';
 import { useSearch, useSearchName, useTopSearch } from '~/lib/queries';
 
 const Search = () => {
@@ -43,7 +44,7 @@ const Search = () => {
     );
   }
 
-  if (isPending || isPendingName || isPendingSearch) {
+  if (isPendingSearch) {
     return (
       <Container>
         <SearchHeader value={value} setValue={setValue} />
@@ -52,39 +53,46 @@ const Search = () => {
     );
   }
 
-  const { organization } = data;
-  const { org } = nameData;
   const uniqueOrgs = [
-    ...new Set([...org, ...organization].map((item) => JSON.stringify(item))),
+    ...new Set(
+      [...(nameData?.org ?? []), ...(data?.organization ?? [])].map((item) => JSON.stringify(item))
+    ),
   ].map((item) => JSON.parse(item));
 
+  const isFetching = isPendingName || isPending;
   return (
     <Container>
       <SearchHeader value={value} setValue={setValue} />
       <TSearch data={topSearch} />
       <RecentSearch />
-      <FlatList
-        ListHeaderComponent={() => (
-          <MyText
-            poppins="Medium"
-            style={{
-              fontSize: 14,
-              marginBottom: 20,
-            }}>
-            Results
-          </MyText>
-        )}
-        style={{ marginTop: 20 }}
-        showsVerticalScrollIndicator={false}
-        data={uniqueOrgs}
-        keyExtractor={(item, index) => item?.id.toString() + index}
-        renderItem={({ item }) => {
-          return <OrganizationItem item={item} />;
-        }}
-        ListEmptyComponent={() => (
-          <Text style={{ color: 'white', fontFamily: 'PoppinsBold' }}>No results found</Text>
-        )}
-      />
+      {isFetching ? (
+        <View style={{ height: 200, justifyContent: 'center', alignItems: 'center' }}>
+          <ActivityIndicator size="large" color="#0000ff" />
+        </View>
+      ) : (
+        <FlatList
+          ListHeaderComponent={() => (
+            <MyText
+              poppins="Medium"
+              style={{
+                fontSize: 14,
+                marginBottom: 20,
+              }}>
+              Results
+            </MyText>
+          )}
+          style={{ marginTop: 20 }}
+          showsVerticalScrollIndicator={false}
+          data={uniqueOrgs}
+          keyExtractor={(item, index) => item?.id.toString() + index}
+          renderItem={({ item }) => {
+            return <OrganizationItem item={item} />;
+          }}
+          ListEmptyComponent={() => (
+            <Text style={{ color: 'white', fontFamily: 'PoppinsBold' }}>No results found</Text>
+          )}
+        />
+      )}
     </Container>
   );
 };
@@ -133,16 +141,21 @@ const SearchHeader = ({ value, setValue }: { value: string; setValue: (text: str
   );
 };
 
-const OrganizationItem = ({ item }: { item: Org }) => {
+const OrganizationItem = ({ item }: { item: ServicePointWithOrg }) => {
+  const storeOrgs = useStoreSearch((state) => state.storeOrgs);
   const router = useRouter();
-
+  const onPress = () => {
+    storeOrgs({ id: item.organizationId.id.toString()!, name: item.organizationId.name! });
+    // @ts-ignore
+    router.push(`reception/${item.organizationId.id}`);
+  };
   return (
     <Pressable
       style={({ pressed }) => [{ opacity: pressed ? 0.5 : 1, marginBottom: 10 }]}
       // @ts-ignore
-      onPress={() => router.push(`reception/${item.id}`)}>
+      onPress={onPress}>
       <HStack alignItems="center" gap={10}>
-        <Avatar rounded source={{ uri: item?.avatar }} size={50} />
+        <Avatar rounded source={{ uri: item.organizationId.avatar }} size={50} />
         <VStack>
           <MyText poppins="Bold" fontSize={14}>
             {item?.name}
