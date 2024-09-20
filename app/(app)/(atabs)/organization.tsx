@@ -76,7 +76,7 @@ const Organization = () => {
           </View>
         )}
       </View>
-      {/* DbYvGlcjKeg5y9MR */}
+
       <View style={{ marginTop: data === null ? 20 : 0 }}>
         <MyText
           style={{
@@ -105,6 +105,8 @@ const Organization = () => {
 export default Organization;
 
 const Workspace = ({ item }: { item: WK }) => {
+  console.log(item.id, item.locked);
+
   const handlePress = () => {
     if (item?.locked) {
       toast('This workspace is locked', {

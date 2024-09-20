@@ -113,22 +113,40 @@ export const Menu = ({ isVisible, setIsVisible, array, onBottomOpen }: Props) =>
   };
 
   const onUnlockWorkspace = async () => {
-    const { error } = await supabase
-      .from('workspace')
-      .update({ locked: !item?.workspaceId?.locked })
-      .eq('id', item?.workspaceId?.id!);
+    if (item?.workspaceId?.locked) {
+      const { error } = await supabase
+        .from('workspace')
+        .update({ locked: false })
+        .eq('id', item?.workspaceId?.id!);
+      if (!error) {
+        toast.success(`Workspace has been unlocked`);
 
-    if (!error) {
-      toast.success(`Workspace has been ${item?.workspaceId?.locked ? 'unlocked' : 'locked'}`);
+        onClose();
+        queryClient.invalidateQueries({ queryKey: ['myStaffs'] });
+      }
 
-      onClose();
-      queryClient.invalidateQueries({ queryKey: ['myStaffs'] });
-    }
+      if (error) {
+        console.log(error);
 
-    if (error) {
-      console.log(error);
+        toast.error('Something went wrong', { description: 'Failed to unlock workspace' });
+      }
+    } else {
+      const { error } = await supabase
+        .from('workspace')
+        .update({ locked: true, active: false })
+        .eq('id', item?.workspaceId?.id!);
+      if (!error) {
+        toast.success(`Workspace has been locked`);
 
-      toast.error('Something went wrong');
+        onClose();
+        queryClient.invalidateQueries({ queryKey: ['myStaffs'] });
+      }
+
+      if (error) {
+        console.log(error);
+
+        toast.error('Something went wrong', { description: 'Failed to lock workspace' });
+      }
     }
   };
   const handlePress = (text: string) => {

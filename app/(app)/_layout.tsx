@@ -41,6 +41,7 @@ export default function AppLayout() {
             queryClient.invalidateQueries({ queryKey: ['myStaffs'] });
             queryClient.invalidateQueries({ queryKey: ['organization'] });
             queryClient.invalidateQueries({ queryKey: ['assignedWk'] });
+            queryClient.invalidateQueries({ queryKey: ['assignedWk'] });
             queryClient.invalidateQueries({ queryKey: ['connections'] });
             queryClient.invalidateQueries({ queryKey: ['request'] });
             queryClient.invalidateQueries({ queryKey: ['pending_requests'] });
@@ -48,6 +49,9 @@ export default function AppLayout() {
             queryClient.invalidateQueries({ queryKey: ['workspace_no_worker'] });
             queryClient.invalidateQueries({ queryKey: ['service_points'] });
             queryClient.invalidateQueries({ queryKey: ['followers'] });
+            queryClient.invalidateQueries({ queryKey: ['wk'] });
+            queryClient.invalidateQueries({ queryKey: ['single_orgs'] });
+            queryClient.invalidateQueries({ queryKey: ['waitList'] });
             onRefresh();
           }
           console.log('Change received!', payload);

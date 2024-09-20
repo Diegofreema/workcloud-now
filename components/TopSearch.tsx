@@ -17,9 +17,8 @@ export const TSearch = ({ data }: Props): JSX.Element => {
   return (
     <View>
       <MyText poppins="Bold" fontSize={20}>
-        Top Search
+        Top Searches
       </MyText>
-
       <FlatList
         data={data}
         renderItem={({ item }) => <Item item={item} />}

@@ -56,7 +56,7 @@ const Reception = () => {
     isPaused: isPausedWorkers,
   } = useOrgsWorkers(data?.org?.id);
   const { width } = useWindowDimensions();
-
+  // ? useEffect for increasing search count
   useEffect(() => {
     const onIncreaseSearchCount = async () => {
       if (data?.org?.search_count !== undefined) {
@@ -77,7 +77,7 @@ const Reception = () => {
       onIncreaseSearchCount();
     }
   }, [search, id, data?.org?.search_count]);
-
+  // ? useEffect for creating connections
   useEffect(() => {
     if (!id || !userId || !workers?.workers) return;
     const createConnection = async () => {
@@ -257,8 +257,15 @@ const RepresentativeItem = ({ item }: { item: WorkerWithWorkspace }) => {
   const router = useRouter();
   const { userId: id } = useAuth();
   const { client } = useChatContext();
+  const queryClient = useQueryClient();
   const handlePress = async () => {
     if (id === item.userId.userId) return;
+    if (!item?.workspaceId?.active) {
+      toast.error('This workspace is currently inactive', {
+        description: 'Please try joining another workspace',
+      });
+      return;
+    }
     const { data, error: err } = await supabase
       .from('waitList')
       .select()
@@ -275,7 +282,6 @@ const RepresentativeItem = ({ item }: { item: WorkerWithWorkspace }) => {
         });
         if (er) {
           console.log(er);
-
           toast.error('Something went wrong', {
             description: 'Please try joining again',
           });
@@ -285,7 +291,7 @@ const RepresentativeItem = ({ item }: { item: WorkerWithWorkspace }) => {
           toast.success('Welcome back to our workspace', {
             description: 'Please be in a quiet place',
           });
-
+          queryClient.invalidateQueries({ queryKey: ['waitList'] });
           router.replace(`/wk/${item?.workspaceId?.id}`);
         }
       } else {
@@ -306,6 +312,8 @@ const RepresentativeItem = ({ item }: { item: WorkerWithWorkspace }) => {
           toast.success('Welcome to our workspace', {
             description: 'Please be in a quiet place',
           });
+          queryClient.invalidateQueries({ queryKey: ['waitList'] });
+
           router.replace(`/wk/${item?.workspaceId?.id}`);
         }
       }

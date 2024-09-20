@@ -1,11 +1,12 @@
 /* eslint-disable prettier/prettier */
 
-import { FontAwesome } from '@expo/vector-icons';
 import { router } from 'expo-router';
+import { X } from 'lucide-react-native';
 import { FlatList, Pressable, StyleSheet, View } from 'react-native';
 
 import { MyText } from './Ui/MyText';
 
+import { useDarkMode } from '~/hooks/useDarkMode';
 import { useStoreSearch } from '~/hooks/useStoreSearch';
 
 export const RecentSearch = (): JSX.Element => {
@@ -33,6 +34,7 @@ export const RecentSearch = (): JSX.Element => {
 
 const SearchItem = ({ item }: { item: { name: string; id: string } }) => {
   const removeOrg = useStoreSearch((state) => state.removeOrg);
+  const { darkMode } = useDarkMode();
   const onPress = () => {
     // @ts-ignore
     router.push(`reception/${item.id}`);
@@ -47,7 +49,7 @@ const SearchItem = ({ item }: { item: { name: string; id: string } }) => {
       <Pressable
         style={({ pressed }) => [{ opacity: pressed ? 0.5 : 1, padding: 5 }]}
         onPress={() => removeOrg(item.id)}>
-        <FontAwesome name="close" size={20} color="black" />
+        <X size={20} color={darkMode === 'dark' ? '#fff' : '#000'} />
       </Pressable>
     </Pressable>
   );

@@ -5,7 +5,7 @@ import { useQueryClient } from '@tanstack/react-query';
 import { formatDistanceToNow } from 'date-fns';
 import * as Crypto from 'expo-crypto';
 import { router, useLocalSearchParams } from 'expo-router';
-import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 import { FlatList, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { toast } from 'sonner-native';
 
@@ -42,6 +42,7 @@ const Work = () => {
   const { darkMode } = useDarkMode();
   const client = useStreamVideoClient();
   const { data, isPaused, isPending, isError, refetch, isRefetchError } = useGetWk(id);
+
   const {
     data: waitListData,
     isPaused: isPausedWaitList,
@@ -55,6 +56,32 @@ const Work = () => {
       setIsLeisure(data?.wks?.leisure);
     }
   }, [data]);
+  // ? useEffect to check if the workspace is locked
+  useEffect(() => {
+    if (data?.wks?.locked) {
+      toast.info('Workspace has been locked', {
+        description: 'Please wait for admin to unlock it',
+      });
+      router.replace('/');
+    }
+  }, [data?.wks?.locked]);
+  // ? useEffect to check if the user is in the wait list
+  useEffect(() => {
+    // Skip if user is the worker, data is still loading, or waitlist is undefined
+    if (userId === data?.wks.workerId.userId || isPendingWaitList || !waitListData?.waitList)
+      return;
+
+    // Check if user is in the wait list
+    const isInWaitList = waitListData.waitList.some((item) => item.customer.userId === userId);
+
+    if (!isInWaitList) {
+      toast.info('You have been removed from this lobby', {
+        description: `We hope to see you again`,
+      });
+      router.replace('/');
+    }
+  }, [waitListData?.waitList, userId, data?.wks.workerId.userId, isPendingWaitList]);
+  // ? useEffect to subscribe to the workspace channel
   useEffect(() => {
     const channel = supabase
       .channel('workspace')
@@ -66,13 +93,13 @@ const Work = () => {
         },
         (payload) => {
           if (payload) {
-            queryClient.invalidateQueries({ queryKey: ['wk', id] });
-            queryClient.invalidateQueries({ queryKey: ['waitList', id] });
+            queryClient.invalidateQueries({ queryKey: ['wk'] });
+            queryClient.invalidateQueries({ queryKey: ['waitList'] });
             queryClient.invalidateQueries({
               queryKey: ['pending_requests'],
             });
             queryClient.invalidateQueries({
-              queryKey: ['myStaffs', userId],
+              queryKey: ['myStaffs'],
             });
           }
           console.log('Change received!', payload);
@@ -84,8 +111,9 @@ const Work = () => {
       supabase.removeChannel(channel);
     };
   }, []);
+
   const onLongPress = useCallback((customerId: string) => {
-    if (userId !== data?.wks?.workerId?.userId && userId !== customerId) return;
+    if (userId !== data?.wks?.workerId?.userId) return;
     setCustomerId(customerId);
     setShowMenu(true);
   }, []);
@@ -122,26 +150,28 @@ const Work = () => {
   };
 
   const onLeave = async () => {
-    if (userId !== customerId) return;
     setLeaving(true);
     try {
       const { error } = await supabase
         .from('waitList')
         .delete()
         .eq('workspace', Number(data?.wks.id!))
-        .eq('customer', customerId);
+        .eq('customer', userId!); // Use userId instead of customerId
+
       if (error) {
         console.log(error.message);
-
         toast.error('Failed to leave the lobby', {
           description: 'Something went wrong',
         });
+        return; // Exit the function early if there's an error
       }
-      if (!error) {
-        toast.success('You have successfully left the lobby');
-        onHideWaitList();
-        router.back();
-      }
+
+      // If we reach here, it means the deletion was successful
+      toast.success('You have left the lobby', {
+        description: 'Hope to see you back soon!',
+      });
+      onHideWaitList();
+      router.back();
     } catch (error) {
       console.log(error);
       toast.error('Failed to leave the lobby', {
@@ -152,20 +182,6 @@ const Work = () => {
     }
   };
 
-  const onHandleRemove = useCallback(() => {
-    if (userId === data?.wks?.workerId?.userId) {
-      onRemove();
-    } else {
-      onLeave();
-    }
-  }, [userId, data?.wks?.workerId?.userId]);
-
-  const removeText = useMemo(() => {
-    if (userId === data?.wks?.workerId?.userId) {
-      return 'Remove from lobby';
-    }
-    return 'Leave from lobby';
-  }, [userId, data?.wks?.workerId?.userId]);
   const handleRefetch = () => {
     refetch();
     refetchWaitList();
@@ -276,8 +292,8 @@ const Work = () => {
       <WaitListModal
         showMenu={showMenu}
         onClose={onHideWaitList}
-        onRemove={onHandleRemove}
-        text={removeText}
+        onRemove={onRemove}
+        text="Remove from lobby"
         loading={leaving}
       />
       <Container>
@@ -344,6 +360,18 @@ const Work = () => {
               />
             )}
           />
+          {userId !== wks?.workerId?.userId && (
+            <View
+              style={{
+                marginBottom: 20,
+              }}>
+              <MyButton onPress={onLeave} loading={leaving}>
+                <Text style={{ color: colors.white, fontFamily: 'PoppinsMedium', fontSize: 15 }}>
+                  Exit Lobby
+                </Text>
+              </MyButton>
+            </View>
+          )}
           <BottomActive
             id={id}
             onClose={onClose}
@@ -387,15 +415,17 @@ type ButtonProps = {
 };
 const Buttons = ({ onShowModal, onProcessors, onSignOff, loading, signedIn }: ButtonProps) => {
   return (
-    <HStack gap={10} mt={15}>
+    <HStack gap={10} mt={15} width="100%">
       <MyButton
         onPress={onShowModal}
         style={{
           backgroundColor: 'transparent',
           borderWidth: 1,
           borderColor: colors.dialPad,
+          flex: 1,
         }}
-        labelStyle={{ color: colors.white }}>
+        containerStyle={{ minWidth: '30%' }}
+        labelStyle={{ color: colors.white, fontSize: 10 }}>
         Set status
       </MyButton>
       <MyButton
@@ -404,8 +434,10 @@ const Buttons = ({ onShowModal, onProcessors, onSignOff, loading, signedIn }: Bu
           backgroundColor: 'transparent',
           borderWidth: 1,
           borderColor: colors.dialPad,
+          flex: 1,
         }}
-        labelStyle={{ color: colors.white }}>
+        containerStyle={{ minWidth: '30%' }}
+        labelStyle={{ color: colors.white, fontSize: 10 }}>
         Processors
       </MyButton>
       <MyButton
@@ -415,8 +447,10 @@ const Buttons = ({ onShowModal, onProcessors, onSignOff, loading, signedIn }: Bu
           backgroundColor: 'transparent',
           borderWidth: 1,
           borderColor: signedIn ? 'red' : colors.openBackgroundColor,
+          flex: 1,
         }}
-        labelStyle={{ color: signedIn ? 'red' : colors.white }}>
+        containerStyle={{ minWidth: '30%' }}
+        labelStyle={{ color: signedIn ? 'red' : colors.white, fontSize: 10 }}>
         {signedIn ? 'Sign off' : 'Sign in'}
       </MyButton>
     </HStack>

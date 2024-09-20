@@ -21,6 +21,10 @@ type Props = {
   mx?: number;
   mr?: number;
   flex?: number;
+  px?: number;
+  rounded?: number;
+  borderWidth?: number;
+  borderColor?: string;
 };
 
 const VStack = ({
@@ -33,7 +37,13 @@ const VStack = ({
   style,
   width,
   mr,
+  mt,
   flex,
+  px,
+  rounded,
+  borderWidth,
+  borderColor,
+  mx,
 }: Props) => {
   return (
     <View
@@ -48,6 +58,12 @@ const VStack = ({
           width,
           marginRight: mr,
           flex,
+          paddingHorizontal: px,
+          marginTop: mt,
+          borderRadius: rounded,
+          borderWidth,
+          borderColor,
+          marginHorizontal: mx,
         },
         style,
       ]}>

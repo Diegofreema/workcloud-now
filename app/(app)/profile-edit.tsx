@@ -1,19 +1,27 @@
-import { useUser } from '@clerk/clerk-expo';
+import { useAuth, useUser } from '@clerk/clerk-expo';
 import { Icon } from '@rneui/themed';
 import React from 'react';
 import { Pressable, StyleSheet, View } from 'react-native';
+import { StreamChat } from 'stream-chat';
 
+import { chatApiKey } from '~/chatConfig';
+import { HStack } from '~/components/HStack';
 import { HeaderNav } from '~/components/HeaderNav';
-import { BottomCard } from '~/components/LoggedInuser/BottomCard';
+import { LogOutSvg } from '~/components/LockSvg';
 import { MiddleCard } from '~/components/LoggedInuser/MiddleCard';
 import { TopCard } from '~/components/LoggedInuser/TopCard';
 import { ErrorComponent } from '~/components/Ui/ErrorComponent';
 import { LoadingComponent } from '~/components/Ui/LoadingComponent';
+import { MyText } from '~/components/Ui/MyText';
+import { OtherLinks } from '~/components/Ui/OtherLinks';
 import { defaultStyle } from '~/constants';
 import { useDarkMode } from '~/hooks/useDarkMode';
 import { useGetConnection, useProfile } from '~/lib/queries';
 
+const chatClient = StreamChat.getInstance(chatApiKey);
+
 const ProfileEdit = () => {
+  const { signOut } = useAuth();
   const { user } = useUser();
   const { darkMode } = useDarkMode();
   const { data, isError, isPending, refetch } = useProfile(user?.id);
@@ -34,6 +42,11 @@ const ProfileEdit = () => {
   if (isPending || isPendingConnections) {
     return <LoadingComponent />;
   }
+
+  const logout = async () => {
+    chatClient.disconnectUser();
+    signOut();
+  };
   const assignedWk = data.profile?.workerId?.workspaceId ? 1 : 0;
   const numberOfWorkspace = data.profile?.workspace?.length || 0;
 
@@ -58,9 +71,29 @@ const ProfileEdit = () => {
       <View style={{ marginTop: 20, ...defaultStyle }}>
         <MiddleCard connections={connections?.connections} />
       </View>
-      <View style={{ marginTop: 'auto', ...defaultStyle, marginBottom: 15 }}>
-        <BottomCard workId={data.profile?.workerId?.id} />
-      </View>
+      <OtherLinks workerId={data.profile?.workerId?.id?.toString()} />
+      <Pressable
+        style={({ pressed }) => ({
+          marginTop: 20,
+          marginHorizontal: 20,
+          opacity: pressed ? 0.5 : 1,
+        })}
+        onPress={logout}>
+        <HStack
+          width="100%"
+          alignItems="center"
+          justifyContent="center"
+          bg={darkMode === 'dark' ? 'black' : '#F2F2F2'}
+          p={10}
+          rounded={10}
+          gap={5}>
+          <LogOutSvg height={30} width={30} />
+
+          <MyText poppins="Bold" fontSize={16}>
+            Log Out
+          </MyText>
+        </HStack>
+      </Pressable>
     </View>
   );
 };
