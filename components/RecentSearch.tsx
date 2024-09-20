@@ -2,7 +2,7 @@
 
 import { FontAwesome } from '@expo/vector-icons';
 import { router } from 'expo-router';
-import { FlatList, Pressable, StyleSheet } from 'react-native';
+import { FlatList, Pressable, StyleSheet, View } from 'react-native';
 
 import { MyText } from './Ui/MyText';
 
@@ -11,24 +11,31 @@ import { useStoreSearch } from '~/hooks/useStoreSearch';
 export const RecentSearch = (): JSX.Element => {
   const recentSearchedOrgs = useStoreSearch((state) => state.orgs);
   return (
-    <FlatList
-      data={recentSearchedOrgs}
-      ListHeaderComponent={
-        <MyText poppins="Medium" fontSize={16}>
-          Recent Searches
-        </MyText>
-      }
-      scrollEnabled={false}
-      renderItem={({ item }) => <SearchItem item={item} />}
-      contentContainerStyle={{ gap: 10 }}
-    />
+    <View style={{ marginVertical: recentSearchedOrgs.length > 0 ? 20 : 0 }}>
+      <FlatList
+        data={recentSearchedOrgs}
+        ListHeaderComponent={
+          recentSearchedOrgs.length > 0 ? (
+            <MyText poppins="Medium" fontSize={16}>
+              Recent Searches
+            </MyText>
+          ) : (
+            <></>
+          )
+        }
+        scrollEnabled={false}
+        renderItem={({ item }) => <SearchItem item={item} />}
+        contentContainerStyle={{ gap: 10 }}
+      />
+    </View>
   );
 };
 
 const SearchItem = ({ item }: { item: { name: string; id: string } }) => {
+  const removeOrg = useStoreSearch((state) => state.removeOrg);
   const onPress = () => {
     // @ts-ignore
-    router.push(`reception/${item.id}?search=true`);
+    router.push(`reception/${item.id}`);
   };
   return (
     <Pressable
@@ -37,7 +44,11 @@ const SearchItem = ({ item }: { item: { name: string; id: string } }) => {
       <MyText poppins="Bold" fontSize={14}>
         {item.name}
       </MyText>
-      <FontAwesome name="close" size={20} color="black" />
+      <Pressable
+        style={({ pressed }) => [{ opacity: pressed ? 0.5 : 1, padding: 5 }]}
+        onPress={() => removeOrg(item.id)}>
+        <FontAwesome name="close" size={20} color="black" />
+      </Pressable>
     </Pressable>
   );
 };
