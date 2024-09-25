@@ -16,6 +16,7 @@ type Props = {
 };
 
 export const ServicePointLists = ({ data }: Props): JSX.Element => {
+  const { darkMode } = useDarkMode();
   return (
     <FlatList
       scrollEnabled={false}
@@ -28,7 +29,14 @@ export const ServicePointLists = ({ data }: Props): JSX.Element => {
       renderItem={({ item }) => <ServicePointItem item={item} />}
       showsVerticalScrollIndicator={false}
       contentContainerStyle={{ gap: 10 }}
-      ItemSeparatorComponent={() => <Divider style={{ marginVertical: 10 }} />}
+      ItemSeparatorComponent={() => (
+        <Divider
+          style={{
+            marginVertical: 10,
+            backgroundColor: darkMode === 'dark' ? 'transparent' : '#ccc',
+          }}
+        />
+      )}
       ListEmptyComponent={() => <EmptyText text="No Service Point yet" />}
     />
   );

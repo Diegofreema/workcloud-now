@@ -49,15 +49,14 @@ const ProfileEdit = () => {
   };
   const assignedWk = data.profile?.workerId?.workspaceId ? 1 : 0;
   const numberOfWorkspace = data.profile?.workspace?.length || 0;
-
+  const isDarkMode = darkMode === 'dark';
   return (
     <View
       style={{
         flex: 1,
-        backgroundColor: darkMode === 'dark' ? 'black' : 'white',
+        backgroundColor: isDarkMode ? 'black' : 'white',
       }}>
-      <View
-        style={[styles.container, { backgroundColor: darkMode === 'dark' ? 'black' : 'white' }]}>
+      <View style={[styles.container, { backgroundColor: isDarkMode ? 'black' : 'white' }]}>
         <HeaderNav title="Profile" RightComponent={RightComponent} />
       </View>
       <TopCard
@@ -74,8 +73,9 @@ const ProfileEdit = () => {
       <OtherLinks workerId={data.profile?.workerId?.id?.toString()} />
       <Pressable
         style={({ pressed }) => ({
-          marginTop: 20,
+          marginTop: 'auto',
           marginHorizontal: 20,
+          marginBottom: 50,
           opacity: pressed ? 0.5 : 1,
         })}
         onPress={logout}>
@@ -83,13 +83,12 @@ const ProfileEdit = () => {
           width="100%"
           alignItems="center"
           justifyContent="center"
-          bg={darkMode === 'dark' ? 'black' : '#F2F2F2'}
+          bg={isDarkMode ? 'white' : '#F2F2F2'}
           p={10}
           rounded={10}
           gap={5}>
           <LogOutSvg height={30} width={30} />
-
-          <MyText poppins="Bold" fontSize={16}>
+          <MyText poppins="Bold" fontSize={16} style={{ color: 'black' }}>
             Log Out
           </MyText>
         </HStack>

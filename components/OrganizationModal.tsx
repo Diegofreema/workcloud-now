@@ -1,8 +1,9 @@
 import { Feather } from '@expo/vector-icons';
 import { Button } from '@rneui/themed';
 import { useRouter } from 'expo-router';
-import { Pressable, StyleSheet, View } from 'react-native';
+import { Pressable, StyleSheet, useWindowDimensions, View } from 'react-native';
 import Modal from 'react-native-modal';
+import { RFValue } from 'react-native-responsive-fontsize';
 
 import { colors } from '../constants/Colors';
 import { useOrganizationModal } from '../hooks/useOrganizationModal';
@@ -12,6 +13,7 @@ import { useDarkMode } from '~/hooks/useDarkMode';
 
 export const OrganizationModal = (): JSX.Element => {
   const { isOpen, onClose } = useOrganizationModal();
+  const { height } = useWindowDimensions();
   const router = useRouter();
   const { darkMode } = useDarkMode();
 
@@ -20,7 +22,7 @@ export const OrganizationModal = (): JSX.Element => {
     onClose();
   };
   const connectToOrganization = () => {
-    router.push('/organizations');
+    router.push('/search');
     onClose();
   };
 
@@ -48,7 +50,7 @@ export const OrganizationModal = (): JSX.Element => {
         <View style={{ alignItems: 'center' }}>
           <MyText
             poppins="Bold"
-            fontSize={17}
+            fontSize={RFValue(17, height)}
             style={{
               textAlign: 'center',
               marginTop: 15,
@@ -78,7 +80,11 @@ export const OrganizationModal = (): JSX.Element => {
             <Button
               color={colors.buttonBlue}
               onPress={createOrganization}
-              titleStyle={{ fontFamily: 'PoppinsLight', color: 'white' }}
+              titleStyle={{
+                fontFamily: 'PoppinsLight',
+                color: 'white',
+                fontSize: RFValue(14, height),
+              }}
               title="Create An Organization"
               radius={10}
             />
@@ -86,7 +92,11 @@ export const OrganizationModal = (): JSX.Element => {
             <Button
               color="#C0D1FE"
               onPress={connectToOrganization}
-              titleStyle={{ fontFamily: 'PoppinsBold', color: colors.lightBlue }}
+              titleStyle={{
+                fontFamily: 'PoppinsBold',
+                color: colors.lightBlue,
+                fontSize: RFValue(14, height),
+              }}
               containerStyle={{
                 width: '100%',
               }}
@@ -97,7 +107,11 @@ export const OrganizationModal = (): JSX.Element => {
             <Button
               color={colors.lightBlue}
               onPress={createWorkerProfile}
-              titleStyle={{ fontFamily: 'PoppinsLight', color: colors.white }}
+              titleStyle={{
+                fontFamily: 'PoppinsLight',
+                color: colors.white,
+                fontSize: RFValue(14, height),
+              }}
               title="Register as a worker"
               radius={10}
             />
@@ -105,7 +119,12 @@ export const OrganizationModal = (): JSX.Element => {
         </View>
         <View style={{ justifyContent: 'center' }}>
           <Button
-            titleStyle={{ verticalAlign: 'middle', fontFamily: 'PoppinsBold', color: 'white' }}
+            titleStyle={{
+              verticalAlign: 'middle',
+              fontFamily: 'PoppinsBold',
+              color: 'white',
+              fontSize: RFValue(14, height),
+            }}
             radius={10}
             onPress={onClose}
             title="Cancel"

@@ -42,7 +42,7 @@ export const OrganizationItems = ({ name, text, website }: SubProps) => {
         <MyText
           poppins="Bold"
           style={{
-            color: colors.buttonBlue,
+            color: darkMode === 'dark' ? colors?.lightBlue : colors.buttonBlue,
 
             fontSize: 10,
           }}>
@@ -185,7 +185,7 @@ const Overview = () => {
         <View
           style={{
             marginTop: 10,
-            borderTopColor: darkMode ? colors.white : colors.gray,
+            borderTopColor: darkMode ? colors.black : colors.gray,
             borderTopWidth: 1,
             paddingTop: 10,
           }}>

@@ -153,12 +153,24 @@ export const SelectRow = ({
             onPress={onClose}>
             <FontAwesome name="times" size={20} color={darkMode === 'dark' ? '#fff' : '#000'} />
           </Pressable>
-          <Divider style={[styles.divider, { marginBottom: -10 }]} />
+          <Divider
+            style={[
+              styles.divider,
+              { marginBottom: -10, backgroundColor: darkMode === 'dark' ? 'transparent' : '#ccc' },
+            ]}
+          />
           <View style={{ marginTop: 20, width: '100%', gap: 14 }}>
             <FlatList
               showsVerticalScrollIndicator={false}
               data={roles}
-              ItemSeparatorComponent={() => <Divider style={styles.divider} />}
+              ItemSeparatorComponent={() => (
+                <Divider
+                  style={[
+                    styles.divider,
+                    { backgroundColor: darkMode === 'dark' ? 'transparent' : '#ccc' },
+                  ]}
+                />
+              )}
               keyExtractor={(item, index) => index.toString()}
               renderItem={({ item }) => (
                 <Pressable

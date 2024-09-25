@@ -50,7 +50,7 @@ export const AddRole = ({ onNavigate }: { onNavigate: (item: string) => void }):
     }
   };
   return (
-    <View style={{ gap: 10, borderTopColor: 'gray', borderTopWidth: 1, paddingTop: 15 }}>
+    <View style={{ gap: 10, paddingTop: 15 }}>
       <MyText poppins="Medium" fontSize={15}>
         Couldn't find a role
       </MyText>

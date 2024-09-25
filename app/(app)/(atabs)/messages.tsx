@@ -12,35 +12,43 @@ import {
 
 import { useDarkMode } from '../../../hooks/useDarkMode';
 
+import { NewGroupModal } from '~/components/Dialogs/NewGroupModal';
+import { NewGroup } from '~/components/NewGroup';
 import { MyText } from '~/components/Ui/MyText';
-import { colors } from '~/constants/Colors';
 import { useUnread } from '~/hooks/useUnread';
+import { useGetMyStaffs, usePersonalOrgs } from '~/lib/queries';
 
 const Messages = () => {
   const { userId } = useAuth();
   const { darkMode } = useDarkMode();
+  const { data } = useGetMyStaffs(userId);
+  const { data: orgs } = usePersonalOrgs(userId);
   const router = useRouter();
   const onSelect = (id: any) => {
     router.push(`/chat/${id}`);
   };
 
   return (
-    <ChannelList
-      additionalFlatListProps={{
-        style: {
-          backgroundColor: darkMode === 'dark' ? 'black' : 'white',
-        },
-        contentContainerStyle: {
-          backgroundColor: darkMode === 'dark' ? 'black' : 'white',
-        },
-      }}
-      filters={{ members: { $in: [userId!] } }}
-      onSelect={(channel) => onSelect(channel.id)}
-      EmptyStateIndicator={EmptyComponent}
-      HeaderErrorIndicator={ErrorComponent}
-      Preview={Preview}
-      numberOfSkeletons={20}
-    />
+    <View style={{ flex: 1 }}>
+      <NewGroupModal data={data?.staffs || []} />
+      <ChannelList
+        additionalFlatListProps={{
+          style: {
+            backgroundColor: darkMode === 'dark' ? 'black' : 'white',
+          },
+          contentContainerStyle: {
+            backgroundColor: darkMode === 'dark' ? 'black' : 'white',
+          },
+        }}
+        filters={{ members: { $in: [userId!] } }}
+        onSelect={(channel) => onSelect(channel.id)}
+        EmptyStateIndicator={EmptyComponent}
+        HeaderErrorIndicator={ErrorComponent}
+        Preview={Preview}
+        numberOfSkeletons={20}
+      />
+      {orgs && orgs?.organizations?.length > 0 && <NewGroup />}
+    </View>
   );
 };
 
@@ -81,9 +89,8 @@ const Preview = (props: ChannelPreviewMessengerProps) => {
     getUnread(unread || 0);
   }, [unread]);
 
-  const backgroundColor = unread ? colors.gray : 'transparent';
   return (
-    <View style={{ backgroundColor }}>
+    <View>
       <ChannelPreview
         {...props}
         Preview={(items) => (

@@ -45,7 +45,12 @@ export const AddToWorkspace = ({
             onPress={onClose}>
             <FontAwesome name="times" size={20} color="black" />
           </Pressable>
-          <Divider style={[styles.divider, { marginBottom: -10 }]} />
+          <Divider
+            style={[
+              styles.divider,
+              { marginBottom: -10, backgroundColor: darkMode === 'dark' ? 'transparent' : '#ccc' },
+            ]}
+          />
           <View style={{ marginTop: 'auto', marginBottom: 20 }}>
             <MyButton loading={loading} onPress={onAdd}>
               <MyText poppins="Bold" fontSize={20} style={{ color: 'white' }}>

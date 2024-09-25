@@ -297,7 +297,11 @@ const Staffs = () => {
           showsVerticalScrollIndicator={false}
           ItemSeparatorComponent={() => (
             <Divider
-              style={{ height: StyleSheet.hairlineWidth, backgroundColor: 'gray', width: '100%' }}
+              style={{
+                height: StyleSheet.hairlineWidth,
+                backgroundColor: darkMode === 'dark' ? 'transparent' : '#ccc',
+                width: '100%',
+              }}
             />
           )}
           data={workspaces}

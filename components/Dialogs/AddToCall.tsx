@@ -24,13 +24,13 @@ export const AddToCall = (): JSX.Element => {
       });
 
       onClose();
-      router.replace('/home');
+      router.replace('/');
       setValue('');
     }
   };
   const joinCall = () => {
     onClose();
-    router.replace(`/video/call/${value}`);
+    // router.replace(`/video/call/${value}`);
     setValue('');
   };
   return (

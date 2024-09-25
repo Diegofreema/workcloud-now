@@ -2,13 +2,14 @@ import { useAuth } from '@clerk/clerk-expo';
 import { Divider } from '@rneui/themed';
 import { useQueryClient } from '@tanstack/react-query';
 import { useRouter } from 'expo-router';
-import React, { useEffect, useState } from 'react';
-import { FlatList, Pressable, StyleSheet } from 'react-native';
+import React, { useEffect, useMemo, useState } from 'react';
+import { FlatList, Pressable, StyleSheet, View } from 'react-native';
 import { toast } from 'sonner-native';
 
 import { AddRole } from '~/components/AddRole';
 import { HStack } from '~/components/HStack';
 import { HeaderNav } from '~/components/HeaderNav';
+import { InputComponent } from '~/components/InputComponent';
 import { Container } from '~/components/Ui/Container';
 import { ErrorComponent } from '~/components/Ui/ErrorComponent';
 import { LoadingComponent } from '~/components/Ui/LoadingComponent';
@@ -21,6 +22,7 @@ import { supabase } from '~/lib/supabase';
 
 const Role = () => {
   const { getData } = useDetailsToAdd();
+  const [value, setValue] = useState('');
   const { userId } = useAuth();
   const [profile, setProfile] = useState<Profile | null>(null);
   const { data, isPending, isError, refetch } = useRoles();
@@ -52,7 +54,12 @@ const Role = () => {
     };
     getFn();
   }, [userId]);
-
+  const filteredData = useMemo(() => {
+    if (value.trim() === '') return data;
+    return data?.filter((item) =>
+      item.role?.toLocaleLowerCase().includes(value.toLocaleLowerCase())
+    );
+  }, [value]);
   const router = useRouter();
 
   if (isError) {
@@ -89,9 +96,23 @@ const Role = () => {
   return (
     <Container>
       <HeaderNav title="Select a role" />
+      <View
+        style={{
+          width: '100%',
+          backgroundColor: '#E5E5E5',
+          height: 60,
+          borderBottomWidth: 0,
+          borderRadius: 10,
+        }}>
+        <InputComponent
+          placeholder="Search Role"
+          value={value}
+          onChangeText={(text) => setValue(text)}
+        />
+      </View>
       <FlatList
         showsVerticalScrollIndicator={false}
-        data={data}
+        data={filteredData}
         ItemSeparatorComponent={() => <Divider style={[styles.divider]} />}
         keyExtractor={(item) => item.id.toString()}
         renderItem={({ item }) => (
@@ -105,7 +126,8 @@ const Role = () => {
             </HStack>
           </Pressable>
         )}
-        ListFooterComponent={() => <AddRole onNavigate={navigate} />}
+        ListEmptyComponent={() => <AddRole onNavigate={navigate} />}
+        contentContainerStyle={{ paddingBottom: 40 }}
       />
     </Container>
   );

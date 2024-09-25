@@ -5,7 +5,6 @@ import { colors } from '../../constants/Colors';
 import { HStack } from '../HStack';
 import { MyText } from '../Ui/MyText';
 import { UserPreview } from '../Ui/UserPreview';
-import VStack from '../Ui/VStack';
 
 import { useDarkMode } from '~/hooks/useDarkMode';
 type Props = {
@@ -28,17 +27,12 @@ export const TopCard = ({
   const router = useRouter();
 
   const { darkMode } = useDarkMode();
-  const navigate = () => {
-    if (!workspaceId) return;
-
-    router.replace(`/wk/${workspaceId}`);
-  };
 
   const onEditProfile = () => {
     router.push('/edit-new');
   };
   return (
-    <View style={{ backgroundColor: darkMode === 'dark' ? 'black' : 'white' }}>
+    <View style={{ backgroundColor: darkMode === 'dark' ? 'black' : 'white', marginBottom: 20 }}>
       <View
         style={[styles.absolute, { backgroundColor: darkMode === 'dark' ? 'black' : 'white' }]}
       />
@@ -50,25 +44,8 @@ export const TopCard = ({
             shadowColor: darkMode === 'dark' ? '#fff' : '#000',
           },
         ]}>
-        <UserPreview imageUrl={image} name={name} id={id} />
-        <HStack alignItems="center" justifyContent="space-between" mt={15}>
-          <VStack justifyContent="center" alignItems="center">
-            <MyText poppins="Medium">Owned WS</MyText>
-            <MyText poppins="Bold" fontSize={14}>
-              {ownedWks}
-            </MyText>
-          </VStack>
-          <Pressable
-            onPress={navigate}
-            style={({ pressed }) => [{ paddingHorizontal: 4, opacity: pressed ? 0.5 : 1 }]}>
-            <VStack justifyContent="center" alignItems="center">
-              <MyText poppins="Medium">Assigned WS</MyText>
-              <MyText poppins="Bold" fontSize={14}>
-                {assignedWk}
-              </MyText>
-            </VStack>
-          </Pressable>
-
+        <HStack justifyContent="space-between" alignItems="center">
+          <UserPreview imageUrl={image} name={name} id={id} />
           <Pressable
             style={{
               backgroundColor: colors.dialPad,

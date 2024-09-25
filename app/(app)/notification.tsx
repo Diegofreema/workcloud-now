@@ -10,13 +10,14 @@ import { Container } from '~/components/Ui/Container';
 import { ErrorComponent } from '~/components/Ui/ErrorComponent';
 import { LoadingComponent } from '~/components/Ui/LoadingComponent';
 import { WorkPreview } from '~/components/Ui/UserPreview';
+import { useDarkMode } from '~/hooks/useDarkMode';
 import { usePendingRequest } from '~/lib/queries';
 import { supabase } from '~/lib/supabase';
 
 const Notification = () => {
   const { userId: id } = useAuth();
   const [isLoading, setIsLoading] = useState(false);
-
+  const { darkMode } = useDarkMode();
   const { data, isPaused, isPending, isError, refetch, isRefetching, isRefetchError } =
     usePendingRequest(id);
 
@@ -125,7 +126,13 @@ const Notification = () => {
           style={{ marginTop: 10 }}
           ListEmptyComponent={() => <EmptyText text="No pending notifications" />}
           ItemSeparatorComponent={() => (
-            <Divider style={{ height: 10, backgroundColor: '#ccc', width: '100%' }} />
+            <Divider
+              style={{
+                height: 10,
+                backgroundColor: darkMode === 'dark' ? 'transparent' : '#ccc',
+                width: '100%',
+              }}
+            />
           )}
           onRefresh={refetch}
           refreshing={isRefetching}

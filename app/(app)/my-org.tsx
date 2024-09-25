@@ -125,7 +125,7 @@ const MyOrg = () => {
         <View
           style={{
             marginTop: 10,
-            borderTopColor: darkMode ? colors.black : colors.gray,
+            borderTopColor: darkMode === 'dark' ? colors.black : colors.gray,
             borderTopWidth: StyleSheet.hairlineWidth,
             paddingTop: 10,
           }}>

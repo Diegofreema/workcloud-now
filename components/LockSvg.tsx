@@ -1,8 +1,6 @@
-/* eslint-disable prettier/prettier */
+import Svg, { Circle, Path, SvgProps } from 'react-native-svg';
 
-import Svg, { Circle, Path } from 'react-native-svg';
-
-type Props = {
+type Props = SvgProps & {
   height: number;
   width: number;
 };
@@ -69,6 +67,7 @@ export const LogOutSvg = ({ height, width, ...props }: Props): JSX.Element => {
     </Svg>
   );
 };
+
 export const UserSvg = ({ height, width, ...props }: Props): JSX.Element => {
   return (
     <Svg height={height} width={width} viewBox="0 0 42 42" fill="none" {...props}>

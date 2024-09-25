@@ -1,10 +1,11 @@
-import { View, Text } from 'react-native';
+import { Privacy } from '~/components/Privacy';
+import { Container } from '~/components/Ui/Container';
 
 const privacy = () => {
   return (
-    <View>
-      <Text>privacy</Text>
-    </View>
+    <Container>
+      <Privacy />
+    </Container>
   );
 };
 

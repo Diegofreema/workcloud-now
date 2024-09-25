@@ -8,7 +8,7 @@ import { Image } from 'expo-image';
 import * as ImagePicker from 'expo-image-picker';
 import { useRouter } from 'expo-router';
 import { useFormik } from 'formik';
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { Pressable, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { SelectList } from 'react-native-dropdown-select-list';
 import { toast } from 'sonner-native';
@@ -24,6 +24,8 @@ import { useDarkMode } from '../../hooks/useDarkMode';
 import { supabase } from '../../lib/supabase';
 
 import { Container } from '~/components/Ui/Container';
+import { MyText } from '~/components/Ui/MyText';
+import { useGetCat } from '~/hooks/useGetCat';
 import { onDeleteImage } from '~/lib/helper';
 
 const validationSchema = yup.object().shape({
@@ -43,6 +45,7 @@ const validationSchema = yup.object().shape({
 
 const CreateWorkSpace = () => {
   const [startTime, setStartTime] = useState(new Date(1598051730000));
+  const cat = useGetCat((state) => state.cat);
   const [endTime, setEndTime] = useState(new Date(1598051730000));
   const [avatar, setAvatar] = useState<string>('https://placehold.co/100x100');
   const [path, setPath] = useState<string>('');
@@ -189,6 +192,11 @@ const CreateWorkSpace = () => {
     },
   });
 
+  useEffect(() => {
+    if (cat) {
+      setValues({ ...values, category: cat });
+    }
+  }, [cat]);
   const onChange = (event: any, selectedDate: any, type: string) => {
     const currentDate = selectedDate;
     if (type === 'startTime') {
@@ -303,19 +311,26 @@ const CreateWorkSpace = () => {
                 placeholder="Description"
                 keyboardType="default"
                 numberOfLines={5}
+                textarea
               />
               {touched.description && errors.description && (
                 <Text style={{ color: 'red', fontWeight: 'bold' }}>{errors.description}</Text>
               )}
             </>
             <>
-              <InputComponent
-                label="Category"
-                value={category}
-                onChangeText={handleChange('category')}
-                placeholder="Category"
-                keyboardType="default"
-              />
+              <Pressable
+                onPress={() => router.push('/category')}
+                style={({ pressed }) => ({ opacity: pressed ? 0.5 : 1 })}>
+                <InputComponent
+                  editable={false}
+                  label="Category"
+                  value={category}
+                  onChangeText={handleChange('category')}
+                  placeholder="Category"
+                  keyboardType="default"
+                />
+              </Pressable>
+
               {touched.category && errors.category && (
                 <Text style={{ color: 'red', fontWeight: 'bold' }}>{errors.category}</Text>
               )}
@@ -358,8 +373,10 @@ const CreateWorkSpace = () => {
                 <Text style={{ color: 'red', fontFamily: 'PoppinsMedium' }}>{errors.email}</Text>
               )}
             </>
-            <>
-              <Text style={{ marginBottom: 5, fontFamily: 'PoppinsMedium' }}>Work Days</Text>
+            <View style={{ marginHorizontal: 10, gap: 15 }}>
+              <MyText fontSize={15} poppins="Medium" style={{ fontFamily: 'PoppinsMedium' }}>
+                Work Days
+              </MyText>
 
               <SelectList
                 search={false}
@@ -408,12 +425,15 @@ const CreateWorkSpace = () => {
                 save="key"
                 placeholder="Select End day"
               />
-            </>
+            </View>
             <>
-              <Text style={{ marginBottom: 5, fontFamily: 'PoppinsMedium' }}>
+              <MyText
+                poppins="Medium"
+                fontSize={15}
+                style={{ marginVertical: 10, fontFamily: 'PoppinsMedium', marginHorizontal: 10 }}>
                 Opening And Closing Time
-              </Text>
-              <View style={{ gap: 10 }}>
+              </MyText>
+              <View style={{ gap: 10, marginHorizontal: 10 }}>
                 <>
                   <Pressable onPress={showMode} style={styles2.border}>
                     <Text> {`${format(startTime, 'HH:mm') || ' Opening Time'}`} </Text>
@@ -454,7 +474,7 @@ const CreateWorkSpace = () => {
               </View>
             </>
           </View>
-          <View style={{ flex: 0.4, marginTop: 30 }}>
+          <View style={{ flex: 0.4, marginTop: 30, marginHorizontal: 10 }}>
             <Button
               loading={isSubmitting}
               onPress={() => handleSubmit()}
@@ -483,6 +503,8 @@ const styles2 = StyleSheet.create({
     justifyContent: 'center',
     borderBottomWidth: 0,
     borderBottomColor: '#DADADA',
+    borderRadius: 5,
     width: '100%',
+    height: 60,
   },
 });

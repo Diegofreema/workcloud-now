@@ -22,6 +22,7 @@ import { useRemoveUser } from '~/hooks/useRemoveUser';
 const roles = [{ role: 'Add new staff' }];
 export const AddStaff = () => {
   const { isOpen, onClose } = useAddStaff();
+  const { darkMode } = useDarkMode();
 
   const router = useRouter();
 
@@ -47,12 +48,24 @@ export const AddStaff = () => {
             onPress={onClose}>
             <FontAwesome name="times" size={20} color="black" />
           </Pressable>
-          <Divider style={[styles.divider, { marginBottom: -10 }]} />
+          <Divider
+            style={[
+              styles.divider,
+              { marginBottom: -10, backgroundColor: darkMode === 'dark' ? 'transparent' : '#ccc' },
+            ]}
+          />
           <View style={{ marginTop: 20, width: '100%', gap: 14 }}>
             <FlatList
               showsVerticalScrollIndicator={false}
               data={roles}
-              ItemSeparatorComponent={() => <Divider style={styles.divider} />}
+              ItemSeparatorComponent={() => (
+                <Divider
+                  style={[
+                    styles.divider,
+                    { backgroundColor: darkMode === 'dark' ? 'transparent' : '#ccc' },
+                  ]}
+                />
+              )}
               keyExtractor={(item) => item.role}
               renderItem={({ item }) => (
                 <Pressable

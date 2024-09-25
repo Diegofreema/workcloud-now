@@ -1,10 +1,11 @@
-import { View, Text } from 'react-native';
+import { HelpComponent } from '~/components/HelpComponent';
+import { CustomScrollView } from '~/components/Ui/CustomScrollView';
 
 const help = () => {
   return (
-    <View>
-      <Text>help</Text>
-    </View>
+    <CustomScrollView>
+      <HelpComponent />
+    </CustomScrollView>
   );
 };
 

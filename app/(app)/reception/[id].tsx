@@ -244,11 +244,13 @@ const Representatives = ({ data }: { data: WorkerWithWorkspace[] }) => {
       data={data}
       contentContainerStyle={{
         paddingBottom: 30,
-        flexDirection: 'row',
         gap: 15,
+        flexGrow: 1,
       }}
       renderItem={({ item }) => <RepresentativeItem item={item} />}
       ListEmptyComponent={() => <EmptyText text="No representatives yet" />}
+      columnWrapperStyle={{ gap: 5 }}
+      numColumns={3}
     />
   );
 };
@@ -336,6 +338,8 @@ const RepresentativeItem = ({ item }: { item: WorkerWithWorkspace }) => {
         {
           opacity: pressed ? 0.5 : 1,
           marginBottom: 10,
+
+          width: '33%',
         },
       ]}
       onPress={handlePress}>

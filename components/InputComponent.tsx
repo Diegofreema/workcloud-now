@@ -64,6 +64,8 @@ export const InputComponent = ({
           color: darkMode === 'dark' ? 'white' : 'black',
           marginBottom: 5,
         }}
+        numberOfLines={numberOfLines}
+        multiline={textarea}
       />
     </View>
   );
