@@ -1,6 +1,7 @@
 import { useAuth } from '@clerk/clerk-expo';
 import { FontAwesome } from '@expo/vector-icons';
 import { Button } from '@rneui/themed';
+import { useQueryClient } from '@tanstack/react-query';
 import { Image } from 'expo-image';
 import * as ImagePicker from 'expo-image-picker';
 import React, { useState } from 'react';
@@ -17,12 +18,14 @@ import { MyText } from '../Ui/MyText';
 import { WorkType } from '~/constants/types';
 import { useDarkMode } from '~/hooks/useDarkMode';
 import { useGroupName } from '~/hooks/useGroupName';
+import { supabase } from '~/lib/supabase';
 
-export const NewGroupModal = ({ data }: { data: WorkType[] }) => {
+export const NewGroupModal = ({ data, id }: { data: WorkType[]; id: string }) => {
   const { isOpen, onClose } = useGroupName();
   const { userId } = useAuth();
   const { client } = useChatContext();
   const [loading, setLoading] = useState(false);
+  const query = useQueryClient();
   const [value, setValue] = useState('');
   const [image, setImage] = useState('https://placehold.co/100x100');
   const { darkMode } = useDarkMode();
@@ -31,15 +34,29 @@ export const NewGroupModal = ({ data }: { data: WorkType[] }) => {
     if (data?.length === 0) return;
     setLoading(true);
     try {
-      const channel = client.channel('messaging', {
-        members: [userId as string, ...data?.map((staff) => staff.userId?.userId as string)],
-        name: value,
-        image,
-      });
-      await channel.watch();
-      toast.success('Success', {
-        description: 'Group created',
-      });
+      const { error } = await supabase
+        .from('organization')
+        .update({ has_group: true })
+        .eq('ownerId', id);
+      if (error) {
+        toast.error('Something went wrong', {
+          description: 'Failed to create group',
+        });
+      }
+      if (!error) {
+        query.invalidateQueries({ queryKey: ['organization'] });
+        const channel = client.channel('messaging', {
+          members: [userId as string, ...data?.map((staff) => staff.userId?.userId as string)],
+          name: value,
+          image,
+        });
+        await channel.watch();
+
+        toast.success('Success', {
+          description: 'Group created',
+        });
+      }
+
       setImage('https://placehold.co/100x100');
       setValue('');
     } catch (error) {

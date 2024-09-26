@@ -3,18 +3,21 @@
 import { useAuth } from '@clerk/clerk-expo';
 import { Avatar } from '@rneui/themed';
 import { router, useLocalSearchParams } from 'expo-router';
+import { Plus } from 'lucide-react-native';
 import { useEffect, useState } from 'react';
 import { FlatList, Pressable, StyleSheet, View } from 'react-native';
 import { toast } from 'sonner-native';
 import { Channel as ChannelType } from 'stream-chat';
 import { useChatContext } from 'stream-chat-expo';
 
+import { AuthHeader } from './AuthHeader';
 import { HStack } from './HStack';
 import { MyButton } from './Ui/MyButton';
 import { MyText } from './Ui/MyText';
 import VStack from './Ui/VStack';
 
 import { colors } from '~/constants/Colors';
+import { useDarkMode } from '~/hooks/useDarkMode';
 import { ChatMember, useMembers } from '~/hooks/useMembers';
 import { supabase } from '~/lib/supabase';
 
@@ -23,7 +26,7 @@ export const GroupDetail = (): JSX.Element => {
   const { chatId } = useLocalSearchParams<{ chatId: string }>();
   const setMembers = useMembers((state) => state.getMembers);
   const [isDeleting, setIsDeleting] = useState(false);
-
+  const { darkMode } = useDarkMode();
   const [close, setClose] = useState(false);
   const { client } = useChatContext();
   const { userId } = useAuth();
@@ -82,8 +85,19 @@ export const GroupDetail = (): JSX.Element => {
     }
   };
   const onClose = () => setClose(true);
+  const onNav = () => {
+    router.push(`/addToGroup?chatId=${chatId}`);
+  };
   return (
     <View style={{ flex: 1 }}>
+      <HStack justifyContent="space-between" alignItems="center">
+        <AuthHeader path="Group Details" />
+        {isAdmin && (
+          <Pressable style={({ pressed }) => [{ opacity: pressed ? 0.5 : 1 }]} onPress={onNav}>
+            <Plus color={darkMode === 'dark' ? 'white' : 'black'} size={25} />
+          </Pressable>
+        )}
+      </HStack>
       <MyText poppins="Bold" fontSize={15} style={{ marginBottom: 10 }}>
         List of members
       </MyText>
@@ -153,7 +167,6 @@ const MemberItem = ({
       const mb = await channel.removeMembers([member.user.id]);
       const newMembers = await channel.queryMembers({});
       const formattedMembers = Object.values(newMembers);
-      console.log(formattedMembers[0]);
 
       if (newMembers) {
         setMembers(formattedMembers[0] as ChatMember[]);

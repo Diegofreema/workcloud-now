@@ -30,9 +30,11 @@ const Messages = () => {
   const staffsIsMoreThanOne = data?.staffs && data?.staffs?.length > 1;
   const hasOrganization = orgs?.organizations && orgs?.organizations?.length > 0;
   const organizationHasGroup = orgs?.organizations && orgs?.organizations[0]?.has_group;
+  console.log({ organizationHasGroup });
+
   return (
     <View style={{ flex: 1 }}>
-      <NewGroupModal data={data?.staffs || []} />
+      <NewGroupModal data={data?.staffs || []} id={userId!} />
       <ChannelList
         additionalFlatListProps={{
           style: {
