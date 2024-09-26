@@ -27,7 +27,9 @@ const Messages = () => {
   const onSelect = (id: any) => {
     router.push(`/chat/${id}`);
   };
-
+  const staffsIsMoreThanOne = data?.staffs && data?.staffs?.length > 1;
+  const hasOrganization = orgs?.organizations && orgs?.organizations?.length > 0;
+  const organizationHasGroup = orgs?.organizations && orgs?.organizations[0]?.has_group;
   return (
     <View style={{ flex: 1 }}>
       <NewGroupModal data={data?.staffs || []} />
@@ -47,7 +49,7 @@ const Messages = () => {
         Preview={Preview}
         numberOfSkeletons={20}
       />
-      {orgs && orgs?.organizations?.length > 0 && <NewGroup />}
+      {hasOrganization && !organizationHasGroup && staffsIsMoreThanOne && <NewGroup />}
     </View>
   );
 };

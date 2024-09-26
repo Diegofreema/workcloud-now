@@ -24,8 +24,8 @@ const Role = () => {
   const { getData } = useDetailsToAdd();
   const [value, setValue] = useState('');
   const { userId } = useAuth();
-  const [profile, setProfile] = useState<Profile | null>(null);
   const { data, isPending, isError, refetch } = useRoles();
+  const [profile, setProfile] = useState<Profile | null>(null);
   const queryClient = useQueryClient();
 
   useEffect(() => {

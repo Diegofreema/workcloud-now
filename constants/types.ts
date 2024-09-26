@@ -39,6 +39,7 @@ export type Organization = {
   website: string;
   workDays: string;
   workspaces: number[];
+  has_group: boolean;
 };
 
 export type Org = {

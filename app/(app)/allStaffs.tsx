@@ -10,7 +10,6 @@ import { ErrorComponent } from '~/components/Ui/ErrorComponent';
 import { LoadingComponent } from '~/components/Ui/LoadingComponent';
 import { UserPreviewWithBio } from '~/components/Ui/UserPreviewWithBio';
 import { Workers } from '~/constants/types';
-import { useDetailsToAdd } from '~/hooks/useDetailsToAdd';
 import { useGetOtherWorkers } from '~/lib/queries';
 
 const AllStaffs = () => {

@@ -1,7 +1,10 @@
 import { useAuth } from '@clerk/clerk-expo';
+import { FontAwesome } from '@expo/vector-icons';
 import { Button } from '@rneui/themed';
+import { Image } from 'expo-image';
+import * as ImagePicker from 'expo-image-picker';
 import React, { useState } from 'react';
-import { StyleSheet, View } from 'react-native';
+import { StyleSheet, TouchableOpacity, View } from 'react-native';
 import Modal from 'react-native-modal';
 import { toast } from 'sonner-native';
 import { useChatContext } from 'stream-chat-expo';
@@ -21,6 +24,7 @@ export const NewGroupModal = ({ data }: { data: WorkType[] }) => {
   const { client } = useChatContext();
   const [loading, setLoading] = useState(false);
   const [value, setValue] = useState('');
+  const [image, setImage] = useState('https://placehold.co/100x100');
   const { darkMode } = useDarkMode();
 
   const handlePress = async () => {
@@ -30,11 +34,14 @@ export const NewGroupModal = ({ data }: { data: WorkType[] }) => {
       const channel = client.channel('messaging', {
         members: [userId as string, ...data?.map((staff) => staff.userId?.userId as string)],
         name: value,
+        image,
       });
       await channel.watch();
       toast.success('Success', {
         description: 'Group created',
       });
+      setImage('https://placehold.co/100x100');
+      setValue('');
     } catch (error) {
       console.log(error);
       toast.error('Failed', {
@@ -43,6 +50,21 @@ export const NewGroupModal = ({ data }: { data: WorkType[] }) => {
     } finally {
       setLoading(false);
       onClose();
+    }
+  };
+  const onSelectImage = async () => {
+    const options: ImagePicker.ImagePickerOptions = {
+      mediaTypes: ImagePicker.MediaTypeOptions.Images,
+      allowsEditing: true,
+      base64: true,
+      quality: 0.5,
+    };
+
+    const result = await ImagePicker.launchImageLibraryAsync(options);
+
+    if (!result.canceled) {
+      const base64Image = `data:image/png;base64,${result.assets[0].base64}`;
+      setImage(base64Image);
     }
   };
 
@@ -66,6 +88,48 @@ export const NewGroupModal = ({ data }: { data: WorkType[] }) => {
           <MyText poppins="Bold" fontSize={17} style={{ textAlign: 'center', marginBottom: 15 }}>
             Create group
           </MyText>
+          <View style={{ alignItems: 'center', justifyContent: 'center', marginBottom: 20 }}>
+            <View
+              style={{
+                width: 100,
+                height: 100,
+                borderRadius: 50,
+              }}>
+              <Image
+                contentFit="cover"
+                style={{ width: 100, height: 100, borderRadius: 50 }}
+                source={{ uri: image }}
+              />
+              {!image && (
+                <TouchableOpacity
+                  style={{
+                    position: 'absolute',
+                    bottom: 0,
+                    right: 3,
+                    backgroundColor: darkMode ? 'white' : 'black',
+                    padding: 5,
+                    borderRadius: 30,
+                  }}
+                  onPress={onSelectImage}>
+                  <FontAwesome name="plus" size={20} color={darkMode ? 'black' : 'white'} />
+                </TouchableOpacity>
+              )}
+              {image && (
+                <TouchableOpacity
+                  style={{
+                    position: 'absolute',
+                    bottom: 0,
+                    right: 3,
+                    backgroundColor: darkMode ? 'white' : 'black',
+                    padding: 5,
+                    borderRadius: 30,
+                  }}
+                  onPress={onSelectImage}>
+                  <FontAwesome name="trash" size={20} color="red" />
+                </TouchableOpacity>
+              )}
+            </View>
+          </View>
           <View style={{ width: '100%' }}>
             <InputComponent value={value} onChangeText={setValue} placeholder="Group name..." />
           </View>

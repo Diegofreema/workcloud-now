@@ -4,7 +4,7 @@ import { useQueryClient } from '@tanstack/react-query';
 import { useRouter } from 'expo-router';
 import { useFormik } from 'formik';
 import React, { useEffect } from 'react';
-import { ScrollView, StyleSheet, View } from 'react-native';
+import { Alert, ScrollView, StyleSheet, View } from 'react-native';
 import { SelectList } from 'react-native-dropdown-select-list';
 import { toast } from 'sonner-native';
 import * as yup from 'yup';
@@ -104,7 +104,7 @@ const CreateProfile = () => {
             })
             .eq('userId', user?.id!);
           if (!err) {
-            toast.success('Welcome to onboard', {
+            toast.success('Welcome  onboard', {
               description: `${user?.firstName} your work profile was created`,
             });
             queryClient.invalidateQueries({ queryKey: ['profile'] });
@@ -113,6 +113,8 @@ const CreateProfile = () => {
             resetForm();
           }
           if (err) {
+            Alert.alert('Error', 'Failed to create profile');
+
             toast.error('Error, failed to create profile', {
               description: 'Please try again',
             });
@@ -217,11 +219,13 @@ const CreateProfile = () => {
                 <Text style={{ color: 'red', fontWeight: 'bold' }}>{errors.location}</Text>
               )}
             </>
-            <>
+            <View style={{ marginHorizontal: 10 }}>
               <Text
                 style={{
-                  color: darkMode ? colors.white : colors.black,
+                  color: darkMode === 'dark' ? colors.white : colors.black,
                   fontWeight: 'bold',
+                  fontSize: 15,
+                  marginBottom: 10,
                 }}>
                 Gender
               </Text>
@@ -232,12 +236,18 @@ const CreateProfile = () => {
                   ...styles2.border,
                   justifyContent: 'flex-start',
                   borderWidth: 0,
-                  height: 50,
+                  height: 60,
                 }}
                 dropdownTextStyles={{
                   color: darkMode === 'dark' ? colors.white : colors.black,
                 }}
-                inputStyles={{ textAlign: 'left', borderWidth: 0 }}
+                inputStyles={{
+                  textAlign: 'left',
+                  borderWidth: 0,
+                  color: 'gray',
+                  justifyContent: 'center',
+                  alignItems: 'center',
+                }}
                 fontFamily="PoppinsMedium"
                 setSelected={handleChange('gender')}
                 data={genders}
@@ -248,16 +258,17 @@ const CreateProfile = () => {
               {touched.gender && errors.gender && (
                 <Text style={{ color: 'red', fontWeight: 'bold' }}>{errors.gender}</Text>
               )}
-            </>
+            </View>
           </View>
-          <View style={{ flex: 0.4, marginTop: 30 }}>
+          <View style={{ flex: 0.4, marginTop: 30, marginHorizontal: 10 }}>
             <MyButton
               loading={isSubmitting}
               onPress={() => handleSubmit()}
               color={colors.buttonBlue}
               style={{ borderRadius: 5 }}
               textColor="white"
-              contentStyle={{ height: 50, borderRadius: 2 }}
+              contentStyle={{ borderRadius: 2 }}
+              buttonStyle={{ height: 60 }}
               labelStyle={{ fontFamily: fontFamily.Medium, fontSize: 14 }}>
               {isSubmitting ? 'Submitting...' : 'Submit'}
             </MyButton>
@@ -273,10 +284,9 @@ export default CreateProfile;
 const styles2 = StyleSheet.create({
   border: {
     backgroundColor: '#E9E9E9',
-    minHeight: 52,
     paddingLeft: 15,
     justifyContent: 'center',
-    borderBottomWidth: 1,
-    borderBottomColor: '#DADADA',
+    borderRadius: 5,
+    alignItems: 'center',
   },
 });

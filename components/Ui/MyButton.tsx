@@ -30,7 +30,7 @@ export const MyButton = ({
     <Button
       {...props}
       loading={loading}
-      buttonStyle={[{ height: 45, alignItems: 'center' }, buttonStyle]}
+      buttonStyle={[{ minHeight: 50, alignItems: 'center' }, buttonStyle]}
       titleStyle={[
         {
           color: textColor,

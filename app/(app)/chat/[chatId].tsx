@@ -1,6 +1,7 @@
 import { EvilIcons, Feather, FontAwesome } from '@expo/vector-icons';
 import { Avatar } from '@rneui/themed';
 import { router, useLocalSearchParams } from 'expo-router';
+import { EllipsisVertical } from 'lucide-react-native';
 import React, { useEffect, useMemo, useState } from 'react';
 import { ActivityIndicator, Pressable, StyleSheet, Text, TextInputProps, View } from 'react-native';
 import { Channel as ChannelType } from 'stream-chat';
@@ -24,6 +25,7 @@ import { MyText } from '~/components/Ui/MyText';
 import VStack from '~/components/Ui/VStack';
 import { colors } from '~/constants/Colors';
 import { useDarkMode } from '~/hooks/useDarkMode';
+import { useMembers } from '~/hooks/useMembers';
 import { useGetWorkerProfile } from '~/lib/queries';
 
 const SingleChat = () => {
@@ -47,7 +49,7 @@ const SingleChat = () => {
       Input={CustomInput}
       channel={channel}>
       <MessageList
-        FooterComponent={CustomHeaderComponent}
+        FooterComponent={() => <CustomHeaderComponent chatId={chatId} />}
         additionalFlatListProps={{
           contentContainerStyle: {
             backgroundColor: darkMode === 'dark' ? 'black' : 'white',
@@ -74,8 +76,13 @@ const SingleChat = () => {
 export default SingleChat;
 
 const CustomMessage = () => {
-  const { message, isMyMessage } = useMessageContext();
-
+  const { message, isMyMessage, members } = useMessageContext();
+  const getMembers = useMembers((state) => state.getMembers);
+  const m = Object.values(members);
+  console.log(m.length);
+  useEffect(() => {
+    getMembers(m);
+  }, [members]);
   return message.text ? (
     <View
       style={{
@@ -156,19 +163,22 @@ const CustomInput = () => {
   );
 };
 
-const CustomHeaderComponent = () => {
+const CustomHeaderComponent = ({ chatId }: { chatId: string }) => {
   const { workerId } = useLocalSearchParams<{ workerId: string }>();
-
+  const members = useMembers((state) => state.members);
   const { isOnline } = useChatContext();
   const { data, isPending, isError, isPaused } = useGetWorkerProfile(workerId);
   const { darkMode } = useDarkMode();
 
+  const onGoToDetails = () => {
+    router.push(`/groupDetails?chatId=${chatId}`);
+  };
   const handleBack = () => {
     router.back();
   };
   if (isError || isPaused) {
     return (
-      <HStack h={70} alignItems="center" px={15} mb={10}>
+      <HStack h={70} alignItems="center" px={15} mb={10} justifyContent="space-between">
         <Pressable onPress={handleBack}>
           <FontAwesome
             name="angle-left"
@@ -189,30 +199,41 @@ const CustomHeaderComponent = () => {
   }
 
   const { worker } = data;
-
+  const isMoreThanTwoMembers = members.length > 2;
   return (
-    <HStack h={70} px={15} mb={10} gap={10}>
-      <Pressable onPress={handleBack}>
-        <FontAwesome name="angle-left" color={darkMode === 'dark' ? 'white' : 'black'} size={30} />
-      </Pressable>
-      <HStack gap={6}>
-        <Avatar rounded source={{ uri: worker?.organizationId?.avatar }} size={40} />
-        <VStack>
-          <MyText poppins="Bold" style={{ fontFamily: 'PoppinsBold', fontSize: 14 }}>
-            {worker?.organizationId?.name}
-          </MyText>
-          <MyText
-            poppins="Medium"
-            style={{
-              fontFamily: 'PoppinsMedium',
+    <HStack h={70} px={15} mb={10} gap={10} justifyContent="space-between" alignItems="center">
+      <HStack gap={10}>
+        <Pressable onPress={handleBack}>
+          <FontAwesome
+            name="angle-left"
+            color={darkMode === 'dark' ? 'white' : 'black'}
+            size={30}
+          />
+        </Pressable>
+        <HStack gap={6}>
+          <Avatar rounded source={{ uri: members[1]?.user?.image }} size={40} />
+          <VStack>
+            <MyText poppins="Bold" style={{ fontFamily: 'PoppinsBold', fontSize: 14 }}>
+              {worker?.organizationId?.name}
+            </MyText>
+            {!isMoreThanTwoMembers && (
+              <MyText
+                poppins="Medium"
+                style={{
+                  fontFamily: 'PoppinsMedium',
 
-              fontSize: 8,
-              color: isOnline ? colors.openBackgroundColor : colors.closeTextColor,
-            }}>
-            {isOnline ? 'Active' : 'Offline'}
-          </MyText>
-        </VStack>
+                  fontSize: 8,
+                  color: isOnline ? colors.openBackgroundColor : colors.closeTextColor,
+                }}>
+                {isOnline ? 'Active' : 'Offline'}
+              </MyText>
+            )}
+          </VStack>
+        </HStack>
       </HStack>
+      <Pressable style={({ pressed }) => ({ opacity: pressed ? 0.5 : 1 })} onPress={onGoToDetails}>
+        <EllipsisVertical color={darkMode === 'dark' ? 'white' : 'black'} size={30} />
+      </Pressable>
     </HStack>
   );
 };

@@ -300,14 +300,15 @@ export const useGetOtherWorkers = (id: any) => {
     const { data, error } = await supabase
       .from('worker')
       .select(`*, userId (name, avatar, userId, email)`)
-      .neq('userId', id);
+      .neq('bossId', id);
+
     return {
       worker: data as Workers[],
       error,
     };
   };
   return useQuery({
-    queryKey: ['other_workers'],
+    queryKey: ['other_workers', id],
     queryFn: async () => getAllStaffs(),
   });
 };
