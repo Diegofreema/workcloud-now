@@ -130,6 +130,7 @@ export const WorkPreview = ({ item }: { item: Requests }) => {
   const [accepting, setAccepting] = useState(false);
   const queryClient = useQueryClient();
   const { id, role, from, to, workspaceId, salary, responsibility, qualities } = item;
+  console.log(item, 'item');
 
   const acceptRequest = async () => {
     if (!userId) return;
@@ -175,7 +176,10 @@ export const WorkPreview = ({ item }: { item: Requests }) => {
         })
         .eq('id', to.workerId);
       if (!err) {
-        const { error } = await supabase.from('request').update({ accepted: true }).eq('id', id);
+        const { error } = await supabase
+          .from('request')
+          .update({ accepted: true, pending: false })
+          .eq('id', id);
         if (error) {
           toast.error('Something went wrong');
           return;
@@ -201,7 +205,10 @@ export const WorkPreview = ({ item }: { item: Requests }) => {
   const rejectRequest = async () => {
     setCancelling(true);
     try {
-      const { error } = await supabase.from('request').update({ accepted: false }).eq('id', id);
+      const { error } = await supabase
+        .from('request')
+        .update({ accepted: false, pending: false })
+        .eq('id', id);
 
       if (!error) {
         toast.success('Request Canceled');

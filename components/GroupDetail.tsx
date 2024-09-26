@@ -23,10 +23,11 @@ export const GroupDetail = (): JSX.Element => {
   const { chatId } = useLocalSearchParams<{ chatId: string }>();
   const setMembers = useMembers((state) => state.getMembers);
   const [isDeleting, setIsDeleting] = useState(false);
+
   const [close, setClose] = useState(false);
   const { client } = useChatContext();
   const { userId } = useAuth();
-  const [channel, setChannel] = useState<ChannelType>();
+  const [channel, setChannel] = useState<ChannelType | null>(null);
   console.log(chatId);
 
   useEffect(() => {
@@ -44,8 +45,6 @@ export const GroupDetail = (): JSX.Element => {
     if (b.role !== 'owner') return 0;
     return 0;
   });
-
-  const onRemoveMembers = () => {};
 
   const onCloseGroup = async () => {
     setIsDeleting(true);
@@ -90,7 +89,9 @@ export const GroupDetail = (): JSX.Element => {
       </MyText>
       <FlatList
         data={formattedArray}
-        renderItem={({ item }) => <MemberItem member={item} isAdmin={isAdmin} />}
+        renderItem={({ item }) => (
+          <MemberItem member={item} isAdmin={isAdmin} chatId={chatId} channel={channel} />
+        )}
         contentContainerStyle={{ gap: 15, flexGrow: 1 }}
         showsVerticalScrollIndicator={false}
         ListFooterComponentStyle={{ marginTop: 'auto', marginBottom: 20 }}
@@ -130,8 +131,52 @@ export const GroupDetail = (): JSX.Element => {
   );
 };
 
-const MemberItem = ({ member, isAdmin }: { member: ChatMember; isAdmin: boolean }) => {
+const MemberItem = ({
+  member,
+  isAdmin,
+  channel,
+  chatId,
+}: {
+  member: ChatMember;
+  isAdmin: boolean;
+  channel: ChannelType | null;
+  chatId: string;
+}) => {
   const admin = member.role === 'owner';
+  const [remove, setRemove] = useState(false);
+  const [removing, setRemoving] = useState(false);
+  const setMembers = useMembers((state) => state.getMembers);
+  const handleRemove = async () => {
+    if (!member?.user?.id || !channel) return;
+    setRemoving(true);
+    try {
+      const mb = await channel.removeMembers([member.user.id]);
+      const newMembers = await channel.queryMembers({});
+      const formattedMembers = Object.values(newMembers);
+      console.log(formattedMembers[0]);
+
+      if (newMembers) {
+        setMembers(formattedMembers[0] as ChatMember[]);
+      }
+      if (mb) {
+        toast.success('Success', {
+          description: 'Member removed successfully',
+        });
+      }
+    } catch (error) {
+      console.log(error);
+
+      toast.error('Something went wrong', {
+        description: 'Failed to remove member',
+      });
+    } finally {
+      setRemoving(false);
+      setRemove(false);
+    }
+  };
+  const onRemoveMember = () => {
+    setRemove(true);
+  };
   return (
     <HStack justifyContent="space-between" alignItems="center">
       <HStack gap={5} alignItems="center">
@@ -147,20 +192,50 @@ const MemberItem = ({ member, isAdmin }: { member: ChatMember; isAdmin: boolean 
           )}
         </VStack>
       </HStack>
-      {isAdmin && !admin && (
-        <Pressable
-          onPress={() => {}}
-          style={({ pressed }) => ({
-            opacity: pressed ? 0.5 : 1,
-            padding: 5,
-            backgroundColor: 'red',
-            borderRadius: 5,
-          })}>
-          <MyText poppins="Medium" fontSize={15} style={{ color: 'white' }}>
-            Remove
-          </MyText>
-        </Pressable>
-      )}
+      {isAdmin &&
+        !admin &&
+        (remove ? (
+          <HStack gap={5}>
+            <Pressable
+              disabled={removing}
+              onPress={handleRemove}
+              style={({ pressed }) => ({
+                opacity: pressed ? 0.5 : 1,
+                padding: 5,
+                backgroundColor: 'green',
+                borderRadius: 5,
+              })}>
+              <MyText poppins="Medium" fontSize={15} style={{ color: 'white' }}>
+                {removing ? 'Removing...' : 'Remove'}
+              </MyText>
+            </Pressable>
+            <Pressable
+              onPress={() => setRemove(false)}
+              style={({ pressed }) => ({
+                opacity: pressed ? 0.5 : 1,
+                padding: 5,
+                backgroundColor: colors.buttonBlue,
+                borderRadius: 5,
+              })}>
+              <MyText poppins="Medium" fontSize={15} style={{ color: 'white' }}>
+                Cancel
+              </MyText>
+            </Pressable>
+          </HStack>
+        ) : (
+          <Pressable
+            onPress={onRemoveMember}
+            style={({ pressed }) => ({
+              opacity: pressed ? 0.5 : 1,
+              padding: 5,
+              backgroundColor: 'red',
+              borderRadius: 5,
+            })}>
+            <MyText poppins="Medium" fontSize={15} style={{ color: 'white' }}>
+              Remove
+            </MyText>
+          </Pressable>
+        ))}
     </HStack>
   );
 };

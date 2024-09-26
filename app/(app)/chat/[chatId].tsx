@@ -49,7 +49,7 @@ const SingleChat = () => {
       Input={CustomInput}
       channel={channel}>
       <MessageList
-        FooterComponent={() => <CustomHeaderComponent chatId={chatId} />}
+        FooterComponent={() => <CustomHeaderComponent channel={channel} chatId={chatId} />}
         additionalFlatListProps={{
           contentContainerStyle: {
             backgroundColor: darkMode === 'dark' ? 'black' : 'white',
@@ -163,7 +163,7 @@ const CustomInput = () => {
   );
 };
 
-const CustomHeaderComponent = ({ chatId }: { chatId: string }) => {
+const CustomHeaderComponent = ({ chatId, channel }: { chatId: string; channel: ChannelType }) => {
   const { workerId } = useLocalSearchParams<{ workerId: string }>();
   const members = useMembers((state) => state.members);
   const { isOnline } = useChatContext();
@@ -211,7 +211,9 @@ const CustomHeaderComponent = ({ chatId }: { chatId: string }) => {
           />
         </Pressable>
         <HStack gap={6}>
-          <Avatar rounded source={{ uri: members[1]?.user?.image }} size={40} />
+          {!isMoreThanTwoMembers && (
+            <Avatar rounded source={{ uri: members[1]?.user?.image }} size={40} />
+          )}
           <VStack>
             <MyText poppins="Bold" style={{ fontFamily: 'PoppinsBold', fontSize: 14 }}>
               {worker?.organizationId?.name}

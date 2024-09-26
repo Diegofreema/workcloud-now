@@ -299,9 +299,7 @@ export const useGetOtherWorkers = (id: any) => {
   const getAllStaffs = async () => {
     const { data, error } = await supabase
       .from('worker')
-      .select(`*, userId (name, avatar, userId, email)`)
-      .neq('bossId', id);
-
+      .select(`*, userId (name, avatar, userId, email)`);
     return {
       worker: data as Workers[],
       error,
@@ -318,7 +316,8 @@ export const usePendingWorkers = (id: any) => {
     const { data, error } = await supabase
       .from('request')
       .select(`*, to (name, avatar, userId, email, workerId(*))`)
-      .eq('from', id);
+      .eq('from', id)
+      .eq('pending', true);
 
     return {
       requests: data as Requests[],

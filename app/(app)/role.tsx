@@ -24,8 +24,8 @@ const Role = () => {
   const { getData } = useDetailsToAdd();
   const [value, setValue] = useState('');
   const { userId } = useAuth();
-  const { data, isPending, isError, refetch } = useRoles();
   const [profile, setProfile] = useState<Profile | null>(null);
+  const { data, isPending, isError, refetch } = useRoles();
   const queryClient = useQueryClient();
 
   useEffect(() => {
@@ -59,7 +59,7 @@ const Role = () => {
     return data?.filter((item) =>
       item.role?.toLocaleLowerCase().includes(value.toLocaleLowerCase())
     );
-  }, [value]);
+  }, [value, data]);
   const router = useRouter();
 
   if (isError) {
@@ -85,7 +85,7 @@ const Role = () => {
 
     if (!error) {
       router.back();
-      getData(item, data.id, profile.organizationId?.id);
+      getData(profile.organizationId?.id, item, data.id);
       router.push(`/allStaffs`);
     }
     if (error) {
