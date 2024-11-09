@@ -10,10 +10,11 @@ const AuthLayout = () => {
   const { darkMode } = useDarkMode();
 
   if (isSignedIn) {
-    return <Redirect href="/(app)/(atabs)/" />;
+    return <Redirect href="/" />;
   }
 
   return (
+    // @ts-ignore
     <>
       <StatusBar
         style={darkMode === 'dark' ? 'light' : 'dark'}

@@ -34,7 +34,7 @@ export default function SignInScreen() {
       const res = await signIn.create({ transfer: true });
 
       if (res.status === 'complete') {
-        setActive({
+        await setActive({
           session: res.createdSessionId,
         });
       }
@@ -48,7 +48,7 @@ export default function SignInScreen() {
       });
 
       if (res.status === 'complete') {
-        setActive({
+        await setActive({
           session: res.createdSessionId,
         });
       }
@@ -58,7 +58,7 @@ export default function SignInScreen() {
       try {
         const { createdSessionId, setActive } = await startOAuthFlow();
         if (createdSessionId) {
-          setActive!({ session: createdSessionId });
+          await setActive!({ session: createdSessionId });
         }
       } catch (error) {
         console.log(JSON.stringify(error, null, 1));

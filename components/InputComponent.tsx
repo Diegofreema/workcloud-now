@@ -35,7 +35,7 @@ export const InputComponent = ({
 }: Props): JSX.Element => {
   const { darkMode } = useDarkMode();
   return (
-    <View style={{ height: 'auto' }}>
+    <View style={{ height: 'auto', backgroundColor: darkMode === 'dark' ? 'black' : 'white' }}>
       <Input
         {...props}
         placeholder={placeholder}

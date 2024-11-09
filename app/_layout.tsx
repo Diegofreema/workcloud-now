@@ -1,6 +1,8 @@
-import { ClerkLoaded, ClerkLoading, ClerkProvider } from '@clerk/clerk-expo';
+import { ClerkLoaded, ClerkLoading, ClerkProvider, useAuth } from '@clerk/clerk-expo';
 import FontAwesome from '@expo/vector-icons/FontAwesome';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import { ConvexReactClient } from 'convex/react';
+import { ConvexProviderWithClerk } from 'convex/react-clerk';
 import { useFonts } from 'expo-font';
 import { Slot, usePathname } from 'expo-router';
 import * as SecureStore from 'expo-secure-store';
@@ -16,6 +18,9 @@ import { Toaster } from 'sonner-native';
 import { LoadingComponent } from '~/components/Ui/LoadingComponent';
 import { useDarkMode } from '~/hooks/useDarkMode';
 
+const convex = new ConvexReactClient(process.env.EXPO_PUBLIC_CONVEX_URL!, {
+  unsavedChangesWarning: false,
+});
 const tokenCache = {
   async getToken(key: string) {
     try {
@@ -108,23 +113,24 @@ export default function RootLayout() {
   return (
     <ClerkProvider publishableKey={publishableKey} tokenCache={tokenCache}>
       <ClerkLoaded>
-        <QueryClientProvider client={queryClient}>
-          <GestureHandlerRootView style={{ flex: 1 }}>
-            <StatusBar
-              style={darkMode === 'dark' ? 'light' : 'dark'}
-              backgroundColor={darkMode === 'dark' ? 'black' : 'white'}
-            />
-            <SafeAreaView
-              style={{
-                flex: 1,
-
-                backgroundColor: darkMode === 'dark' ? 'black' : 'white',
-              }}>
-              <Slot />
-            </SafeAreaView>
-            <Toaster />
-          </GestureHandlerRootView>
-        </QueryClientProvider>
+        <ConvexProviderWithClerk client={convex} useAuth={useAuth}>
+          <QueryClientProvider client={queryClient}>
+            <GestureHandlerRootView style={{ flex: 1 }}>
+              <StatusBar
+                style={darkMode === 'dark' ? 'light' : 'dark'}
+                backgroundColor={darkMode === 'dark' ? 'black' : 'white'}
+              />
+              <SafeAreaView
+                style={{
+                  flex: 1,
+                  backgroundColor: darkMode === 'dark' ? 'black' : 'white',
+                }}>
+                <Slot />
+              </SafeAreaView>
+              <Toaster />
+            </GestureHandlerRootView>
+          </QueryClientProvider>
+        </ConvexProviderWithClerk>
       </ClerkLoaded>
       <ClerkLoading>
         <LoadingComponent />

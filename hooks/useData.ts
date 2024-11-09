@@ -22,7 +22,7 @@ export const useData = create<UserType>((set) => ({
   user: null,
   id: '',
   getUser: (user: PartialUser) => {
-    set((state) => ({ ...state, user: user }));
+    set((state) => ({ ...state, user }));
     const stringifyUser = JSON.stringify(user);
     SecureStore.setItem('user', stringifyUser);
   },
@@ -32,7 +32,7 @@ export const useData = create<UserType>((set) => ({
     await SecureStore.deleteItemAsync('user');
   },
   setId: (id: string) => {
-    set((state) => ({ ...state, id: id }));
+    set((state) => ({ ...state, id }));
     SecureStore.setItem('id', id);
   },
   getValues: () => {
