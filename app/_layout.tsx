@@ -4,7 +4,7 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { ConvexReactClient } from 'convex/react';
 import { ConvexProviderWithClerk } from 'convex/react-clerk';
 import { useFonts } from 'expo-font';
-import { Slot, usePathname } from 'expo-router';
+import { Slot, usePathname, useRouter, useSegments } from 'expo-router';
 import * as SecureStore from 'expo-secure-store';
 import * as SplashScreen from 'expo-splash-screen';
 import { StatusBar } from 'expo-status-bar';
@@ -48,6 +48,24 @@ const tokenCache = {
 const queryClient = new QueryClient();
 SplashScreen.preventAutoHideAsync();
 
+const InitialRouteLayout = () => {
+  const segments = useSegments();
+  const router = useRouter();
+  const { isLoaded, isSignedIn } = useAuth();
+  useEffect(() => {
+    if (!isLoaded) return;
+
+    const inTabsGroup = segments[0] === '(app)';
+
+    if (isSignedIn && !inTabsGroup) {
+      // @ts-ignore
+      router.replace(`/(app)/(tabs)/`);
+    } else if (!isSignedIn && inTabsGroup) {
+      router.replace('/(auth)/login');
+    }
+  }, [isSignedIn]);
+  return <Slot />;
+};
 export default function RootLayout() {
   const { darkMode } = useDarkMode();
 
@@ -62,6 +80,7 @@ export default function RootLayout() {
     PoppinsLightItalic: require('../assets/fonts/Poppins-BoldItalic.ttf'),
     ...FontAwesome.font,
   });
+
   useEffect(() => {
     if (error) throw error;
   }, [error]);
@@ -125,7 +144,7 @@ export default function RootLayout() {
                   flex: 1,
                   backgroundColor: darkMode === 'dark' ? 'black' : 'white',
                 }}>
-                <Slot />
+                <InitialRouteLayout />
               </SafeAreaView>
               <Toaster />
             </GestureHandlerRootView>

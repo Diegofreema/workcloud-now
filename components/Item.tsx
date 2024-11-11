@@ -1,19 +1,19 @@
+import { Avatar } from '@rneui/themed';
 import { formatDistanceToNow, isBefore } from 'date-fns';
-import { Image } from 'expo-image';
 import { useRouter } from 'expo-router';
 import { Pressable, StyleSheet, View } from 'react-native';
 
 import { HStack } from './HStack';
-import { Connection } from '../constants/types';
 import { MyText } from './Ui/MyText';
 import VStack from './Ui/VStack';
 
 import { colors } from '~/constants/Colors';
+import { Connection } from '~/constants/types';
 
 export const Item = (item: Connection & { isLastItemOnList?: boolean }) => {
   const router = useRouter();
-
-  const [hours, minutes] = item?.connectedTo?.end.split(':').map(Number);
+  if (!item.organisation) return null;
+  const [hours, minutes] = item?.organisation?.end.split(':').map(Number);
 
   const date = new Date();
   date.setHours(hours);
@@ -22,7 +22,7 @@ export const Item = (item: Connection & { isLastItemOnList?: boolean }) => {
   const isOpen = isBefore(new Date(), date);
 
   const startChannel = async () => {
-    router.push(`/reception/${item?.connectedTo?.id}`);
+    router.push(`/reception/${item?.organisation?._id}`);
   };
   return (
     <Pressable
@@ -31,13 +31,11 @@ export const Item = (item: Connection & { isLastItemOnList?: boolean }) => {
       style={({ pressed }) => [styles.item, pressed && { opacity: 0.3 }]}>
       <HStack justifyContent="space-between" alignItems="center">
         <HStack gap={7} alignItems="center">
-          <Image
-            source={{ uri: item?.connectedTo?.avatar }}
-            style={{ width: 48, height: 48, borderRadius: 9999 }}
-          />
+          <Avatar size={40} rounded source={{ uri: item?.organisation?.avatar }} />
+
           <VStack>
             <MyText poppins="Bold" fontSize={10}>
-              {item?.connectedTo?.name}
+              {item?.organisation?.name}
             </MyText>
             {isOpen ? (
               <View
@@ -76,7 +74,7 @@ export const Item = (item: Connection & { isLastItemOnList?: boolean }) => {
             Time
           </MyText>
           <MyText poppins="Light" fontSize={9}>
-            {formatDistanceToNow(new Date(item?.created_at))} ago
+            {formatDistanceToNow(new Date(item?.createdAt))} ago
           </MyText>
         </VStack>
       </HStack>

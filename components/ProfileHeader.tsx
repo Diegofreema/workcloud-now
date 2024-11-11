@@ -2,14 +2,19 @@ import { Image } from 'expo-image';
 import { Link } from 'expo-router';
 import { Pressable, StyleSheet, View } from 'react-native';
 
-import { useDarkMode } from '../hooks/useDarkMode';
-import { PartialUser } from '../hooks/useData';
 import { MyText } from './Ui/MyText';
 
-export const ProfileHeader = (user: PartialUser): JSX.Element | undefined => {
+import { useDarkMode } from '~/hooks/useDarkMode';
+
+type PartUser = {
+  id: string;
+  name: string;
+  avatar: string;
+};
+export const ProfileHeader = (user: PartUser): JSX.Element | undefined => {
   const { darkMode } = useDarkMode();
   return (
-    <Link asChild href="/profile-edit">
+    <Link asChild href={`/profile-edit?id=${user?.id}`}>
       <Pressable
         style={{
           marginTop: 10,

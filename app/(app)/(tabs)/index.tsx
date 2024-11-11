@@ -1,64 +1,43 @@
 import { useAuth } from '@clerk/clerk-expo';
+import { useQuery } from 'convex/react';
 import * as SecureStore from 'expo-secure-store';
 import { useEffect } from 'react';
 import { FlatList, View } from 'react-native';
 
-import { Header } from '../../../components/Header';
-import { OrganizationModal } from '../../../components/OrganizationModal';
-import { ProfileHeader } from '../../../components/ProfileHeader';
-import { HeadingText } from '../../../components/Ui/HeadingText';
-import { useOrganizationModal } from '../../../hooks/useOrganizationModal';
-import { useGetConnection, useProfile } from '../../../lib/queries';
-
 import { EmptyText } from '~/components/EmptyText';
+import { Header } from '~/components/Header';
 import { Item } from '~/components/Item';
+import { OrganizationModal } from '~/components/OrganizationModal';
+import { ProfileHeader } from '~/components/ProfileHeader';
 import { Container } from '~/components/Ui/Container';
-import { ErrorComponent } from '~/components/Ui/ErrorComponent';
+import { HeadingText } from '~/components/Ui/HeadingText';
 import { LoadingComponent } from '~/components/Ui/LoadingComponent';
-import { useData } from '~/hooks/useData';
+import { api } from '~/convex/_generated/api';
+import { useOrganizationModal } from '~/hooks/useOrganizationModal';
 
 export default function TabOneScreen() {
   const { userId } = useAuth();
-  const { user } = useData();
-  const { data, isError, isPending, refetch } = useProfile(userId);
-
+  const data = useQuery(api.users.getUserByClerkId, { clerkId: userId! });
+  const connections = useQuery(api.users.getUserConnections, { ownerId: data?._id });
   const loaded = !!SecureStore.getItem('loaded');
 
   useEffect(() => {
     if (loaded) return;
     if (!data) return;
 
-    if (!data?.profile?.organizationId && !data?.profile?.workerId) {
+    if (!data?.organizationId && !data?.workerId) {
       onOpen();
     }
-  }, [data?.profile?.organizationId, data?.profile?.workerId, loaded]);
-  const {
-    data: connections,
-    refetch: refetchConnections,
-    isRefetching: isRefetchingConnections,
-    isError: isErrorConnections,
-    isPending: isPendingConnections,
+  }, [data?.organizationId, data?.organizationId, loaded]);
 
-    isPaused: isConnectionsPaused,
-  } = useGetConnection(userId || '');
   SecureStore.setItem('loaded', '1');
   const { onOpen } = useOrganizationModal();
-  const handleRefetch = () => {
-    refetch();
-    refetchConnections();
-  };
 
-  if (isError || isErrorConnections || isConnectionsPaused) {
-    return <ErrorComponent refetch={refetch} />;
-  }
-
-  if (isPending || isPendingConnections) {
+  if (!data || !connections) {
     return <LoadingComponent />;
   }
 
-  const { connections: connectionsData } = connections;
-
-  const firstTen = connectionsData?.slice(0, 10);
+  const firstTen = connections?.slice(0, 10);
 
   return (
     <Container>
@@ -66,10 +45,9 @@ export default function TabOneScreen() {
 
       <Header />
       <ProfileHeader
-        id={user?.id!}
-        avatar={user?.avatar!}
-        name={user?.name!}
-        email={user?.email!}
+        id={data?._id!}
+        avatar={data?.imageUrl!}
+        name={data?.first_name + ' ' + data?.last_name}
       />
 
       <View style={{ marginVertical: 10 }}>
@@ -77,8 +55,6 @@ export default function TabOneScreen() {
       </View>
 
       <FlatList
-        onRefresh={handleRefetch}
-        refreshing={isRefetchingConnections}
         contentContainerStyle={{
           gap: 5,
           paddingBottom: 50,

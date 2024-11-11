@@ -1,5 +1,7 @@
-import { useAuth, useUser } from '@clerk/clerk-expo';
+import { useAuth } from '@clerk/clerk-expo';
 import { Icon } from '@rneui/themed';
+import { useQuery } from 'convex/react';
+import { useLocalSearchParams } from 'expo-router';
 import React from 'react';
 import { Pressable, StyleSheet, View } from 'react-native';
 import { StreamChat } from 'stream-chat';
@@ -10,45 +12,32 @@ import { HeaderNav } from '~/components/HeaderNav';
 import { LogOutSvg } from '~/components/LockSvg';
 import { MiddleCard } from '~/components/LoggedInuser/MiddleCard';
 import { TopCard } from '~/components/LoggedInuser/TopCard';
-import { ErrorComponent } from '~/components/Ui/ErrorComponent';
 import { LoadingComponent } from '~/components/Ui/LoadingComponent';
 import { MyText } from '~/components/Ui/MyText';
 import { OtherLinks } from '~/components/Ui/OtherLinks';
 import { defaultStyle } from '~/constants';
+import { api } from '~/convex/_generated/api';
+import { Id } from '~/convex/_generated/dataModel';
 import { useDarkMode } from '~/hooks/useDarkMode';
-import { useGetConnection, useProfile } from '~/lib/queries';
 
 const chatClient = StreamChat.getInstance(chatApiKey);
 
 const ProfileEdit = () => {
   const { signOut } = useAuth();
-  const { user } = useUser();
+  const { id } = useLocalSearchParams<{ id: string }>();
+  const user = useQuery(api.users.getUserById, { id: id as Id<'users'> });
+  const connections = useQuery(api.users.getUserConnections, { ownerId: id as Id<'users'> });
   const { darkMode } = useDarkMode();
-  const { data, isError, isPending, refetch } = useProfile(user?.id);
-  const {
-    data: connections,
-    isError: isConnectionError,
-    isPending: isPendingConnections,
-    refetch: refetchConnections,
-  } = useGetConnection(user?.id);
 
-  const handleRefetch = async () => {
-    refetch();
-    refetchConnections();
-  };
-  if (isError || isConnectionError) {
-    return <ErrorComponent refetch={handleRefetch} />;
-  }
-  if (isPending || isPendingConnections) {
+  if (!user || !connections) {
     return <LoadingComponent />;
   }
 
   const logout = async () => {
-    chatClient.disconnectUser();
-    signOut();
+    await chatClient.disconnectUser();
+    await signOut();
   };
-  const assignedWk = data.profile?.workerId?.workspaceId ? 1 : 0;
-  const numberOfWorkspace = data.profile?.workspace?.length || 0;
+
   const isDarkMode = darkMode === 'dark';
   return (
     <View
@@ -60,17 +49,14 @@ const ProfileEdit = () => {
         <HeaderNav title="Profile" RightComponent={RightComponent} />
       </View>
       <TopCard
-        id={data.profile?.userId}
-        name={data.profile?.name}
-        image={data.profile?.avatar}
-        ownedWks={numberOfWorkspace}
-        assignedWk={assignedWk}
-        workspaceId={data.profile?.workerId?.id}
+        id={user?._id}
+        name={user?.first_name + ' ' + user?.last_name}
+        image={user?.imageUrl!}
       />
       <View style={{ marginTop: 20, ...defaultStyle }}>
-        <MiddleCard connections={connections?.connections} />
+        <MiddleCard connections={connections} />
       </View>
-      <OtherLinks workerId={data.profile?.workerId?.id?.toString()} />
+      <OtherLinks workerId={user?.workerId} />
       <Pressable
         style={({ pressed }) => ({
           marginTop: 'auto',

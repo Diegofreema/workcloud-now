@@ -1,33 +1,30 @@
-import { useAuth } from '@clerk/clerk-expo';
+import { useQuery } from 'convex/react';
+import { useLocalSearchParams } from 'expo-router';
 
-import { CompleteDialog } from '../../components/Dialogs/SavedDialog';
-import { ProfileUpdateForm } from '../../components/Forms/ProfileUpdateForm';
-import { HeaderNav } from '../../components/HeaderNav';
-import { Container } from '../../components/Ui/Container';
-
-import { ErrorComponent } from '~/components/Ui/ErrorComponent';
+import { CompleteDialog } from '~/components/Dialogs/SavedDialog';
+import { ProfileUpdateForm } from '~/components/Forms/ProfileUpdateForm';
+import { HeaderNav } from '~/components/HeaderNav';
+import { Container } from '~/components/Ui/Container';
 import { LoadingComponent } from '~/components/Ui/LoadingComponent';
-import { useProfile } from '~/lib/queries';
+import { User } from '~/constants/types';
+import { api } from '~/convex/_generated/api';
+import { Id } from '~/convex/_generated/dataModel';
 
 const Edit = () => {
-  const { userId } = useAuth();
-  const { data, isError, isPending, isPaused, refetch } = useProfile(userId);
+  const { id } = useLocalSearchParams<{ id: string }>();
+  const data = useQuery(api.users.getUserById, { id: id as Id<'users'> });
 
-  if (isError || isPaused) {
-    return <ErrorComponent refetch={refetch} />;
-  }
-  if (isPending) {
+  if (!data) {
     return <LoadingComponent />;
   }
 
-  const { profile } = data;
   return (
     <>
       <CompleteDialog text="Changes saved successfully" />
 
       <Container>
         <HeaderNav title="Edit Profile" />
-        <ProfileUpdateForm person={profile} />
+        <ProfileUpdateForm person={data as unknown as User} />
       </Container>
     </>
   );

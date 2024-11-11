@@ -1,27 +1,21 @@
 import { useRouter } from 'expo-router';
 import { Pressable, StyleSheet, View } from 'react-native';
 
-import { colors } from '../../constants/Colors';
 import { HStack } from '../HStack';
 import { MyText } from '../Ui/MyText';
 import { UserPreview } from '../Ui/UserPreview';
 
+import { colors } from '~/constants/Colors';
 import { useDarkMode } from '~/hooks/useDarkMode';
 type Props = {
   id?: string;
   image?: string;
   name?: string | null;
-  ownedWks?: number;
-  assignedWk?: any;
-  workspaceId?: number;
 };
 
 export const TopCard = ({
   image,
   name,
-  ownedWks,
-  assignedWk,
-  workspaceId,
   id,
 }: Props): JSX.Element => {
   const router = useRouter();
@@ -29,7 +23,7 @@ export const TopCard = ({
   const { darkMode } = useDarkMode();
 
   const onEditProfile = () => {
-    router.push('/edit-new');
+    router.push(`/edit-new?id=${id}`);
   };
   return (
     <View style={{ backgroundColor: darkMode === 'dark' ? 'black' : 'white', marginBottom: 20 }}>

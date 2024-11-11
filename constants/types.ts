@@ -1,3 +1,5 @@
+import { Id } from '~/convex/_generated/dataModel';
+
 import { Database } from '~/supabase';
 
 export type connections =
@@ -9,6 +11,38 @@ export type connections =
     }[]
   | null;
 
+export type User = {
+  _id: Id<'users'>;
+  email: string;
+  clerkId: string;
+  imageUrl?: string;
+  first_name?: string;
+  last_name?: string;
+  pushToken: string;
+  organizationId: Id<'organizations'>;
+  workerId: Id<'users'>;
+  phoneNumber: string;
+  date_of_birth: string
+};
+export type Organization = {
+  _id: Id<'organizations'>;
+  avatar: string;
+  category: string;
+  created_at: string;
+  description: string;
+  email: string;
+  end: string;
+  followers?: Id<'users'>[];
+  followersCount: number;
+  location: string;
+  name: string;
+  ownerId: Id<'users'>;
+  start: string;
+  website: string;
+  workDays: string;
+  workspaceCount: number;
+  has_group: boolean;
+};
 export type UserProfile = Database['public']['Tables']['user']['Row'];
 export type TopSearch = Database['public']['Tables']['organization']['Row'];
 export type ServicePoint = Database['public']['Tables']['servicePoint']['Row'];
@@ -16,30 +50,9 @@ export type ServicePointWithOrg = ServicePoint & {
   organizationId: Organization;
 };
 export type Connection = {
-  connectedTo: Org;
-  created_at: string;
-  id: number;
-  owner: string;
-};
-
-export type Organization = {
-  avatar: string;
-  category: string;
-  created_at: string;
-  description: string;
-  email: string;
-  end: string;
-  folllowers: string[];
-  followers: number[];
-  id: number;
-  location: string;
-  name: string;
-  ownerId: Profile | null;
-  start: string;
-  website: string;
-  workDays: string;
-  workspaces: number[];
-  has_group: boolean;
+  id: Id<'connections'>;
+  createdAt: number;
+  organisation: Organization | null;
 };
 
 export type Org = {

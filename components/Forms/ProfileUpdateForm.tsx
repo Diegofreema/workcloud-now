@@ -1,6 +1,5 @@
-import { useUser } from '@clerk/clerk-expo';
 import { FontAwesome } from '@expo/vector-icons';
-import { useQueryClient } from '@tanstack/react-query';
+import { useMutation } from 'convex/react';
 import { Image } from 'expo-image';
 import * as ImagePicker from 'expo-image-picker';
 import { router } from 'expo-router';
@@ -16,9 +15,9 @@ import { MyButton } from '../Ui/MyButton';
 import { MyText } from '../Ui/MyText';
 import VStack from '../Ui/VStack';
 
-import { Profile } from '~/constants/types';
+import { User } from '~/constants/types';
+import { api } from '~/convex/_generated/api';
 import { useDarkMode } from '~/hooks/useDarkMode';
-import { supabase } from '~/lib/supabase';
 
 const validationSchema = yup.object().shape({
   firstName: yup.string().required('First name is required'),
@@ -26,15 +25,26 @@ const validationSchema = yup.object().shape({
   avatar: yup.string().required('Profile image is required'),
   phoneNumber: yup.string(),
 });
-export const ProfileUpdateForm = ({
-  person,
-}: {
-  person: Profile | null | undefined;
-}): JSX.Element => {
-  const { user } = useUser();
-  const queryClient = useQueryClient();
+export const ProfileUpdateForm = ({ person }: { person: User }) => {
   const [loading, setLoading] = useState(false);
+  const updateUser = useMutation(api.users.updateUserById);
+  const generateUploadUrl = useMutation(api.users.generateUploadUrl);
+  // const updateImage = useMutation(api.users.updateImage);
+  const [selectedImage, setSelectedImage] = useState<ImagePicker.ImagePickerAsset | null>(null);
+  const uploadProfilePicture = async () => {
+    const uploadUrl = await generateUploadUrl();
+    if (!selectedImage) return;
+    const response = await fetch(selectedImage?.uri);
+    const blob = await response.blob();
+    const result = await fetch(uploadUrl, {
+      method: 'POST',
+      body: blob,
+      headers: { 'Content-Type': selectedImage.mimeType! },
+    });
+    const { storageId } = await result.json();
 
+    return storageId;
+  };
   const {
     handleSubmit,
     isSubmitting,
@@ -58,35 +68,25 @@ export const ProfileUpdateForm = ({
       const { firstName, lastName, phoneNumber } = values;
 
       try {
-        user?.update({
-          firstName,
-          lastName,
-          primaryPhoneNumberId: phoneNumber,
-        });
-
-        const { error } = await supabase
-          .from('user')
-          .update({
-            avatar: user?.imageUrl,
-            name: `${firstName} ${lastName}`,
+        if (selectedImage) {
+          const storageId = await uploadProfilePicture();
+          await updateUser({
+            first_name: firstName,
+            last_name: lastName,
             phoneNumber,
-          })
-          .eq('userId', user?.id!);
-
-        if (!error) {
-          toast.success('Profile updated successfully');
-
-          resetForm();
-          router.back();
-          queryClient.invalidateQueries({
-            queryKey: ['profile'],
+            _id: person._id,
+            imageUrl: storageId,
+          });
+        } else {
+          await updateUser({
+            first_name: firstName,
+            last_name: lastName,
+            phoneNumber,
+            _id: person._id,
           });
         }
-
-        if (error) {
-          console.log(JSON.stringify(error, null, 2), 'Error');
-          toast.error('Error updating profile');
-        }
+        resetForm();
+        router.back();
       } catch (error: any) {
         toast.error('Error updating profile');
 
@@ -99,39 +99,27 @@ export const ProfileUpdateForm = ({
 
   useEffect(() => {
     if (person) {
-      setFieldValue('firstName', person.name.split(' ')[0]);
-      setFieldValue('lastName', person.name.split(' ')[1]);
-      setFieldValue('email', person.email);
-      setFieldValue('date_of_birth', person.birthday);
+      setFieldValue('firstName', person?.first_name);
+      setFieldValue('lastName', person?.last_name);
+      setFieldValue('email', person?.email);
+      setFieldValue('date_of_birth', person.date_of_birth);
       setFieldValue('phoneNumber', person.phoneNumber);
-      setFieldValue('avatar', person.avatar);
+      setFieldValue('avatar', person.imageUrl);
       setFieldValue('phoneNumber', person.phoneNumber);
     }
   }, [person]);
 
   const pickImageAsync = async () => {
+    setLoading(true);
     const result = await ImagePicker.launchImageLibraryAsync({
+      mediaTypes: ImagePicker.MediaTypeOptions.Images,
       allowsEditing: true,
-      quality: 0.75,
-      base64: true,
+      aspect: [4, 3],
     });
-
-    // Save image if not cancelled
     if (!result.canceled) {
-      const base64Image = `data:image/png;base64,${result.assets[0].base64}`;
-      try {
-        setLoading(true);
-        user?.setProfileImage({ file: base64Image });
-      } catch (error) {
-        console.log(JSON.stringify(error, null, 1));
-
-        toast.error('Something went wrong', {
-          description: 'Failed to upload image',
-        });
-      } finally {
-        setLoading(false);
-      }
+      setSelectedImage(result.assets[0]);
     }
+    setLoading(false);
   };
 
   if (!person) return <LoadingComponent />;
@@ -148,7 +136,7 @@ export const ProfileUpdateForm = ({
           <Image
             contentFit="cover"
             style={{ width: 100, height: 100, borderRadius: 50 }}
-            source={{ uri: user?.imageUrl }}
+            source={{ uri: selectedImage?.uri || person.imageUrl }}
           />
 
           {loading ? (

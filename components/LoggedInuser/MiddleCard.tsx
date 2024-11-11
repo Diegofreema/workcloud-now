@@ -5,9 +5,9 @@ import { FlatList, Pressable, View } from 'react-native';
 import { EmptyText } from '../EmptyText';
 import { HeadingText } from '../Ui/HeadingText';
 
-import { ConnectionType } from '~/constants/types';
+import { Connection } from '~/constants/types';
 
-export const MiddleCard = ({ connections }: { connections: ConnectionType[] }): JSX.Element => {
+export const MiddleCard = ({ connections }: { connections: Connection[] }): JSX.Element => {
   const firstSix = (connections?.length && connections?.slice(0, 6)) || [];
   return (
     <View>
@@ -33,14 +33,14 @@ export const MiddleCard = ({ connections }: { connections: ConnectionType[] }): 
   );
 };
 
-const Images = ({ item }: { item: ConnectionType }) => {
+const Images = ({ item }: { item: Connection }) => {
   const router = useRouter();
   const startChannel = async () => {
-    router.push(`/reception/${item?.connectedTo?.id}`);
+    router.push(`/reception/${item?.organisation?._id}`);
   };
   return (
     <Pressable onPress={startChannel}>
-      <Avatar rounded size={70} source={{ uri: item?.connectedTo?.avatar }} />
+      <Avatar rounded size={70} source={{ uri: item?.organisation?.avatar }} />
     </Pressable>
   );
 };
