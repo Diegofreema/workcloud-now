@@ -118,3 +118,18 @@ export const updateImage = mutation({
     });
   },
 });
+
+export const createWorkerProfile = mutation({
+  args: {
+    userId: v.id('users'),
+    experience: v.string(),
+    location: v.string(),
+    skills: v.string(),
+    gender: v.string(),
+    email: v.string(),
+    qualifications: v.string(),
+  },
+  handler: async (ctx, args) => {
+    await ctx.db.insert('workers', { ...args });
+  },
+});

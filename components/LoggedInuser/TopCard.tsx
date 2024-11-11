@@ -13,11 +13,7 @@ type Props = {
   name?: string | null;
 };
 
-export const TopCard = ({
-  image,
-  name,
-  id,
-}: Props): JSX.Element => {
+export const TopCard = ({ image, name, id }: Props): JSX.Element => {
   const router = useRouter();
 
   const { darkMode } = useDarkMode();

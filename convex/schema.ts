@@ -37,14 +37,15 @@ export const Worker = {
   userId: v.id('users'),
   experience: v.string(),
   location: v.string(),
-  organizationId: v.id('organizations'),
+  organizationId: v.optional(v.id('organizations')),
   qualifications: v.string(),
-  servicePointId: v.id('servicePoints'),
+  servicePointId: v.optional(v.id('servicePoints')),
   skills: v.string(),
-  workspaceId: v.id('workspaces'),
-  role: v.string(),
-  bossId: v.id('users'),
+  workspaceId: v.optional(v.id('workspaces')),
+  role: v.optional(v.string()),
+  bossId: v.optional(v.id('users')),
   gender: v.string(),
+  email: v.string(),
 };
 
 export const Workspace = {

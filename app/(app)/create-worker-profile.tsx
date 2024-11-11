@@ -1,25 +1,26 @@
 import { useUser } from '@clerk/clerk-expo';
 import { Text } from '@rneui/themed';
-import { useQueryClient } from '@tanstack/react-query';
+import { useMutation } from 'convex/react';
 import { useRouter } from 'expo-router';
 import { useFormik } from 'formik';
 import React, { useEffect } from 'react';
-import { Alert, ScrollView, StyleSheet, View } from 'react-native';
+import { ScrollView, StyleSheet, View } from 'react-native';
 import { SelectList } from 'react-native-dropdown-select-list';
 import { toast } from 'sonner-native';
 import * as yup from 'yup';
 
-import { AuthHeader } from '../../components/AuthHeader';
-import { AuthTitle } from '../../components/AuthTitle';
-import { InputComponent } from '../../components/InputComponent';
-import { fontFamily } from '../../constants';
-import { colors } from '../../constants/Colors';
-import { useDarkMode } from '../../hooks/useDarkMode';
-
+import { AuthHeader } from '~/components/AuthHeader';
+import { AuthTitle } from '~/components/AuthTitle';
+import { InputComponent } from '~/components/InputComponent';
 import { Container } from '~/components/Ui/Container';
 import { MyButton } from '~/components/Ui/MyButton';
 import { MyText } from '~/components/Ui/MyText';
-import { supabase } from '~/lib/supabase';
+import { fontFamily } from '~/constants';
+import { colors } from '~/constants/Colors';
+import { api } from '~/convex/_generated/api';
+import { Id } from '~/convex/_generated/dataModel';
+import { useDarkMode } from '~/hooks/useDarkMode';
+import { useGetUserId } from '~/hooks/useGetUserId';
 
 const validationSchema = yup.object().shape({
   email: yup.string().email('Invalid email').required('Email is required'),
@@ -45,14 +46,13 @@ const genders = [
 const CreateProfile = () => {
   const { darkMode } = useDarkMode();
   const { user } = useUser();
-
-  const queryClient = useQueryClient();
+  const id = useGetUserId(user?.id!);
   const router = useRouter();
+  const createWorkerProfile = useMutation(api.users.createWorkerProfile);
 
   const {
     values,
     handleChange,
-
     handleSubmit,
     isSubmitting,
     errors,
@@ -61,75 +61,30 @@ const CreateProfile = () => {
     resetForm,
   } = useFormik({
     initialValues: {
-      email: user?.emailAddresses[0].emailAddress,
+      email: user?.emailAddresses[0].emailAddress as string,
       location: '',
       gender: '',
       skills: '',
       experience: '',
-      userId: user?.id,
+      userId: id as Id<'users'>,
       qualifications: '',
     },
     validationSchema,
     onSubmit: async (values) => {
-      const {
-        experience,
-
-        location,
-        skills,
-        userId,
-
-        gender,
-
-        qualifications,
-      } = values;
-
+      if (!values.userId)
+        return toast.error('Something went wrong', {
+          description: 'User ID is required',
+        });
       try {
-        const { data, error } = await supabase
-          .from('worker')
-          .insert({
-            userId,
-            skills,
-            experience,
-            location,
-            gender,
-            qualifications,
-          })
-          .select()
-          .single();
-        if (!error) {
-          const { error: err } = await supabase
-            .from('user')
-            .update({
-              workerId: data.id,
-            })
-            .eq('userId', user?.id!);
-          if (!err) {
-            toast.success('Welcome  onboard', {
-              description: `${user?.firstName} your work profile was created`,
-            });
-            queryClient.invalidateQueries({ queryKey: ['profile'] });
+        await createWorkerProfile(values);
+        toast.success('Welcome  onboard', {
+          description: `${user?.firstName} your work profile was created`,
+        });
 
-            router.replace(`/myWorkerProfile/${user?.id}`);
-            resetForm();
-          }
-          if (err) {
-            Alert.alert('Error', 'Failed to create profile');
-
-            toast.error('Error, failed to create profile', {
-              description: 'Please try again',
-            });
-          }
-        }
-
-        if (error) {
-          console.log(error);
-
-          toast.error('Error, failed to create profile', {
-            description: 'Please try again',
-          });
-        }
+        router.replace(`/myWorkerProfile/${id}`);
+        resetForm();
       } catch (error: any) {
-        toast.error(error?.response?.data.error, {
+        toast.error('Something went wrong', {
           description: 'Please try again',
         });
         console.log(error, 'Error');
@@ -265,10 +220,8 @@ const CreateProfile = () => {
               loading={isSubmitting}
               onPress={() => handleSubmit()}
               color={colors.buttonBlue}
-              style={{ borderRadius: 5 }}
               textColor="white"
-              contentStyle={{ borderRadius: 2 }}
-              buttonStyle={{ height: 60 }}
+              buttonStyle={{ height: 60 , width: 200, borderRadius: 5}}
               labelStyle={{ fontFamily: fontFamily.Medium, fontSize: 14 }}>
               {isSubmitting ? 'Submitting...' : 'Submit'}
             </MyButton>
