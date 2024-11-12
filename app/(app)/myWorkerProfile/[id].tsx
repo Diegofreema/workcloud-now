@@ -1,5 +1,6 @@
 import { useAuth } from '@clerk/clerk-expo';
 import { AntDesign, EvilIcons, MaterialCommunityIcons, SimpleLineIcons } from '@expo/vector-icons';
+import { useQuery } from 'convex/react';
 import { format } from 'date-fns';
 import { useRouter } from 'expo-router';
 import React from 'react';
@@ -8,43 +9,39 @@ import { ScrollView, View } from 'react-native';
 import { HStack } from '~/components/HStack';
 import { HeaderNav } from '~/components/HeaderNav';
 import { Container } from '~/components/Ui/Container';
-import { ErrorComponent } from '~/components/Ui/ErrorComponent';
 import { LoadingComponent } from '~/components/Ui/LoadingComponent';
 import { MyButton } from '~/components/Ui/MyButton';
 import { MyText } from '~/components/Ui/MyText';
 import { UserPreview } from '~/components/Ui/UserPreview';
 import VStack from '~/components/Ui/VStack';
 import { colors } from '~/constants/Colors';
+import { api } from '~/convex/_generated/api';
+import { Id } from '~/convex/_generated/dataModel';
 import { useDarkMode } from '~/hooks/useDarkMode';
-import { useGetWorkerProfile } from '~/lib/queries';
+import { useGetUserId } from '~/hooks/useGetUserId';
 
 const Profile = () => {
-  const { userId: id } = useAuth();
-
+  const { userId } = useAuth();
+  const { id } = useGetUserId(userId!);
+  const data = useQuery(api.users.getWorkerProfileWithUser, { id: id as Id<'users'> });
   const { darkMode } = useDarkMode();
-
+  console.log({ user: data?.user });
   const router = useRouter();
-  const { data, isPaused, isPending, isError, refetch, isRefetchError } = useGetWorkerProfile(id);
 
-  if (isError || isRefetchError || isPaused) {
-    return <ErrorComponent refetch={refetch} />;
-  }
-
-  if (isPending) {
+  if (!data) {
     return <LoadingComponent />;
   }
 
-  const { worker } = data;
   const formattedSkills = (text: string) => {
     const arrayOfSkills = text.split(',');
-    const finishedText = arrayOfSkills.map((skill, index) => (
+
+    return arrayOfSkills.map((skill, index) => (
       <View key={index} style={{ width: '100%' }}>
         <MyText poppins="Bold" style={{ color: colors.nine }}>
           {index + 1}. {skill}
         </MyText>
       </View>
     ));
-    return finishedText;
   };
 
   return (
@@ -56,10 +53,10 @@ const Profile = () => {
         <HeaderNav title="Profile" />
         <View style={{ marginTop: 10, marginBottom: 20 }}>
           <UserPreview
-            imageUrl={worker?.userId?.avatar}
-            name={worker?.userId?.name}
-            roleText={worker?.role}
-            workPlace={worker?.organizationId?.name}
+            imageUrl={data?.user.imageUrl!}
+            name={data?.user?.first_name + ' ' + data?.user?.last_name}
+            roleText={data?.role}
+            workPlace={data?.organization?.name!}
             personal
           />
         </View>
@@ -68,13 +65,13 @@ const Profile = () => {
           <HStack gap={5} alignItems="center">
             <AntDesign name="calendar" size={24} color={colors.grayText} />
             <MyText fontSize={12} poppins="Medium" style={{ color: colors.grayText }}>
-              Joined since {format(worker?.created_at, 'do MMMM yyyy')}
+              Joined since {format(data?._creationTime, 'do MMMM yyyy')}
             </MyText>
           </HStack>
           <HStack gap={5} alignItems="center" mb={10}>
             <EvilIcons name="location" size={24} color={colors.grayText} />
             <MyText fontSize={12} poppins="Medium" style={{ color: colors.grayText }}>
-              {worker?.location}
+              {data?.location}
             </MyText>
           </HStack>
         </VStack>
@@ -95,7 +92,7 @@ const Profile = () => {
               color={darkMode === 'dark' ? 'white' : 'black'}
             />
             <MyText poppins="Medium" fontSize={12}>
-              {worker?.qualifications}
+              {data?.qualifications}
             </MyText>
           </HStack>
         </VStack>
@@ -115,7 +112,7 @@ const Profile = () => {
               color={darkMode === 'dark' ? 'white' : 'black'}
             />
             <MyText poppins="Medium" fontSize={12}>
-              {worker?.experience}
+              {data?.experience}
             </MyText>
           </HStack>
         </VStack>
@@ -133,13 +130,13 @@ const Profile = () => {
             />
 
             <VStack gap={5} alignItems="flex-start">
-              {formattedSkills(worker?.skills)}
+              {formattedSkills(data?.skills)}
             </VStack>
           </HStack>
         </VStack>
         <View style={{ marginTop: 'auto', gap: 10 }}>
-          <MyButton onPress={() => router.push(`/myWorkerProfile/edit/${id}`)}>
-            <MyText poppins="Bold" style={{ color: colors.white }} fontSize={12}>
+          <MyButton onPress={() => router.push(`/myWorkerProfile/edit/${id}`)} buttonStyle={{width: 250, borderRadius: 7}}>
+            <MyText poppins="Bold" style={{ color: colors.white,  }} fontSize={12}>
               Edit work profile
             </MyText>
           </MyButton>

@@ -2,7 +2,7 @@ import { useAuth } from '@clerk/clerk-expo';
 import { FontAwesome } from '@expo/vector-icons';
 import DateTimePicker from '@react-native-community/datetimepicker';
 import { Button } from '@rneui/themed';
-import { useQueryClient } from '@tanstack/react-query';
+import { useMutation } from 'convex/react';
 import { format } from 'date-fns';
 import { Image } from 'expo-image';
 import * as ImagePicker from 'expo-image-picker';
@@ -14,19 +14,20 @@ import { SelectList } from 'react-native-dropdown-select-list';
 import { toast } from 'sonner-native';
 import * as yup from 'yup';
 
-import { AuthHeader } from '../../components/AuthHeader';
-import { AuthTitle } from '../../components/AuthTitle';
-import { InputComponent } from '../../components/InputComponent';
-import { Subtitle } from '../../components/Subtitle';
-import { days } from '../../constants';
-import { colors } from '../../constants/Colors';
-import { useDarkMode } from '../../hooks/useDarkMode';
-import { supabase } from '../../lib/supabase';
-
+import { AuthHeader } from '~/components/AuthHeader';
+import { AuthTitle } from '~/components/AuthTitle';
+import { InputComponent } from '~/components/InputComponent';
+import { Subtitle } from '~/components/Subtitle';
 import { Container } from '~/components/Ui/Container';
 import { MyText } from '~/components/Ui/MyText';
+import { days } from '~/constants';
+import { colors } from '~/constants/Colors';
+import { api } from '~/convex/_generated/api';
+import { Id } from '~/convex/_generated/dataModel';
+import { useDarkMode } from '~/hooks/useDarkMode';
 import { useGetCat } from '~/hooks/useGetCat';
-import { onDeleteImage } from '~/lib/helper';
+import { useGetUserId } from '~/hooks/useGetUserId';
+import { uploadProfilePicture } from '~/lib/helper';
 
 const validationSchema = yup.object().shape({
   organizationName: yup.string().required('Name of organization is required'),
@@ -40,80 +41,30 @@ const validationSchema = yup.object().shape({
   websiteUrl: yup.string().required('Website link is required'),
   email: yup.string().email('Invalid email').required('Email is required'),
   image: yup.string().required('Logo is required'),
-  logoId: yup.string(),
 });
 
 const CreateWorkSpace = () => {
   const [startTime, setStartTime] = useState(new Date(1598051730000));
   const cat = useGetCat((state) => state.cat);
+  const generateUploadUrl = useMutation(api.users.generateUploadUrl);
+  const createOrganization = useMutation(api.organisation.createOrganization);
+  const updateUserTableWithOrganizationId = useMutation(
+    api.organisation.updateUserTableWithOrganizationId
+  );
   const [endTime, setEndTime] = useState(new Date(1598051730000));
   const [avatar, setAvatar] = useState<string>('https://placehold.co/100x100');
-  const [path, setPath] = useState<string>('');
-  const { userId: id } = useAuth();
+  const [selectedImage, setSelectedImage] = useState<ImagePicker.ImagePickerAsset | null>(null);
+
+  const { userId } = useAuth();
+  const { id } = useGetUserId(userId!);
   const [show, setShow] = useState(false);
   const [show2, setShow2] = useState(false);
   const { darkMode } = useDarkMode();
   const router = useRouter();
 
-  const queryClient = useQueryClient();
-
-  const onSelectImage = async () => {
-    const options: ImagePicker.ImagePickerOptions = {
-      mediaTypes: ImagePicker.MediaTypeOptions.Images,
-      allowsEditing: true,
-      base64: true,
-      quality: 0.5,
-    };
-
-    const result = await ImagePicker.launchImageLibraryAsync(options);
-
-    if (!result.canceled) {
-      const image = result.assets[0];
-
-      const arraybuffer = await fetch(image.uri).then((res) => res.arrayBuffer());
-
-      const fileExt = image.uri?.split('.').pop()?.toLowerCase() ?? 'jpeg';
-      const path = `${Date.now()}.${fileExt}`;
-      try {
-        const { data, error: uploadError } = await supabase.storage
-          .from('avatars/logo')
-          .upload(path, arraybuffer, {
-            contentType: image.mimeType ?? 'image/jpeg',
-          });
-
-        if (uploadError) {
-          toast.error('Something went wrong', {
-            description: uploadError.message,
-          });
-        }
-
-        if (!uploadError) {
-          setPath(data?.path);
-
-          setAvatar(
-            // @ts-ignore
-            `https://mckkhgmxgjwjgxwssrfo.supabase.co/storage/v1/object/public/${data?.fullPath}`
-          );
-          setValues({
-            ...values,
-            // @ts-ignore
-            image: `https://mckkhgmxgjwjgxwssrfo.supabase.co/storage/v1/object/public/${data.fullPath}`,
-          });
-        }
-      } catch (error) {
-        console.log(error);
-
-        toast.error('Something went wrong', {
-          description: 'Failed to upload image',
-        });
-      }
-    }
-  };
-
   const {
     values,
     handleChange,
-
     handleSubmit,
     isSubmitting,
     errors,
@@ -133,65 +84,58 @@ const CreateWorkSpace = () => {
       startTime: '',
       endTime: '',
       image: '',
-      logoId: '',
     },
     validationSchema,
     onSubmit: async (values) => {
-      const { data, error } = await supabase
-        .from('organization')
-        .insert({
-          name: values.organizationName,
-          category: values.category,
-          description: values.description,
-          avatar: values.image,
+      if (!id) return;
+
+      try {
+        const storageId: Id<'_storage'> = await uploadProfilePicture(
+          selectedImage,
+          generateUploadUrl
+        );
+        const organizationId = await createOrganization({
+          ...values,
           ownerId: id,
-          email: values.email,
-          location: values.location,
-          start: values.startTime,
+          avatar: storageId,
           end: values.endTime,
+          name: values.organizationName,
+          start: values.startTime,
           website: values.websiteUrl,
           workDays: values.startDay + ' - ' + values.endDay,
-          logoId: values.logoId,
-        })
-        .select()
-        .single();
+        });
 
-      if (!error) {
-        const { error: err } = await supabase
-          .from('user')
-          .update({
-            organizationId: data?.id,
-          })
-          .eq('userId', id!);
-        if (!err) {
-          queryClient.invalidateQueries({
-            queryKey: ['organizations'],
-          });
-          queryClient.invalidateQueries({
-            queryKey: ['organization'],
-          });
-          queryClient.invalidateQueries({
-            queryKey: ['profile'],
+        if (organizationId) {
+          await updateUserTableWithOrganizationId({ userId: id, organizationId });
+          router.replace(`/my-org`);
+          toast.success('Success', {
+            description: 'Organization has been created successfully',
           });
           resetForm();
-          toast.success('Success', {
-            description: 'Organization created successfully',
-          });
-
-          router.replace(`/my-org`);
         }
-      }
-
-      if (error) {
-        console.log(error);
-
+      } catch (e) {
+        console.log(e);
         toast.error('Something went wrong', {
           description: "Couldn't create organization",
         });
       }
     },
   });
-
+  const onSelectImage = async () => {
+    const result = await ImagePicker.launchImageLibraryAsync({
+      mediaTypes: ImagePicker.MediaTypeOptions.Images,
+      allowsEditing: true,
+      aspect: [4, 3],
+    });
+    if (!result.canceled) {
+      const imgUrl = result.assets[0];
+      setSelectedImage(imgUrl);
+      await setValues({
+        ...values,
+        image: imgUrl?.uri,
+      });
+    }
+  };
   useEffect(() => {
     if (cat) {
       setValues({ ...values, category: cat });
@@ -215,13 +159,11 @@ const CreateWorkSpace = () => {
   const showMode2 = () => {
     setShow2(true);
   };
-  console.log(path);
+
   // ! to fix later
   const handleDeleteImage = () => {
     setValues({ ...values, image: '' });
     setAvatar('https://placehold.co/100x100');
-    onDeleteImage(`logo/${path}`);
-    console.log('deleted');
   };
   const { email, category, location, organizationName, description, websiteUrl } = values;
 
@@ -255,7 +197,7 @@ const CreateWorkSpace = () => {
                 <Image
                   contentFit="cover"
                   style={{ width: 100, height: 100, borderRadius: 50 }}
-                  source={{ uri: avatar }}
+                  source={{ uri: selectedImage?.uri || avatar }}
                 />
                 {!values.image && (
                   <TouchableOpacity
@@ -384,12 +326,14 @@ const CreateWorkSpace = () => {
                   ...styles2.border,
                   justifyContent: 'flex-start',
                   width: '100%',
+                  alignItems: 'center',
                 }}
                 inputStyles={{
                   textAlign: 'left',
                   fontSize: 14,
                   borderWidth: 0,
                   width: '100%',
+                  paddingRight: 10,
                 }}
                 fontFamily="PoppinsMedium"
                 setSelected={handleChange('startDay')}
@@ -409,6 +353,7 @@ const CreateWorkSpace = () => {
                   justifyContent: 'flex-start',
                   backgroundColor: '#E9E9E9',
                   width: '100%',
+                  alignItems: 'center',
                 }}
                 dropdownTextStyles={{
                   color: darkMode === 'dark' ? 'white' : 'black',

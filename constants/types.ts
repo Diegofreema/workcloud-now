@@ -1,5 +1,4 @@
 import { Id } from '~/convex/_generated/dataModel';
-
 import { Database } from '~/supabase';
 
 export type connections =
@@ -22,11 +21,11 @@ export type User = {
   organizationId: Id<'organizations'>;
   workerId: Id<'users'>;
   phoneNumber: string;
-  date_of_birth: string
+  date_of_birth: string;
 };
 export type Organization = {
-  _id: Id<'organizations'>;
-  avatar: string;
+  _id: Id<'organizations'> | undefined;
+  avatar: string | null;
   category: string;
   created_at: string;
   description: string;
@@ -42,6 +41,24 @@ export type Organization = {
   workDays: string;
   workspaceCount: number;
   has_group: boolean;
+};
+
+export type WorkSpace = {
+  _id: Id<'workspaces'>;
+  organization: Organization;
+  active: boolean;
+  leisure: boolean;
+  organizationId: Id<'organizations'>;
+  ownerId: Id<'users'>;
+  responsibility: string;
+  salary: string;
+  waitlistCount: number;
+  role: string;
+  workerId: Id<'users'>;
+  servicePointId: Id<'servicePoints'>;
+  locked: boolean;
+  signedIn: boolean;
+  personal: boolean;
 };
 export type UserProfile = Database['public']['Tables']['user']['Row'];
 export type TopSearch = Database['public']['Tables']['organization']['Row'];
@@ -138,17 +155,20 @@ export type Profile = {
 };
 
 export type Wks = {
+  _id: Id<'workspaces'>;
   active: boolean;
-  created_at: string;
-  id: number;
   leisure: boolean;
-  organizationId: number;
-  ownerId: number;
+  organizationId: Id<'organizations'>;
+  ownerId: Id<'users'>;
   responsibility: string;
   salary: string;
-  waitlist: number[];
+  waitlistCount: number;
   role: string;
-  workerId: string;
+  workerId: Id<'users'>;
+  servicePointId: Id<'servicePoints'>;
+  locked: boolean;
+  signedIn: boolean;
+  personal: boolean;
 };
 
 export type Workers = {

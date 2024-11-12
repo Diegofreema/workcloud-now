@@ -1,73 +1,55 @@
 import { useAuth } from '@clerk/clerk-expo';
+import { convexQuery } from '@convex-dev/react-query';
 import { EvilIcons } from '@expo/vector-icons';
+import { useQuery } from '@tanstack/react-query';
 import { Image } from 'expo-image';
 import * as Linking from 'expo-linking';
 import { router } from 'expo-router';
 import React from 'react';
 import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 
-import { ErrorComponent } from '../../components/Ui/ErrorComponent';
-import { LoadingComponent } from '../../components/Ui/LoadingComponent';
-import { colors } from '../../constants/Colors';
-import { useCreate } from '../../hooks/useCreate';
-import { useDarkMode } from '../../hooks/useDarkMode';
-import { useGetPersonalWk, usePersonalOrgs, useProfile } from '../../lib/queries';
-
 import { AuthHeader } from '~/components/AuthHeader';
 import { CreateWorkspaceModal } from '~/components/Dialogs/CreateWorkspace';
 import { DeleteWksSpaceModal } from '~/components/Dialogs/DeleteWks';
 import { SelectRow } from '~/components/Dialogs/SelectRow';
 import { Container } from '~/components/Ui/Container';
+import { ErrorComponent } from '~/components/Ui/ErrorComponent';
+import { LoadingComponent } from '~/components/Ui/LoadingComponent';
 import { MyText } from '~/components/Ui/MyText';
 import { WorkspaceDetails } from '~/components/WorkspaceDetails';
+import { colors } from '~/constants/Colors';
+import { api } from '~/convex/_generated/api';
+import { Id } from '~/convex/_generated/dataModel';
+import { useCreate } from '~/hooks/useCreate';
+import { useDarkMode } from '~/hooks/useDarkMode';
+import { useGetUserId } from '~/hooks/useGetUserId';
 
 const MyOrg = () => {
-  const { userId: id } = useAuth();
-
-  const {
-    data: profileData,
-    isError: isErrorData,
-    isPending: isPendingData,
-    refetch: refetchData,
-  } = useProfile(id);
+  const { userId } = useAuth();
+  const { id } = useGetUserId(userId!);
+  const { data, isPending, isError, refetch } = useQuery(
+    convexQuery(api.organisation.getOrganizationWithOwnerAndWorkspaces, {
+      ownerId: id as Id<'users'>,
+    })
+  );
 
   const { onOpen } = useCreate();
   const { darkMode } = useDarkMode();
 
-  const { data, isPending, error, refetch, isPaused } = usePersonalOrgs(id);
-
-  const {
-    data: workspaces,
-    isPending: isPendingWks,
-    isError,
-    isPaused: isPausedWks,
-  } = useGetPersonalWk(id);
-
-  const handleRefetch = () => {
-    refetch();
-    refetchData();
-  };
-
-  if (error || isError || isPaused || isPausedWks || isErrorData) {
-    return <ErrorComponent refetch={handleRefetch} />;
+  if (isError) {
+    return <ErrorComponent refetch={refetch()} />;
   }
-  if (isPending || isPendingWks || isPendingData) {
+  if (isPending) {
     return <LoadingComponent />;
   }
 
-  const { organizations } = data;
-
-  const { wks } = workspaces;
-  const { profile } = profileData;
-  const organization = organizations[0];
-
-  const startDay = organization?.workDays?.split('-')[0];
-  const endDay = organization?.workDays?.split('-')[1];
+  const startDay = data?.workDays?.split('-')[0];
+  const endDay = data?.workDays?.split('-')[1];
 
   return (
     <Container>
-      <CreateWorkspaceModal workspace={wks} />
-      <SelectRow organizationId={organization?.id} profile={profile} />
+      <CreateWorkspaceModal workspace={data?.workspaces!} />
+      <SelectRow organizationId={data?._id!} profile={data?.owner!} />
       <DeleteWksSpaceModal />
       <AuthHeader style={{ alignItems: 'center' }} path="Manage Organizations" />
       <ScrollView showsVerticalScrollIndicator={false} style={{ flex: 1 }}>
@@ -81,7 +63,7 @@ const MyOrg = () => {
             <Image
               style={{ width: 70, height: 70, borderRadius: 50 }}
               contentFit="cover"
-              source={{ uri: organization?.avatar }}
+              source={{ uri: data?.avatar! }}
             />
             <View>
               <Text
@@ -91,7 +73,7 @@ const MyOrg = () => {
                   fontSize: 14,
                   color: darkMode === 'dark' ? colors.white : colors.black,
                 }}>
-                {organization?.name}
+                {data?.name}
               </Text>
               <Text
                 style={{
@@ -99,11 +81,11 @@ const MyOrg = () => {
                   fontSize: 10,
                   color: darkMode === 'dark' ? colors.white : colors.black,
                 }}>
-                {organization?.ownerId?.name} | Admin
+                {data?.owner?.first_name} | Admin
               </Text>
             </View>
           </View>
-          {id === organization?.ownerId?.userId && (
+          {id === data?.owner?._id && (
             <Pressable
               style={({ pressed }) => ({
                 padding: 5,
@@ -115,7 +97,7 @@ const MyOrg = () => {
                 justifyContent: 'center',
                 alignItems: 'center',
               })}
-              onPress={() => router.push(`/(app)/(organization)/edit/${organization?.id}`)}>
+              onPress={() => router.push(`/(app)/(organization)/edit/${data?._id}`)}>
               <MyText poppins="Medium" fontSize={14} style={{ color: 'white' }}>
                 Edit
               </MyText>
@@ -134,7 +116,7 @@ const MyOrg = () => {
             style={{
               fontSize: 13,
             }}>
-            {organization?.description}
+            {data?.description}
           </MyText>
           <View
             style={{
@@ -166,7 +148,7 @@ const MyOrg = () => {
                     fontFamily: 'PoppinsBold',
                     fontSize: 10,
                   }}>
-                  {organization?.start}
+                  {data?.start}
                 </Text>
               </View>
               <Text style={{ marginBottom: 8 }}> — </Text>
@@ -183,7 +165,7 @@ const MyOrg = () => {
                     fontFamily: 'PoppinsBold',
                     fontSize: 10,
                   }}>
-                  {organization?.end}
+                  {data?.end}
                 </Text>
               </View>
             </View>
@@ -194,16 +176,16 @@ const MyOrg = () => {
             gap: 10,
             marginTop: 15,
           }}>
-          <OrganizationItems name="envelope" text={organization?.email} />
-          <OrganizationItems name="location" text={organization?.location} />
-          <OrganizationItems name="link" text={organization?.website} website />
+          <OrganizationItems name="envelope" text={data?.email} />
+          <OrganizationItems name="location" text={data?.location} />
+          <OrganizationItems name="link" text={data?.website} website />
           <Text
             style={{
               fontFamily: 'PoppinsBold',
               fontSize: 12,
               color: darkMode === 'dark' ? colors.white : colors.black,
             }}>
-            Members {organization?.followers?.length || 0}
+            Members {data?.followers?.length || 0}
           </Text>
         </View>
         <View>
@@ -238,14 +220,14 @@ const MyOrg = () => {
             name="Staffs"
           />
           <WorkspaceDetails
-            onPress={() => router.push(`/(atabs)/messages`)}
+            onPress={() => router.push(`/(tabs)/messages`)}
             darkMode={darkMode}
             uri={require('~/assets/images/message.png')}
             name="Messages"
           />
 
           <WorkspaceDetails
-            onPress={() => router.push(`/posts/${organization?.id}`)}
+            onPress={() => router.push(`/posts/${data?._id}`)}
             darkMode={darkMode}
             uri={require('~/assets/images/post.png')}
             name="Posts"
@@ -259,7 +241,7 @@ const MyOrg = () => {
             alignItems: 'center',
           }}>
           <WorkspaceDetails
-            onPress={() => router.push(`/services?id=${organization?.id}`)}
+            onPress={() => router.push(`/services?id=${data?._id}`)}
             darkMode={darkMode}
             uri={require('~/assets/images/service.png')}
             name="Service point"

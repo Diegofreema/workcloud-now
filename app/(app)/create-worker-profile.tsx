@@ -46,10 +46,10 @@ const genders = [
 const CreateProfile = () => {
   const { darkMode } = useDarkMode();
   const { user } = useUser();
-  const id = useGetUserId(user?.id!);
+  const { id } = useGetUserId(user?.id!);
   const router = useRouter();
   const createWorkerProfile = useMutation(api.users.createWorkerProfile);
-
+  const updateWorkerIdOnUserTable = useMutation(api.users.updateWorkerIdOnUserTable);
   const {
     values,
     handleChange,
@@ -76,7 +76,10 @@ const CreateProfile = () => {
           description: 'User ID is required',
         });
       try {
-        await createWorkerProfile(values);
+        const workerId = await createWorkerProfile(values);
+        if (workerId && id) {
+          await updateWorkerIdOnUserTable({ workerId, _id: id });
+        }
         toast.success('Welcome  onboard', {
           description: `${user?.firstName} your work profile was created`,
         });
@@ -121,6 +124,7 @@ const CreateProfile = () => {
                 keyboardType="default"
                 numberOfLines={5}
                 multiline
+                textarea
               />
               <MyText poppins="Medium" fontSize={15}>
                 {experience.length}/{max}
@@ -221,7 +225,7 @@ const CreateProfile = () => {
               onPress={() => handleSubmit()}
               color={colors.buttonBlue}
               textColor="white"
-              buttonStyle={{ height: 60 , width: 200, borderRadius: 5}}
+              buttonStyle={{ height: 60, width: 200, borderRadius: 5 }}
               labelStyle={{ fontFamily: fontFamily.Medium, fontSize: 14 }}>
               {isSubmitting ? 'Submitting...' : 'Submit'}
             </MyButton>

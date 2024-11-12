@@ -4,17 +4,17 @@ import React from 'react';
 import { StyleSheet, Pressable, View } from 'react-native';
 import Modal from 'react-native-modal';
 
-import { colors } from '../../constants/Colors';
-import { useCreate } from '../../hooks/useCreate';
-import { useSelectRow } from '../../hooks/useSelectRow';
 import { EmptyText } from '../EmptyText';
 import { HStack } from '../HStack';
 import { DottedButton } from '../Ui/DottedButton';
 import { MyText } from '../Ui/MyText';
 
+import { colors } from '~/constants/Colors';
 import { Wks } from '~/constants/types';
+import { useCreate } from '~/hooks/useCreate';
 import { useDarkMode } from '~/hooks/useDarkMode';
 import { useDeleteWks } from '~/hooks/useDeleteWks';
+import { useSelectRow } from '~/hooks/useSelectRow';
 
 export const CreateWorkspaceModal = ({ workspace }: { workspace: Wks }) => {
   const { isOpen, onClose } = useCreate();
@@ -35,8 +35,7 @@ export const CreateWorkspaceModal = ({ workspace }: { workspace: Wks }) => {
 
   const handlePress = (item: Wks) => {
     onClose();
-
-    router.push(`/wk/${item.id}`);
+    router.push(`/wk/${item._id}`);
   };
   return (
     <View>
@@ -69,9 +68,9 @@ export const CreateWorkspaceModal = ({ workspace }: { workspace: Wks }) => {
             />
           </Pressable>
 
-          {!workspace?.id && <DottedButton onPress={handleClose} text="Create personal WKS" />}
+          {!workspace?._id && <DottedButton onPress={handleClose} text="Create personal WKS" />}
           <View style={{ marginTop: 20, width: '100%' }}>
-            {workspace?.id && (
+            {workspace?._id && (
               <Pressable onPress={() => handlePress(workspace)}>
                 <HStack justifyContent="space-between" alignItems="center" mb={15} mx={5}>
                   <MyText fontSize={13} poppins="Medium">
@@ -79,13 +78,13 @@ export const CreateWorkspaceModal = ({ workspace }: { workspace: Wks }) => {
                   </MyText>
                   <Pressable
                     style={({ pressed }) => [styles.trash, { opacity: pressed ? 0.5 : 1 }]}
-                    onPress={() => onDelete(workspace?.id)}>
+                    onPress={() => onDelete(workspace?._id)}>
                     <EvilIcons name="trash" size={24} color={colors.closeTextColor} />
                   </Pressable>
                 </HStack>
               </Pressable>
             )}
-            {!workspace?.id && <EmptyText text="No personal WKS" />}
+            {!workspace?._id && <EmptyText text="No personal WKS" />}
           </View>
         </View>
       </Modal>

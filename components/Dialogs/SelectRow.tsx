@@ -8,14 +8,15 @@ import { FlatList, Pressable, StyleSheet, View } from 'react-native';
 import Modal from 'react-native-modal';
 import { toast } from 'sonner-native';
 
-import { colors } from '../../constants/Colors';
-import { useSelectRow } from '../../hooks/useSelectRow';
-import { supabase } from '../../lib/supabase';
 import { HStack } from '../HStack';
 import { MyText } from '../Ui/MyText';
 
-import { Profile } from '~/constants/types';
+import { colors } from '~/constants/Colors';
+import { User } from '~/constants/types';
+import { Id } from '~/convex/_generated/dataModel';
 import { useDarkMode } from '~/hooks/useDarkMode';
+import { useSelectRow } from '~/hooks/useSelectRow';
+import { useGetUserId } from "~/hooks/useGetUserId";
 
 const roles = [
   'Manager',
@@ -59,17 +60,17 @@ export const SelectRow = ({
   organizationId,
   profile,
 }: {
-  organizationId: number;
-  profile: Profile;
+  organizationId: Id<'organizations'>;
+  profile: User;
 }) => {
   const { isOpen, onClose } = useSelectRow();
   const queryClient = useQueryClient();
   const router = useRouter();
   const { darkMode } = useDarkMode();
-  const { userId: id } = useAuth();
-
+  const { userId } = useAuth();
+  const { id } = useGetUserId(userId!);
   const createWorkspace = async (role: string) => {
-    if (!profile?.workerId?.id) {
+    if (!profile?.workerId) {
       toast.info('Failed to create workspace', {
         description: "Please create a worker's profile first",
       });
@@ -77,48 +78,7 @@ export const SelectRow = ({
       return;
     }
     try {
-      const { data, error } = await supabase
-        .from('workspace')
-        .insert({
-          role,
-          ownerId: id,
-          organizationId,
-          workerId: profile?.workerId?.userId.toString(),
-          personal: true,
-          locked: false,
-        })
-        .select()
-        .single();
-
-      if (!error) {
-        const { error: err } = await supabase
-          .from('worker')
-          .update({
-            workspaceId: data?.id,
-            organizationId: profile?.organizationId?.id,
-          })
-          .eq('userId', id!);
-        if (!err) {
-          toast.success('Workspace created successfully');
-
-          queryClient.invalidateQueries({ queryKey: ['personal', id] });
-        }
-
-        if (err) {
-          console.log(err);
-
-          toast.error('Something went wrong', {
-            description: 'Please try again later',
-          });
-        }
-      }
-      if (error) {
-        console.log(error, 'error');
-
-        toast.error('Something went wrong', {
-          description: 'Please try again later',
-        });
-      }
+      // to create personal workspace then updated organization and user table
     } catch (error) {
       console.log(error);
       toast.error('Something went wrong', {

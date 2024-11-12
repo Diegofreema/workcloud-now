@@ -1,9 +1,9 @@
-import { useUser } from '@clerk/clerk-expo';
-import { useQueryClient } from '@tanstack/react-query';
+import { useAuth } from '@clerk/clerk-expo';
+import { useMutation, useQuery } from 'convex/react';
 import { useRouter } from 'expo-router';
 import { useFormik } from 'formik';
 import React, { useEffect } from 'react';
-import { View, ScrollView, StyleSheet, Text } from 'react-native';
+import { ScrollView, StyleSheet, Text, View } from 'react-native';
 import { SelectList } from 'react-native-dropdown-select-list';
 import { toast } from 'sonner-native';
 import * as yup from 'yup';
@@ -12,14 +12,14 @@ import { AuthHeader } from '~/components/AuthHeader';
 import { AuthTitle } from '~/components/AuthTitle';
 import { InputComponent } from '~/components/InputComponent';
 import { Container } from '~/components/Ui/Container';
-import { ErrorComponent } from '~/components/Ui/ErrorComponent';
 import { LoadingComponent } from '~/components/Ui/LoadingComponent';
 import { MyButton } from '~/components/Ui/MyButton';
 import { MyText } from '~/components/Ui/MyText';
 import { colors } from '~/constants/Colors';
+import { api } from '~/convex/_generated/api';
+import { Id } from '~/convex/_generated/dataModel';
 import { useDarkMode } from '~/hooks/useDarkMode';
-import { useGetWorkerProfile } from '~/lib/queries';
-import { supabase } from '~/lib/supabase';
+import { useGetUserId } from '~/hooks/useGetUserId';
 
 const validationSchema = yup.object().shape({
   gender: yup.string().required('Gender is required'),
@@ -43,60 +43,35 @@ const genders = [
 const CreateProfile = () => {
   const { darkMode } = useDarkMode();
 
-  const { user } = useUser();
-  const { data, isPaused, isPending, isError, refetch, isRefetchError } = useGetWorkerProfile(
-    user?.id
-  );
-  const queryClient = useQueryClient();
+  const { userId } = useAuth();
+  const { id } = useGetUserId(userId!);
+  const data = useQuery(api.users.getWorkerProfileWithUser, { id: id as Id<'users'> });
+  const updateWorkerProfile = useMutation(api.users.updateWorkerProfile);
   const router = useRouter();
 
-  const {
-    values,
-    handleChange,
+  const { values, handleChange, handleSubmit, isSubmitting, errors, touched, setValues } =
+    useFormik({
+      initialValues: {
+        location: '',
+        gender: '',
+        skills: '',
+        experience: '',
+        qualifications: '',
+      },
+      validationSchema,
+      onSubmit: async (values) => {
+        try {
+          if (!data?._id) return;
+          await updateWorkerProfile({ _id: data?._id, ...values });
 
-    handleSubmit,
-    isSubmitting,
-    errors,
-    touched,
-    setValues,
-  } = useFormik({
-    initialValues: {
-      location: '',
-      gender: '',
-      skills: '',
-      experience: '',
-      qualifications: '',
-    },
-    validationSchema,
-    onSubmit: async (values) => {
-      const { experience, location, skills, gender, qualifications } = values;
-
-      try {
-        const { error } = await supabase
-          .from('worker')
-          .update({
-            experience,
-            location,
-            skills,
-            gender,
-            qualifications,
-          })
-          .eq('userId', user?.id!);
-        toast.success(`${user?.firstName} your work profile has been updated`);
-        queryClient.invalidateQueries({ queryKey: ['worker'] });
-        if (error) {
-          console.log(error);
-
-          toast.error('Something went wrong');
+          toast.success(`${data?.user?.first_name} your work profile has been updated`);
+          router.back();
+        } catch (error: any) {
+          toast.error(error?.response?.data.error);
+          console.log(error, 'Error');
         }
-
-        router.back();
-      } catch (error: any) {
-        toast.error(error?.response?.data.error);
-        console.log(error, 'Error');
-      }
-    },
-  });
+      },
+    });
   const { gender, location, experience, skills, qualifications } = values;
   useEffect(() => {
     if (experience.length > 150) {
@@ -105,23 +80,18 @@ const CreateProfile = () => {
   }, [experience]);
 
   useEffect(() => {
-    if (data?.worker) {
-      const { worker } = data;
+    if (data) {
       setValues({
-        experience: worker?.experience as string,
-        gender: worker?.gender as string,
-        location: worker?.location as string,
-        qualifications: worker?.qualifications as string,
-        skills: worker?.skills as string,
+        experience: data?.experience as string,
+        gender: data?.gender as string,
+        location: data?.location as string,
+        qualifications: data?.qualifications as string,
+        skills: data?.skills as string,
       });
     }
   }, [data]);
 
-  if (isError || isRefetchError || isPaused) {
-    return <ErrorComponent refetch={refetch} />;
-  }
-
-  if (isPending) {
+  if (!data) {
     return <LoadingComponent />;
   }
   return (
@@ -218,7 +188,7 @@ const CreateProfile = () => {
                   ...styles2.border,
                   justifyContent: 'flex-start',
                   borderWidth: 0,
-                  height: 50,
+                  height: 60,
                 }}
                 inputStyles={{ textAlign: 'left', borderWidth: 0 }}
                 fontFamily="PoppinsMedium"
@@ -243,7 +213,8 @@ const CreateProfile = () => {
               onPress={() => handleSubmit()}
               buttonColor={colors.buttonBlue}
               textColor="white"
-              contentStyle={{ height: 50 }}>
+              contentStyle={{ height: 50 }}
+              buttonStyle={{ width: 250, borderRadius: 7 }}>
               {isSubmitting ? 'Submitting...' : 'Submit'}
             </MyButton>
           </View>
@@ -263,5 +234,8 @@ const styles2 = StyleSheet.create({
     justifyContent: 'center',
     borderBottomWidth: 1,
     borderBottomColor: '#DADADA',
+    alignItems: 'center',
+    marginHorizontal: 10,
+    borderRadius: 5,
   },
 });

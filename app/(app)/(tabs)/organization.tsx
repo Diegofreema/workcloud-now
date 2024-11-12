@@ -1,55 +1,53 @@
 import { useUser } from '@clerk/clerk-expo';
+import { convexQuery } from '@convex-dev/react-query';
 import { FontAwesome } from '@expo/vector-icons';
 import { Avatar } from '@rneui/themed';
+import { useQuery } from '@tanstack/react-query';
 import { router } from 'expo-router';
 import React from 'react';
-import { FlatList, Pressable, View } from 'react-native';
+import { Pressable, View } from 'react-native';
 import { toast } from 'sonner-native';
 
-import { EmptyText } from '../../../components/EmptyText';
-import { ErrorComponent } from '../../../components/Ui/ErrorComponent';
-import { LoadingComponent } from '../../../components/Ui/LoadingComponent';
-import { WorkCloudHeader } from '../../../components/WorkCloudHeader';
-import { WorkspaceItem } from '../../../components/WorkspaceItem';
-import { useDarkMode } from '../../../hooks/useDarkMode';
-import { useOtherOrgs, usePersonalOrgs } from '../../../lib/queries';
-
+import { EmptyText } from '~/components/EmptyText';
 import { HStack } from '~/components/HStack';
 import { Container } from '~/components/Ui/Container';
+import { ErrorComponent } from '~/components/Ui/ErrorComponent';
+import { LoadingComponent } from '~/components/Ui/LoadingComponent';
 import { MyText } from '~/components/Ui/MyText';
 import VStack from '~/components/Ui/VStack';
+import { WorkCloudHeader } from '~/components/WorkCloudHeader';
+import { WorkspaceItem } from '~/components/WorkspaceItem';
 import { colors } from '~/constants/Colors';
-import { WK } from '~/constants/types';
+import { WorkSpace } from '~/constants/types';
+import { api } from '~/convex/_generated/api';
+import { useDarkMode } from '~/hooks/useDarkMode';
+import { useGetUserId } from '~/hooks/useGetUserId';
 
 const Organization = () => {
   const { user } = useUser();
-  const { data, isPending, refetch, isError, isPaused, error } = usePersonalOrgs(user?.id);
+  const { id } = useGetUserId(user?.id!);
+  const { data, isPending, isError, refetch } = useQuery(
+    convexQuery(api.organisation.getOrganisationsOrNull, { ownerId: id! })
+  );
   const { darkMode } = useDarkMode();
   const {
-    data: otherOrgs,
-    isPending: isPendingOther,
-    refetch: refetchOther,
-    isError: isErrorOther,
-    isPaused: isPausedOther,
-    isRefetching,
-  } = useOtherOrgs(user?.id);
+    data: workspace,
+    isPending: isPendingWorkspace,
+    isError: isErrorWorkspace,
+    refetch: refetchWorkspace,
+  } = useQuery(convexQuery(api.workspaces.getUserWorkspaceOrNull, { workerId: id! }));
 
   const handleRefetch = () => {
     refetch();
-    refetchOther();
+    refetchWorkspace();
   };
-  if (error) {
-    console.log(error.name, error.message);
-  }
-  if (isError || isPaused || isPausedOther || isErrorOther) {
+
+  if (isError || isErrorWorkspace) {
     return <ErrorComponent refetch={handleRefetch} />;
   }
-  if (isPending || isPendingOther) {
+  if (isPending || isPendingWorkspace) {
     return <LoadingComponent />;
   }
-
-  const { organizations } = data;
-  const organization = organizations[0];
 
   return (
     <Container>
@@ -68,16 +66,16 @@ const Organization = () => {
         </Pressable>
       </View>
       <View style={{ marginVertical: 14 }}>
-        {!data.organizations.length ? (
+        {!data?._id ? (
           <WorkCloudHeader />
         ) : (
           <View style={{ gap: 15 }}>
-            <WorkspaceItem item={organization} onPress={() => router.push(`/my-org`)} />
+            <WorkspaceItem item={data} onPress={() => router.push(`/my-org`)} />
           </View>
         )}
       </View>
 
-      <View style={{ marginTop: data === null ? 20 : 0 }}>
+      <View style={{ marginTop: !data ? 20 : 0 }}>
         <MyText
           style={{
             fontSize: 13,
@@ -86,17 +84,12 @@ const Organization = () => {
           Assigned workspace
         </MyText>
 
-        <FlatList
-          data={otherOrgs?.workspace}
-          renderItem={({ item }) => <Workspace item={item} />}
-          keyExtractor={(item) => item.id.toString()}
-          ItemSeparatorComponent={() => <View style={{ height: 10 }} />}
-          onRefresh={handleRefetch}
-          refreshing={isRefetching}
-          showsVerticalScrollIndicator={false}
-          ListEmptyComponent={() => <EmptyText text="No assigned workspace yet" />}
-          contentContainerStyle={{ paddingBottom: 50 }}
-        />
+        {workspace?._id ? (
+          // @ts-ignore
+          <Workspace item={workspace} />
+        ) : (
+          <EmptyText text="No assigned workspace yet" />
+        )}
       </View>
     </Container>
   );
@@ -104,9 +97,7 @@ const Organization = () => {
 
 export default Organization;
 
-const Workspace = ({ item }: { item: WK }) => {
-  console.log(item.id, item.locked);
-
+const Workspace = ({ item }: { item: WorkSpace }) => {
   const handlePress = () => {
     if (item?.locked) {
       toast('This workspace is locked', {
@@ -114,10 +105,10 @@ const Workspace = ({ item }: { item: WK }) => {
       });
       return;
     }
-    router.replace(`/wk/${item?.id}`);
+    router.replace(`/wk/${item?._id}`);
   };
 
-  const imgUrl = item?.personal ? item?.ownerId?.avatar : item?.organizationId?.avatar;
+  // const imgUrl = item?.personal ? item?.ownerId?.avatar : item?.organizationId?.avatar;
 
   return (
     <Pressable
@@ -128,7 +119,7 @@ const Workspace = ({ item }: { item: WK }) => {
         justifyContent: 'space-between',
       }}>
       <HStack gap={10} alignItems="center">
-        <Avatar rounded source={{ uri: imgUrl }} size={50} />
+        <Avatar rounded source={{ uri: item.organization?.avatar! }} size={50} />
         <VStack>
           <MyText poppins="Bold" style={{ fontSize: 13 }}>
             {item?.role}

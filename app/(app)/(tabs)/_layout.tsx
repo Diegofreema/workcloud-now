@@ -2,11 +2,11 @@ import FontAwesome from '@expo/vector-icons/FontAwesome';
 import { Badge, Text } from '@rneui/themed';
 import { Tabs } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
+import React from 'react';
 import { View } from 'react-native';
 
-import { fontFamily } from '../../../constants';
-import { colors } from '../../../constants/Colors';
-
+import { fontFamily } from '~/constants';
+import { colors } from '~/constants/Colors';
 import { useDarkMode } from '~/hooks/useDarkMode';
 import { useUnread } from '~/hooks/useUnread';
 
@@ -76,6 +76,7 @@ export default function TabLayout() {
         <Tabs.Screen
           name="messages"
           options={{
+            href: null,
             title: 'Messages',
             tabBarIcon: ({ focused, size }) => (
               <View>

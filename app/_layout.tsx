@@ -3,6 +3,8 @@ import FontAwesome from '@expo/vector-icons/FontAwesome';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { ConvexReactClient } from 'convex/react';
 import { ConvexProviderWithClerk } from 'convex/react-clerk';
+import { ConvexQueryClient } from "@convex-dev/react-query";
+
 import { useFonts } from 'expo-font';
 import { Slot, usePathname, useRouter, useSegments } from 'expo-router';
 import * as SecureStore from 'expo-secure-store';
@@ -21,6 +23,17 @@ import { useDarkMode } from '~/hooks/useDarkMode';
 const convex = new ConvexReactClient(process.env.EXPO_PUBLIC_CONVEX_URL!, {
   unsavedChangesWarning: false,
 });
+const convexQueryClient = new ConvexQueryClient(convex);
+
+const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: {
+      queryKeyHashFn: convexQueryClient.hashFn(),
+      queryFn: convexQueryClient.queryFn(),
+    },
+  },
+});
+convexQueryClient.connect(queryClient);
 const tokenCache = {
   async getToken(key: string) {
     try {
@@ -45,7 +58,7 @@ const tokenCache = {
     }
   },
 };
-const queryClient = new QueryClient();
+
 SplashScreen.preventAutoHideAsync();
 
 const InitialRouteLayout = () => {

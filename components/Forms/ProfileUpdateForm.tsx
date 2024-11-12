@@ -18,6 +18,7 @@ import VStack from '../Ui/VStack';
 import { User } from '~/constants/types';
 import { api } from '~/convex/_generated/api';
 import { useDarkMode } from '~/hooks/useDarkMode';
+import { uploadProfilePicture } from '~/lib/helper';
 
 const validationSchema = yup.object().shape({
   firstName: yup.string().required('First name is required'),
@@ -31,20 +32,7 @@ export const ProfileUpdateForm = ({ person }: { person: User }) => {
   const generateUploadUrl = useMutation(api.users.generateUploadUrl);
   // const updateImage = useMutation(api.users.updateImage);
   const [selectedImage, setSelectedImage] = useState<ImagePicker.ImagePickerAsset | null>(null);
-  const uploadProfilePicture = async () => {
-    const uploadUrl = await generateUploadUrl();
-    if (!selectedImage) return;
-    const response = await fetch(selectedImage?.uri);
-    const blob = await response.blob();
-    const result = await fetch(uploadUrl, {
-      method: 'POST',
-      body: blob,
-      headers: { 'Content-Type': selectedImage.mimeType! },
-    });
-    const { storageId } = await result.json();
 
-    return storageId;
-  };
   const {
     handleSubmit,
     isSubmitting,
@@ -69,7 +57,7 @@ export const ProfileUpdateForm = ({ person }: { person: User }) => {
 
       try {
         if (selectedImage) {
-          const storageId = await uploadProfilePicture();
+          const storageId = await uploadProfilePicture(selectedImage, generateUploadUrl);
           await updateUser({
             first_name: firstName,
             last_name: lastName,

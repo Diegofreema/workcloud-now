@@ -15,9 +15,8 @@ export const User = {
 };
 
 export const Organization = {
-  avatar: v.string(),
+  avatar: v.id('_storage'),
   category: v.string(),
-  created_at: v.string(),
   description: v.string(),
   email: v.string(),
   end: v.string(),
@@ -87,7 +86,9 @@ export default defineSchema({
   users: defineTable(User),
   organizations: defineTable(Organization),
   workers: defineTable(Worker),
-  workspaces: defineTable(Workspace),
+  workspaces: defineTable(Workspace)
+    .index('workspace', ['organizationId', 'ownerId'])
+    .index('personal', ['organizationId', 'personal']),
   connections: defineTable(Connection),
   waitlists: defineTable(WaitList),
   servicePoints: defineTable(ServicePoints),

@@ -5,6 +5,7 @@ import { toast } from 'sonner-native';
 
 import { supabase } from './supabase';
 import { Org } from '../constants/types';
+import { ImagePickerAsset } from "expo-image-picker";
 
 const queryClient = new QueryClient();
 type User = {
@@ -256,4 +257,20 @@ export const trimText = (text: string, maxLength: number = 20) => {
   }
 
   return text;
+};
+
+
+export const uploadProfilePicture = async (selectedImage: ImagePickerAsset | null, generateUploadUrl: any) => {
+  const uploadUrl = await generateUploadUrl();
+  if (!selectedImage) return;
+  const response = await fetch(selectedImage?.uri);
+  const blob = await response.blob();
+  const result = await fetch(uploadUrl, {
+    method: 'POST',
+    body: blob,
+    headers: { 'Content-Type': selectedImage.mimeType! },
+  });
+  const { storageId } = await result.json();
+
+  return storageId;
 };
