@@ -6,6 +6,7 @@ import { toast } from 'sonner-native';
 import { supabase } from './supabase';
 import { Org } from '../constants/types';
 import { ImagePickerAsset } from "expo-image-picker";
+import { parse } from "date-fns";
 
 const queryClient = new QueryClient();
 type User = {
@@ -274,3 +275,13 @@ export const uploadProfilePicture = async (selectedImage: ImagePickerAsset | nul
 
   return storageId;
 };
+
+export function convertTimeToDateTime(timeString: string) {
+  // Use current date as base, then parse the time
+  const currentDate = new Date();
+  return parse(
+    `${currentDate.toISOString().split('T')[0]} ${timeString}`,
+    'yyyy-MM-dd HH:mm',
+    currentDate
+  );
+}

@@ -88,7 +88,7 @@ const CreateWorkSpace = () => {
     validationSchema,
     onSubmit: async (values) => {
       if (!id) return;
-      const { startDay, endDay, endTime, startTime, image, organizationName, ...rest } = values;
+
       try {
         const storageId: Id<'_storage'> = await uploadProfilePicture(
           selectedImage,

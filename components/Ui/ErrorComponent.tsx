@@ -1,9 +1,9 @@
-import { useState } from 'react';
 import { Text, View } from 'react-native';
 
 import { MyButton } from './MyButton';
-import { defaultStyle } from '../../constants/index';
-import { useDarkMode } from '../../hooks/useDarkMode';
+
+import { defaultStyle } from '~/constants';
+import { useDarkMode } from '~/hooks/useDarkMode';
 
 type Props = {
   refetch: any;
@@ -11,9 +11,8 @@ type Props = {
 
 export const ErrorComponent = ({ refetch }: Props): JSX.Element => {
   const { darkMode } = useDarkMode();
-  const [error, setError] = useState(false);
+
   const handleRefetch = () => {
-    setError((prev) => !prev);
     refetch();
   };
   return (
@@ -35,7 +34,9 @@ export const ErrorComponent = ({ refetch }: Props): JSX.Element => {
         }}>
         Something went wrong, please try again
       </Text>
-      <MyButton onPress={handleRefetch}>Retry</MyButton>
+      <MyButton onPress={handleRefetch} buttonStyle={{ width: 200 }}>
+        Retry
+      </MyButton>
     </View>
   );
 };

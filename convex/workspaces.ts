@@ -1,7 +1,7 @@
 import { v } from 'convex/values';
 
-import { query, QueryCtx } from '~/convex/_generated/server';
 import { Id } from '~/convex/_generated/dataModel';
+import { query, QueryCtx } from '~/convex/_generated/server';
 
 export const getUserWorkspaceOrNull = query({
   args: { workerId: v.id('users') },
@@ -23,7 +23,10 @@ export const getUserWorkspaceOrNull = query({
 const organisationByWorkSpaceId = async (ctx: QueryCtx, organizationId: Id<'organizations'>) => {
   const organization = await ctx.db.get(organizationId);
   if (!organization || !organization.avatar) return null;
-  const avatar = await ctx.storage.getUrl(organization.avatar);
+  if (organization.avatar.startsWith('https')) {
+    return organization;
+  }
+  const avatar = await ctx.storage.getUrl(organization.avatar as Id<'_storage'>);
   return {
     ...organization,
     avatar,

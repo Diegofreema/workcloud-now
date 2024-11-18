@@ -12,11 +12,11 @@ import { HStack } from '../HStack';
 import { MyText } from '../Ui/MyText';
 
 import { colors } from '~/constants/Colors';
-import { User } from '~/constants/types';
+import { OwnerType } from '~/constants/types';
 import { Id } from '~/convex/_generated/dataModel';
 import { useDarkMode } from '~/hooks/useDarkMode';
+import { useGetUserId } from '~/hooks/useGetUserId';
 import { useSelectRow } from '~/hooks/useSelectRow';
-import { useGetUserId } from "~/hooks/useGetUserId";
 
 const roles = [
   'Manager',
@@ -61,7 +61,7 @@ export const SelectRow = ({
   profile,
 }: {
   organizationId: Id<'organizations'>;
-  profile: User;
+  profile: OwnerType;
 }) => {
   const { isOpen, onClose } = useSelectRow();
   const queryClient = useQueryClient();

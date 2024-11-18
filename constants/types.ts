@@ -9,7 +9,18 @@ export type connections =
       time: string;
     }[]
   | null;
-
+export type OwnerType = {
+  clerkId: string;
+  email: string;
+  first_name?: string;
+  imageUrl?: string | null;
+  last_name?: string;
+  organizationId?: string;
+  phoneNumber?: string;
+  workerId?: Id<'workers'>;
+  _creationTime: number;
+  _id: Id<'users'>;
+};
 export type User = {
   _id: Id<'users'>;
   email: string;
@@ -17,9 +28,9 @@ export type User = {
   imageUrl?: string;
   first_name?: string;
   last_name?: string;
-  pushToken: string;
-  organizationId: Id<'organizations'>;
-  workerId: Id<'users'>;
+  pushToken?: string;
+  organizationId?: Id<'organizations'>;
+  workerId?: Id<'users'>;
   phoneNumber: string;
   date_of_birth: string;
 };

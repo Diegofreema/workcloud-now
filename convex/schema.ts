@@ -15,7 +15,7 @@ export const User = {
 };
 
 export const Organization = {
-  avatar: v.id('_storage'),
+  avatar: v.union(v.id('_storage'), v.string()),
   category: v.string(),
   description: v.string(),
   email: v.string(),

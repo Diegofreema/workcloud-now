@@ -27,12 +27,12 @@ import { useGetUserId } from '~/hooks/useGetUserId';
 const MyOrg = () => {
   const { userId } = useAuth();
   const { id } = useGetUserId(userId!);
-  const { data, isPending, isError, refetch } = useQuery(
+  const { data, isPending, isError, refetch , error} = useQuery(
     convexQuery(api.organisation.getOrganizationWithOwnerAndWorkspaces, {
       ownerId: id as Id<'users'>,
     })
   );
-
+  console.log(error);
   const { onOpen } = useCreate();
   const { darkMode } = useDarkMode();
 
@@ -64,6 +64,8 @@ const MyOrg = () => {
               style={{ width: 70, height: 70, borderRadius: 50 }}
               contentFit="cover"
               source={{ uri: data?.avatar! }}
+              placeholder={require('~/assets/images/boy.png')}
+              placeholderContentFit="cover"
             />
             <View>
               <Text

@@ -1,6 +1,8 @@
 /* eslint-disable prettier/prettier */
 
+import { Input } from "@rneui/themed";
 import { router } from 'expo-router';
+import { useMemo, useState } from "react";
 import { FlatList, Text } from 'react-native';
 
 import { MyText } from './Ui/MyText';
@@ -87,19 +89,25 @@ const data = [
 
 export const CategoryFlatList = (): JSX.Element => {
   const { darkMode } = useDarkMode();
+  const [selected, setSelected] = useState('');
   const setCat = useGetCat((state) => state.setCat);
   const onPress = (text: string) => {
     setCat(text);
     router.back();
   };
+  const filteredCats = useMemo(() => {if(selected.length === 0) return data;
+    return data.filter(cat => cat.toLowerCase().includes(selected.toLowerCase()));
+  }, [selected,data]);
   return (
+  <>
+    <Input placeholder="Search" onChangeText={setSelected} value={selected} />
     <FlatList
       ListHeaderComponent={() => (
         <MyText poppins="Bold" fontSize={20}>
           Select a category
         </MyText>
       )}
-      data={data}
+      data={filteredCats}
       renderItem={({ item }) => (
         <Text
           onPress={() => onPress(item)}
@@ -114,5 +122,6 @@ export const CategoryFlatList = (): JSX.Element => {
       showsVerticalScrollIndicator={false}
       contentContainerStyle={{ gap: 15, paddingVertical: 10 }}
     />
+  </>
   );
 };

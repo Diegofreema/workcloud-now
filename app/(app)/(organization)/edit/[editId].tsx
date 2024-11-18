@@ -1,7 +1,9 @@
+import { convexQuery } from '@convex-dev/react-query';
 import { FontAwesome } from '@expo/vector-icons';
 import DateTimePicker from '@react-native-community/datetimepicker';
-import { useQueryClient } from '@tanstack/react-query';
-import { format, parse } from 'date-fns';
+import { useQuery } from '@tanstack/react-query';
+import { useMutation } from 'convex/react';
+import { format } from 'date-fns';
 import { Image } from 'expo-image';
 import * as ImagePicker from 'expo-image-picker';
 import { useLocalSearchParams, useRouter } from 'expo-router';
@@ -12,20 +14,20 @@ import { SelectList } from 'react-native-dropdown-select-list';
 import { toast } from 'sonner-native';
 import * as yup from 'yup';
 
-import { AuthHeader } from '../../../../components/AuthHeader';
-import { InputComponent } from '../../../../components/InputComponent';
-import { days } from '../../../../constants';
-import { colors } from '../../../../constants/Colors';
-import { useDarkMode } from '../../../../hooks/useDarkMode';
-
+import { AuthHeader } from '~/components/AuthHeader';
+import { InputComponent } from '~/components/InputComponent';
 import { Container } from '~/components/Ui/Container';
 import { ErrorComponent } from '~/components/Ui/ErrorComponent';
 import { LoadingComponent } from '~/components/Ui/LoadingComponent';
 import { MyButton } from '~/components/Ui/MyButton';
 import { MyText } from '~/components/Ui/MyText';
+import { days } from '~/constants';
+import { colors } from '~/constants/Colors';
+import { api } from '~/convex/_generated/api';
+import { Id } from '~/convex/_generated/dataModel';
+import { useDarkMode } from '~/hooks/useDarkMode';
 import { useGetCat } from '~/hooks/useGetCat';
-import { onDeleteImage } from '~/lib/helper';
-import { supabase } from '~/lib/supabase';
+import { convertTimeToDateTime, uploadProfilePicture } from '~/lib/helper';
 
 const validationSchema = yup.object().shape({
   organizationName: yup.string().required('Name of organization is required'),
@@ -42,72 +44,65 @@ const validationSchema = yup.object().shape({
 });
 
 const Edit = () => {
+  const { editId } = useLocalSearchParams<{ editId: Id<'organizations'> }>();
+  const { data, isPending, isError, refetch } = useQuery(
+    convexQuery(api.organisation.getOrganisationById, { organisationId: editId! })
+  );
+  const [selectedImage, setSelectedImage] = useState<ImagePicker.ImagePickerAsset | null>(null);
+  const generateUploadUrl = useMutation(api.users.generateUploadUrl);
+  const updateOrganization = useMutation(api.organisation.updateOrganization);
   const [start, setStartTime] = useState(new Date(1598051730000));
   const [end, setEndTime] = useState(new Date(1598051730000));
-  const [error, setError] = useState(false);
-  // const [organization, setOrganization] = useState();
 
-  const [isLoading, setIsLoading] = useState(true);
-  const { editId } = useLocalSearchParams<{ editId: string; id: string }>();
-  const [path, setPath] = useState('');
   const [show, setShow] = useState(false);
   const [show2, setShow2] = useState(false);
-  const [orgId, setOrgId] = useState('');
+
   const { darkMode } = useDarkMode();
   const cat = useGetCat((state) => state.cat);
   const router = useRouter();
 
-  const queryClient = useQueryClient();
-
   const onSelectImage = async () => {
-    const options: ImagePicker.ImagePickerOptions = {
+    const result = await ImagePicker.launchImageLibraryAsync({
       mediaTypes: ImagePicker.MediaTypeOptions.Images,
       allowsEditing: true,
-      base64: true,
-    };
-
-    const result = await ImagePicker.launchImageLibraryAsync(options);
-
-    // Save image if not cancelled
+      aspect: [4, 3],
+    });
     if (!result.canceled) {
-      const image = result.assets[0];
-
-      const arraybuffer = await fetch(image.uri).then((res) => res.arrayBuffer());
-
-      const fileExt = image.uri?.split('.').pop()?.toLowerCase() ?? 'jpeg';
-      const path = `${Date.now()}.${fileExt}`;
-      try {
-        const { data, error: uploadError } = await supabase.storage
-          .from('avatars/logo')
-          .upload(path, arraybuffer, {
-            contentType: image.mimeType ?? 'image/jpeg',
-          });
-
-        if (uploadError) {
-          throw uploadError.message;
-        }
-
-        if (!uploadError) {
-          setPath(data?.path);
-
-          setValues({
-            ...values,
-            // @ts-ignore
-            image: `https://mckkhgmxgjwjgxwssrfo.supabase.co/storage/v1/object/public/${data.fullPath}`,
-          });
-        }
-      } catch (error) {
-        console.log(error);
-
-        toast.error('Failed to upload image');
-      }
+      const imgUrl = result.assets[0];
+      setSelectedImage(imgUrl);
+      await setValues({
+        ...values,
+        image: imgUrl?.uri,
+      });
     }
   };
-
+  const startDay = data?.workDays?.split('-')?.[0]?.trim() || '';
+  const endDay = data?.workDays?.split('-')?.[1]?.trim() || '';
+  useEffect(() => {
+    if (data) {
+      setValues({
+        ...values,
+        email: data?.email!,
+        category: data?.category!,
+        location: data?.location!,
+        organizationName: data?.name!,
+        description: data?.description!,
+        websiteUrl: data?.website!,
+        startTime: data?.start!,
+        endTime: data?.end!,
+        image: data?.avatar!,
+        startDay,
+        endDay,
+      });
+      const start = convertTimeToDateTime(data.start);
+      const end = convertTimeToDateTime(data.end);
+      setStartTime(new Date(start));
+      setEndTime(new Date(end));
+    }
+  }, [data]);
   const {
     values,
     handleChange,
-
     handleSubmit,
     isSubmitting,
     errors,
@@ -116,103 +111,71 @@ const Edit = () => {
     setValues,
   } = useFormik({
     initialValues: {
-      email: '',
-      organizationName: '',
-      category: '',
-      startDay: '',
-      endDay: '',
-      description: '',
-      location: '',
-      websiteUrl: '',
-      startTime: '',
-      endTime: '',
-      image: '',
+      email: data?.email || '',
+      organizationName: data?.name || '',
+      category: data?.category || '',
+      startDay,
+      endDay,
+      description: data?.description || '',
+      location: data?.location || '',
+      websiteUrl: data?.website || '',
+      startTime: data?.start || '',
+      endTime: data?.end || '',
+      image: data?.avatar || '',
     },
     validationSchema,
     onSubmit: async (values) => {
-      // @ts-ignore
-      const { error } = await supabase
-        .from('organization')
-        .update({
-          name: values.organizationName,
-          category: values.category,
-          description: values.description,
-          avatar: image,
-          email: values.email,
-          location: values.location,
-          start: values.startTime,
-          end: values.endTime,
-          website: values.websiteUrl,
-          workDays: values.startDay + ' - ' + values.endDay,
-        })
-        .eq('id', orgId);
+      let storageId = '';
+      if (!data) {
+        return;
+      }
+      try {
+        if (selectedImage) {
+          storageId = await uploadProfilePicture(selectedImage, generateUploadUrl);
+          await updateOrganization({
+            avatar: storageId,
+            end: values.endTime,
+            name: values.organizationName,
+            start: values.startTime,
+            website: values.websiteUrl,
+            workDays: values.startDay + ' - ' + values.endDay,
+            category: values.category,
+            description: values.description,
+            email: values.email,
+            location: values.location,
+            organizationId: editId,
+          });
+        } else {
+          await updateOrganization({
+            avatar: data?.avatar!,
+            end: values.endTime,
+            name: values.organizationName,
+            start: values.startTime,
+            website: values.websiteUrl,
+            workDays: values.startDay + ' - ' + values.endDay,
+            category: values.category,
+            description: values.description,
+            email: values.email,
+            location: values.location,
+            organizationId: editId,
+          });
+        }
 
-      if (!error) {
         resetForm();
         toast.success('Success', {
           description: 'Organization updated successfully',
         });
-        queryClient.invalidateQueries({
-          queryKey: ['organizations', 'organization'],
-        });
+        // queryClient.invalidateQueries({
+        //   queryKey: ['organizations', 'organization'],
+        // });
 
         router.replace(`/my-org`);
-      }
-
-      if (error) {
+      } catch (error) {
         console.log(error);
-
-        toast.error('Something went wrong', {
-          description: 'Please try again',
-        });
       }
     },
   });
 
-  const getOrgs = async () => {
-    setError(false);
-    try {
-      const { data, error } = await supabase
-        .from('organization')
-        .select('*')
-        .eq('id', editId)
-        .single();
-      if (!error && data) {
-        setValues({
-          ...values,
-          email: data?.email!,
-          category: data?.category!,
-          location: data?.location!,
-          organizationName: data?.name!,
-          description: data?.description!,
-          websiteUrl: data?.website!,
-          startTime: data?.start!,
-          endTime: data?.end!,
-          image: data?.avatar!,
-        });
-
-        const start = parse(data?.start?.trim()!, 'HH:mm', new Date());
-        const end = parse(data?.end?.trim()!, 'HH:mm', new Date());
-
-        setStartTime(start);
-        setEndTime(end);
-
-        setOrgId(data?.id.toString());
-      }
-
-      if (error) {
-        setError(true);
-      }
-    } catch (error) {
-      console.log(error);
-      setError(true);
-    } finally {
-      setIsLoading(false);
-    }
-  };
-  useEffect(() => {
-    getOrgs();
-  }, []);
   useEffect(() => {
     if (cat) {
       setValues({ ...values, category: cat });
@@ -236,31 +199,26 @@ const Edit = () => {
   const showMode2 = () => {
     setShow2(true);
   };
-  // ! to fix later
   const handleDeleteImage = () => {
     setValues({ ...values, image: '' });
-
-    onDeleteImage(`logo/${path}`);
-    console.log('deleted');
   };
 
   const {
     email,
     category,
-
     location,
     organizationName,
-
     description,
     websiteUrl,
-
     image,
+    startDay: s,
+    endDay: e,
   } = values;
 
-  if (error) {
-    return <ErrorComponent refetch={getOrgs} />;
+  if (isError) {
+    return <ErrorComponent refetch={refetch()} />;
   }
-  if (isLoading) {
+  if (isPending) {
     return <LoadingComponent />;
   }
 
@@ -344,7 +302,9 @@ const Edit = () => {
               )}
             </>
             <>
-              <Pressable style={({ pressed }) => ({ opacity: pressed ? 0.5 : 1 })}>
+              <Pressable
+                onPress={() => router.push('/category')}
+                style={({ pressed }) => ({ opacity: pressed ? 0.5 : 1 })}>
                 <InputComponent
                   label="Category"
                   value={category}
@@ -417,7 +377,7 @@ const Edit = () => {
               fontFamily="PoppinsMedium"
               setSelected={handleChange('startDay')}
               data={days}
-              defaultOption={{ key: 'monday', value: 'Monday' }}
+              defaultOption={{ key: startDay, value: s.charAt(0).toUpperCase() + s.slice(1) }}
               save="key"
               placeholder="Select Start Day"
               dropdownTextStyles={{
@@ -444,7 +404,7 @@ const Edit = () => {
               fontFamily="PoppinsMedium"
               setSelected={handleChange('endDay')}
               data={days}
-              defaultOption={{ key: 'friday', value: 'Friday' }}
+              defaultOption={{ key: e, value: e.charAt(0).toUpperCase() + e.slice(1) }}
               save="key"
               placeholder="Select End day"
             />
@@ -493,6 +453,7 @@ const Edit = () => {
               loading={isSubmitting}
               onPress={() => handleSubmit()}
               buttonColor={colors.buttonBlue}
+              buttonStyle={{ width: 200 }}
               textColor={colors.white}
               labelStyle={{ fontFamily: 'PoppinsMedium', fontSize: 12 }}
               contentStyle={{ height: 50, borderRadius: 20 }}>
