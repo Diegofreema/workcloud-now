@@ -22,7 +22,13 @@
     },
     "production": {
       "autoIncrement": true,
-      "channel": "production"
+      "channel": "production",
+      "env": {
+        "EXPO_PUBLIC_CONVEX_URL":"https://giddy-marten-642.convex.cloud",
+        "EXPO_PUBLIC_SUPABASE_ANON_KEY":"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im1ja2toZ214Z2p3amd4d3NzcmZvIiwicm9sZSI6ImFub24iLCJpYXQiOjE3MDAxMzk4NjksImV4cCI6MjAxNTcxNTg2OX0.f5RhZOj4wLrd6jl9rIFoljlsD4ihZCLKlZnPtcXWxsM",
+        "EXPO_PUBLIC_SUPABASE_URL":"https://mckkhgmxgjwjgxwssrfo.supabase.co",
+        "EXPO_PUBLIC_CLERK_PUBLISHABLE_KEY":"pk_test_aHVnZS1nYXplbGxlLTI5LmNsZXJrLmFjY291bnRzLmRldiQ"
+      }
     }
   },
   "submit": {

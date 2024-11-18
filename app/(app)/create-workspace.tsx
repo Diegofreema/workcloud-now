@@ -88,14 +88,13 @@ const CreateWorkSpace = () => {
     validationSchema,
     onSubmit: async (values) => {
       if (!id) return;
-
+      const { startDay, endDay, endTime, startTime, image, organizationName, ...rest } = values;
       try {
         const storageId: Id<'_storage'> = await uploadProfilePicture(
           selectedImage,
           generateUploadUrl
         );
         const organizationId = await createOrganization({
-          ...values,
           ownerId: id,
           avatar: storageId,
           end: values.endTime,
@@ -103,6 +102,10 @@ const CreateWorkSpace = () => {
           start: values.startTime,
           website: values.websiteUrl,
           workDays: values.startDay + ' - ' + values.endDay,
+          category: values.category,
+          description: values.description,
+          email: values.email,
+          location: values.location,
         });
 
         if (organizationId) {
