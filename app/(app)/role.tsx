@@ -1,59 +1,32 @@
 import { useAuth } from '@clerk/clerk-expo';
-import { Divider } from '@rneui/themed';
-import { useQueryClient } from '@tanstack/react-query';
+import { convexQuery } from '@convex-dev/react-query';
+import { Input } from '@rneui/themed';
+import { useQuery } from '@tanstack/react-query';
+import { useMutation } from 'convex/react';
 import { useRouter } from 'expo-router';
-import React, { useEffect, useMemo, useState } from 'react';
-import { FlatList, Pressable, StyleSheet, View } from 'react-native';
+import React, { useMemo, useState } from 'react';
+import { FlatList, Pressable } from 'react-native';
 import { toast } from 'sonner-native';
 
 import { AddRole } from '~/components/AddRole';
 import { HStack } from '~/components/HStack';
 import { HeaderNav } from '~/components/HeaderNav';
-import { InputComponent } from '~/components/InputComponent';
 import { Container } from '~/components/Ui/Container';
 import { ErrorComponent } from '~/components/Ui/ErrorComponent';
 import { LoadingComponent } from '~/components/Ui/LoadingComponent';
 import { MyText } from '~/components/Ui/MyText';
-import { colors } from '~/constants/Colors';
-import { Profile } from '~/constants/types';
+import { api } from '~/convex/_generated/api';
 import { useDetailsToAdd } from '~/hooks/useDetailsToAdd';
-import { useRoles } from '~/lib/queries';
-import { supabase } from '~/lib/supabase';
+import { useGetUserId } from '~/hooks/useGetUserId';
 
 const Role = () => {
-  const { getData } = useDetailsToAdd();
+  const { getData, personal, setPersonal } = useDetailsToAdd();
   const [value, setValue] = useState('');
   const { userId } = useAuth();
-  const [profile, setProfile] = useState<Profile | null>(null);
-  const { data, isPending, isError, refetch } = useRoles();
-  const queryClient = useQueryClient();
+  const { organizationId, id, worker } = useGetUserId(userId!);
+  const { data, isPending, isError, refetch } = useQuery(convexQuery(api.workspaces.getRoles, {}));
+  const createWorkspace = useMutation(api.workspaces.createWorkspace);
 
-  useEffect(() => {
-    const getFn = async () => {
-      try {
-        const getProfile = async () => {
-          const { data } = await supabase
-            .from('user')
-            .select(`name, avatar, streamToken, email, userId, organizationId (*), workerId (*)`)
-            .eq('userId', userId!)
-            .single();
-          // @ts-ignore
-          setProfile(data);
-          return data;
-        };
-        const res = await queryClient.fetchQuery({
-          queryKey: ['profile', userId],
-          queryFn: getProfile,
-        });
-
-        return res;
-      } catch (error) {
-        console.log(error);
-        return {};
-      }
-    };
-    getFn();
-  }, [userId]);
   const filteredData = useMemo(() => {
     if (value.trim() === '') return data;
     return data?.filter((item) =>
@@ -71,24 +44,25 @@ const Role = () => {
   }
 
   const navigate = async (item: string) => {
-    if (!profile) return;
-
-    const { data, error } = await supabase
-      .from('workspace')
-      .insert({
-        ownerId: userId,
+    if (!organizationId || !id) return;
+    try {
+      const workspaceId = await createWorkspace({
+        organizationId,
+        ownerId: id,
+        personal,
         role: item,
-        organizationId: profile.organizationId?.id,
-      })
-      .select()
-      .single();
+        workerId: personal ? worker : undefined,
+      });
 
-    if (!error) {
       router.back();
-      getData(profile.organizationId?.id, item, data.id);
-      router.push(`/allStaffs`);
-    }
-    if (error) {
+      getData({ orgId: organizationId!, role: item, workspaceId });
+      toast.success('Success', {
+        // eslint-disable-next-line no-useless-concat
+        description: personal ? 'Personal' : '' + ' workspace created',
+      });
+      setPersonal(false);
+    } catch (e) {
+      console.log(e);
       router.back();
       toast.error('Something went wrong');
     }
@@ -96,25 +70,12 @@ const Role = () => {
   return (
     <Container>
       <HeaderNav title="Select a role" />
-      <View
-        style={{
-          width: '100%',
-          backgroundColor: '#E5E5E5',
-          height: 60,
-          borderBottomWidth: 0,
-          borderRadius: 10,
-        }}>
-        <InputComponent
-          placeholder="Search Role"
-          value={value}
-          onChangeText={(text) => setValue(text)}
-        />
-      </View>
+      <Input placeholder="Search Role" value={value} onChangeText={setValue} />
       <FlatList
         showsVerticalScrollIndicator={false}
         data={filteredData}
-        ItemSeparatorComponent={() => <Divider style={[styles.divider]} />}
-        keyExtractor={(item) => item.id.toString()}
+        // ItemSeparatorComponent={() => <Divider style={[styles.divider]} />}
+        keyExtractor={(item) => item._id.toString()}
         renderItem={({ item }) => (
           <Pressable
             onPress={() => navigate(item.role!)}
@@ -134,12 +95,3 @@ const Role = () => {
 };
 
 export default Role;
-
-const styles = StyleSheet.create({
-  divider: {
-    width: '100%',
-    height: 1,
-    backgroundColor: colors.black,
-    marginVertical: 6,
-  },
-});

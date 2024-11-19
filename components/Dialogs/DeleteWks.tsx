@@ -2,14 +2,14 @@ import { useAuth } from '@clerk/clerk-expo';
 import { Button } from '@rneui/themed';
 import { useQueryClient } from '@tanstack/react-query';
 import React, { useState } from 'react';
-import { StyleSheet, View } from 'react-native';
-import Modal from 'react-native-modal';
+import { StyleSheet, View , Modal} from 'react-native';
+
 import { toast } from 'sonner-native';
 
-import { colors } from '../../constants/Colors';
 import { HStack } from '../HStack';
 import { MyText } from '../Ui/MyText';
 
+import { colors } from '~/constants/Colors';
 import { useDarkMode } from '~/hooks/useDarkMode';
 import { useDeleteWks } from '~/hooks/useDeleteWks';
 import { supabase } from '~/lib/supabase';
@@ -46,12 +46,10 @@ export const DeleteWksSpaceModal = () => {
   return (
     <View>
       <Modal
-        hasBackdrop={false}
-        onDismiss={onClose}
-        animationIn="slideInDown"
-        isVisible={isOpen}
-        onBackButtonPress={onClose}
-        onBackdropPress={onClose}>
+        onDismiss={onClose} animationType="slide"
+        visible={isOpen}
+        onRequestClose={onClose}
+        >
         <View
           style={[
             styles.centeredView,

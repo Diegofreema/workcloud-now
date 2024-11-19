@@ -37,8 +37,7 @@ const MyOrg = () => {
   const { darkMode } = useDarkMode();
 
   if (isError) {
-    return <ErrorComponent refetch={refetch()} />;
-  }
+    return <ErrorComponent refetch={refetch()} />;}
   if (isPending) {
     return <LoadingComponent />;
   }
@@ -48,6 +47,7 @@ const MyOrg = () => {
 
   return (
     <Container>
+      {/*@ts-ignore*/}
       <CreateWorkspaceModal workspace={data?.workspaces!} />
       <SelectRow organizationId={data?._id!} profile={data?.owner!} />
       <DeleteWksSpaceModal />

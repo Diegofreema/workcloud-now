@@ -177,14 +177,14 @@ export const getWorkerProfileWithUser = query({
     const user = await getUserForWorker(ctx, worker.userId);
     const organisation = await getOrganisations(ctx, worker?.organizationId!);
     let orgs = null;
-    if(organisation?.avatar.startsWith('http')){
-      orgs = organisation
-    }else{
-      const organizationImg = await ctx.storage.getUrl(organisation?.avatar as Id<'_storage'>)
+    if (organisation?.avatar.startsWith('http')) {
+      orgs = organisation;
+    } else {
+      const organizationImg = await ctx.storage.getUrl(organisation?.avatar as Id<'_storage'>);
       orgs = {
         ...organisation,
-        avatar: organizationImg
-      }
+        avatar: organizationImg,
+      };
     }
     if (!user) return null;
     const { _creationTime, imageUrl, ...rest } = user;
@@ -215,4 +215,7 @@ export const getWorkerProfileWithUser = query({
 
 const getUserForWorker = async (ctx: QueryCtx, userId: Id<'users'>) => {
   return await ctx.db.get(userId);
+};
+const getWorkerProfile = async (ctx: QueryCtx, workerId: Id<'workers'>) => {
+  return await ctx.db.get(workerId);
 };

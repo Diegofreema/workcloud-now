@@ -25,7 +25,7 @@ import { useGetUserId } from '~/hooks/useGetUserId';
 
 const Organization = () => {
   const { user } = useUser();
-  const { id } = useGetUserId(user?.id!);
+  const { id, worker } = useGetUserId(user?.id!);
   const { data, isPending, isError, refetch } = useQuery(
     convexQuery(api.organisation.getOrganisationsOrNull, { ownerId: id! })
   );
@@ -35,7 +35,7 @@ const Organization = () => {
     isPending: isPendingWorkspace,
     isError: isErrorWorkspace,
     refetch: refetchWorkspace,
-  } = useQuery(convexQuery(api.workspaces.getUserWorkspaceOrNull, { workerId: id! }));
+  } = useQuery(convexQuery(api.workspaces.getUserWorkspaceOrNull, { workerId: worker! }));
 
   const handleRefetch = () => {
     refetch();

@@ -47,17 +47,21 @@ export const Worker = {
   email: v.string(),
 };
 
+export const Role = {
+  role: v.string(),
+}
+
 export const Workspace = {
   active: v.boolean(),
   leisure: v.boolean(),
   organizationId: v.id('organizations'),
   ownerId: v.id('users'),
-  responsibility: v.string(),
-  salary: v.string(),
+  responsibility: v.optional(v.string()),
+  salary: v.optional(v.string()),
   waitlistCount: v.number(),
   role: v.string(),
-  workerId: v.id('users'),
-  servicePointId: v.id('servicePoints'),
+  workerId: v.optional(v.id('workers')),
+  servicePointId: v.optional(v.id('servicePoints')),
   locked: v.boolean(),
   signedIn: v.boolean(),
   personal: v.boolean(),
@@ -92,4 +96,5 @@ export default defineSchema({
   connections: defineTable(Connection),
   waitlists: defineTable(WaitList),
   servicePoints: defineTable(ServicePoints),
+  roles: defineTable(Role),
 });
