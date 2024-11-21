@@ -1,35 +1,27 @@
 import { FontAwesome } from '@expo/vector-icons';
-import { PostgrestError } from '@supabase/supabase-js';
-import { QueryObserverResult, RefetchOptions } from '@tanstack/react-query';
 import { Image } from 'expo-image';
 import { FlatList, Pressable, View } from 'react-native';
 
 import { EmptyText } from './EmptyText';
-import { PostType } from '../constants/types';
-import { useDeletePost } from '../hooks/useDeletePost';
+
+import { PostType } from '~/constants/types';
+import { useDeletePost } from '~/hooks/useDeletePost';
 
 type Props = {
-  imgUrls: PostType[];
-  refetch: (options?: RefetchOptions | undefined) => Promise<
-    QueryObserverResult<
-      {
-        imgUrls: PostType[];
-        error: PostgrestError | null;
-      },
-      Error
-    >
-  >;
+  imgUrls: PostType[] | null;
+  refetch: () => void;
   isRefetching: boolean;
 };
 
 export const PostComponent = ({ imgUrls, isRefetching, refetch }: Props): JSX.Element => {
   return (
     <FlatList
+      style={{ marginTop: 20 }}
       onRefresh={refetch}
       refreshing={isRefetching}
       data={imgUrls}
       renderItem={({ item }) => <PostItem {...item} />}
-      keyExtractor={(item) => item.id.toString()}
+      keyExtractor={(item) => item._id.toString()}
       showsVerticalScrollIndicator={false}
       contentContainerStyle={{ paddingBottom: 50 }}
       ItemSeparatorComponent={() => <View style={{ height: 10 }} />}
@@ -38,18 +30,20 @@ export const PostComponent = ({ imgUrls, isRefetching, refetch }: Props): JSX.El
   );
 };
 
-const PostItem = ({ postUrl, id }: PostType) => {
+const PostItem = ({ image, _id }: PostType) => {
   const { getId, onOpen } = useDeletePost();
   const handleDelete = () => {
-    getId(id);
+    getId(_id);
     onOpen();
   };
   return (
     <View>
       <Image
-        source={{ uri: postUrl }}
+        source={{ uri: image! }}
         style={{ width: '100%', height: 200, borderRadius: 10 }}
         contentFit="cover"
+        placeholder={require('~/assets/images.png')}
+        placeholderContentFit="cover"
       />
       <Pressable
         onPress={handleDelete}

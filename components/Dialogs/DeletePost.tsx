@@ -1,43 +1,30 @@
-import { useAuth } from '@clerk/clerk-expo';
 import { Button } from '@rneui/themed';
-import { useQueryClient } from '@tanstack/react-query';
+import { useMutation } from 'convex/react';
 import React, { useState } from 'react';
 import { StyleSheet, View } from 'react-native';
 import Modal from 'react-native-modal';
 import { toast } from 'sonner-native';
 
-import { colors } from '../../constants/Colors';
 import { HStack } from '../HStack';
 import { MyText } from '../Ui/MyText';
 
+import { colors } from '~/constants/Colors';
+import { api } from '~/convex/_generated/api';
 import { useDarkMode } from '~/hooks/useDarkMode';
 import { useDeletePost } from '~/hooks/useDeletePost';
-import { supabase } from '~/lib/supabase';
 
 export const DeletePostModal = () => {
   const { id, isOpen, onClose } = useDeletePost();
   const { darkMode } = useDarkMode();
-  const { userId } = useAuth();
-  const queryClient = useQueryClient();
+  const deleteSinglePost = useMutation(api.organisation.deletePosts);
+
   const [deleting, setDeleting] = useState(false);
 
   const deletePost = async () => {
     setDeleting(true);
+    if (!id) return;
     try {
-      const { error } = await supabase.from('posts').delete().eq('id', id);
-      if (!error) {
-        toast.success('Post has been deleted successfully');
-        queryClient.invalidateQueries({ queryKey: ['posts', userId] });
-      }
-
-      if (error) {
-        console.log(error);
-
-        toast.error('Something went wrong', {
-          description: 'Could not delete post, please try again',
-        });
-      }
-
+      await deleteSinglePost({ postId: id });
       onClose();
     } catch (error) {
       console.log(error);

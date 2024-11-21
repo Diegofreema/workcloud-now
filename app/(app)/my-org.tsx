@@ -27,7 +27,7 @@ import { useGetUserId } from '~/hooks/useGetUserId';
 const MyOrg = () => {
   const { userId } = useAuth();
   const { id } = useGetUserId(userId!);
-  const { data, isPending, isError, refetch , error} = useQuery(
+  const { data, isPending, isError, refetch, error } = useQuery(
     convexQuery(api.organisation.getOrganizationWithOwnerAndWorkspaces, {
       ownerId: id as Id<'users'>,
     })
@@ -37,7 +37,8 @@ const MyOrg = () => {
   const { darkMode } = useDarkMode();
 
   if (isError) {
-    return <ErrorComponent refetch={refetch()} />;}
+    return <ErrorComponent refetch={refetch()} />;
+  }
   if (isPending) {
     return <LoadingComponent />;
   }

@@ -2,6 +2,7 @@ import { v } from 'convex/values';
 
 import { Id } from '~/convex/_generated/dataModel';
 import { mutation, query, QueryCtx } from '~/convex/_generated/server';
+import { ctx } from 'expo-router/_ctx';
 
 export const getOrganisationsOrNull = query({
   args: {
@@ -96,6 +97,34 @@ export const getOrganizationWithOwnerAndWorkspaces = query({
     };
   },
 });
+export const getPostsByOrganizationId = query({
+  args: {
+    organizationId: v.id('organizations'),
+  },
+  handler: async (ctx, args) => {
+    const res = await ctx.db
+      .query('posts')
+      .filter((q) => q.eq(q.field('organizationId'), args.organizationId))
+      .collect();
+
+    if (!res) return null;
+    const data = await Promise.all(
+      res.map(async (r) => {
+        if (r.image.startsWith('https')) {
+          return r;
+        }
+        const imageUrl = await getImageUrl(ctx, r.image as Id<'_storage'>);
+
+        return {
+          ...r,
+          image: imageUrl,
+        };
+      })
+    );
+
+    return data;
+  },
+});
 //  mutations
 
 export const createOrganization = mutation({
@@ -161,6 +190,27 @@ export const updateOrganization = mutation({
     });
   },
 });
+
+// posts
+export const createPosts = mutation({
+  args: {
+    organizationId: v.id('organizations'),
+    storageId: v.id('_storage'),
+  },
+  handler: async (ctx, args) => {
+    await ctx.db.insert('posts', { image: args.storageId, organizationId: args.organizationId });
+  },
+});
+
+export const deletePosts = mutation({
+  args: {
+    postId: v.id('posts'),
+  },
+  handler: async (ctx, args) => {
+    await ctx.db.delete(args.postId);
+  },
+});
+
 // helpers
 
 export const getUserByOwnerId = async (ctx: QueryCtx, ownerId: Id<'users'>) => {

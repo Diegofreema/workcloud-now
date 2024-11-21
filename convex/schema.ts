@@ -46,10 +46,13 @@ export const Worker = {
   gender: v.string(),
   email: v.string(),
 };
-
+export const Post = {
+  image: v.union(v.id('_storage'), v.string()),
+  organizationId: v.id('organizations'),
+};
 export const Role = {
   role: v.string(),
-}
+};
 
 export const Workspace = {
   active: v.boolean(),
@@ -97,4 +100,5 @@ export default defineSchema({
   waitlists: defineTable(WaitList),
   servicePoints: defineTable(ServicePoints),
   roles: defineTable(Role),
+  posts: defineTable(Post),
 });

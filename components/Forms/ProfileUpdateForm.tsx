@@ -98,7 +98,6 @@ export const ProfileUpdateForm = ({ person }: { person: User }) => {
   }, [person]);
 
   const pickImageAsync = async () => {
-    setLoading(true);
     const result = await ImagePicker.launchImageLibraryAsync({
       mediaTypes: ImagePicker.MediaTypeOptions.Images,
       allowsEditing: true,
@@ -107,7 +106,6 @@ export const ProfileUpdateForm = ({ person }: { person: User }) => {
     if (!result.canceled) {
       setSelectedImage(result.assets[0]);
     }
-    setLoading(false);
   };
 
   if (!person) return <LoadingComponent />;

@@ -1,5 +1,6 @@
 import { EvilIcons, FontAwesome } from '@expo/vector-icons';
 import { Button } from '@rneui/themed';
+import { useMutation } from 'convex/react';
 import { useRouter } from 'expo-router';
 import React, { useState } from 'react';
 import { Pressable, StyleSheet, View } from 'react-native';
@@ -13,12 +14,10 @@ import { MyText } from '../Ui/MyText';
 
 import { colors } from '~/constants/Colors';
 import { Wks } from '~/constants/types';
+import { api } from '~/convex/_generated/api';
 import { useCreate } from '~/hooks/useCreate';
 import { useDarkMode } from '~/hooks/useDarkMode';
 import { useDetailsToAdd } from '~/hooks/useDetailsToAdd';
-import { deleteWorkspace } from '~/convex/workspaces';
-import { useMutation } from 'convex/react';
-import { api } from '~/convex/_generated/api';
 
 export const CreateWorkspaceModal = ({ workspace }: { workspace: Wks }) => {
   const { isOpen, onClose } = useCreate();
@@ -27,8 +26,7 @@ export const CreateWorkspaceModal = ({ workspace }: { workspace: Wks }) => {
   const [deleteMode, setDeleteMode] = useState(false);
   const [deleting, setDeleting] = useState(false);
   const { darkMode } = useDarkMode();
-  // const { onOpen: onSelectRow, } = useSelectRow();
-  // const { onOpen: onOpenDelete, getId } = useDeleteWks();
+
   const router = useRouter();
 
   const handleClose = () => {
@@ -58,7 +56,7 @@ export const CreateWorkspaceModal = ({ workspace }: { workspace: Wks }) => {
     router.push(`/wk/${id}`);
     onClose();
   };
-  const thereIsWorkspace = !!workspace?._id
+  const thereIsWorkspace = !!workspace?._id;
   return (
     <View>
       <Modal

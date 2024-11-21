@@ -105,9 +105,10 @@ export type Org = {
 };
 
 export type PostType = {
-  postUrl: string;
-  id: number;
-  organizationId: number;
+  image: string | null;
+  _id: Id<'posts'>;
+  organizationId: Id<'organizations'>;
+  _creationTime: number;
 };
 export type Profile = {
   avatar: string;
