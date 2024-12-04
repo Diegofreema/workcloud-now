@@ -1,52 +1,32 @@
-import { useAuth } from '@clerk/clerk-expo';
 import { Button } from '@rneui/themed';
-import { useQueryClient } from '@tanstack/react-query';
+import { useMutation } from 'convex/react';
 import React, { useState } from 'react';
 import { StyleSheet, View } from 'react-native';
 import Modal from 'react-native-modal';
 import { toast } from 'sonner-native';
 
-import { colors } from '../../constants/Colors';
 import { HStack } from '../HStack';
 import { MyText } from '../Ui/MyText';
 
+import { colors } from '~/constants/Colors';
+import { api } from '~/convex/_generated/api';
 import { useDarkMode } from '~/hooks/useDarkMode';
 import { useHandleStaff } from '~/hooks/useHandleStaffs';
 import { useRemoveUser } from '~/hooks/useRemoveUser';
-import { supabase } from '~/lib/supabase';
 
 export const RemoveUser = () => {
   const { onClose, isOpen } = useRemoveUser();
   const { darkMode } = useDarkMode();
-  const { userId: id } = useAuth();
-  const queryClient = useQueryClient();
+
   const [deleting, setDeleting] = useState(false);
   const { item } = useHandleStaff();
-
+  const onRemoveUser = useMutation(api.workspaces.removeFromWorkspace);
   const removeUser = async () => {
     setDeleting(true);
     try {
-      const { error } = await supabase
-        .from('workspace')
-        .update({ userId: null, locked: true, signedIn: false, active: false })
-        .eq('workerId', item?.userId?.userId);
-      if (!error) {
-        const { error: err } = await supabase
-          .from('worker')
-          .update({
-            organizationId: null,
-            bossId: null,
-            workspaceId: null,
-            role: null,
-          })
-          .eq('userId', item?.userId?.userId);
-        if (!err) {
-          queryClient.invalidateQueries({
-            queryKey: ['myStaffs', id],
-          });
-          toast.success('Staff has been removed successfully');
-        }
-      }
+      await onRemoveUser({ workerId: item?._id!, workspaceId: item?.workspaceId! });
+      toast.success('Staff has been removed successfully');
+
       onClose();
     } catch (error) {
       console.log(error);

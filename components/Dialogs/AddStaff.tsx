@@ -6,18 +6,17 @@ import React from 'react';
 import { FlatList, Pressable, StyleSheet, View } from 'react-native';
 import Modal from 'react-native-modal';
 import { toast } from 'sonner-native';
-import { useChatContext } from 'stream-chat-expo';
 
-import { colors } from '../../constants/Colors';
-import { supabase } from '../../lib/supabase';
 import { HStack } from '../HStack';
 import { MyText } from '../Ui/MyText';
 
+import { colors } from '~/constants/Colors';
 import { useAddStaff } from '~/hooks/useAddStaff';
 import { useDarkMode } from '~/hooks/useDarkMode';
 import { useData } from '~/hooks/useData';
 import { useHandleStaff } from '~/hooks/useHandleStaffs';
 import { useRemoveUser } from '~/hooks/useRemoveUser';
+import { supabase } from '~/lib/supabase';
 
 const roles = [{ role: 'Add new staff' }];
 export const AddStaff = () => {
@@ -96,7 +95,7 @@ type Props = {
 export const Menu = ({ isVisible, setIsVisible, array, onBottomOpen }: Props) => {
   const queryClient = useQueryClient();
   const { onOpen } = useRemoveUser();
-  const { client } = useChatContext();
+
   const { user } = useData();
   const router = useRouter();
   const { item } = useHandleStaff();
@@ -105,7 +104,7 @@ export const Menu = ({ isVisible, setIsVisible, array, onBottomOpen }: Props) =>
     setIsVisible(false);
   };
   const onViewProfile = () => {
-    router.push(`/workerProfile/${item?.userId?.userId}`);
+    router.push(`/workerProfile/${item?._id}`);
     onClose();
   };
 
@@ -115,22 +114,15 @@ export const Menu = ({ isVisible, setIsVisible, array, onBottomOpen }: Props) =>
   };
 
   const onSendMessage = async () => {
-    const channel = client.channel('messaging', {
-      members: [user?.id as string, item?.userId?.userId as any],
-    });
-
-    await channel.watch();
-
-    router.push(`/chat/${channel.id}`);
     onClose();
   };
 
   const onUnlockWorkspace = async () => {
-    if (item?.workspaceId?.locked) {
+    if (item?.workspace?.locked) {
       const { error } = await supabase
         .from('workspace')
         .update({ locked: false })
-        .eq('id', item?.workspaceId?.id!);
+        .eq('id', item?.workspace?._id!);
       if (!error) {
         toast.success(`Workspace has been unlocked`);
 
@@ -147,7 +139,7 @@ export const Menu = ({ isVisible, setIsVisible, array, onBottomOpen }: Props) =>
       const { error } = await supabase
         .from('workspace')
         .update({ locked: true, active: false })
-        .eq('id', item?.workspaceId?.id!);
+        .eq('id', item?.workspaceId!);
       if (!error) {
         toast.success(`Workspace has been locked`);
 

@@ -1,21 +1,25 @@
 import { useAuth } from '@clerk/clerk-expo';
 import { Button } from '@rneui/themed';
-import { useQueryClient } from '@tanstack/react-query';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { Image } from 'expo-image';
 import { router } from 'expo-router';
 import { useState } from 'react';
 import { Pressable, View } from 'react-native';
 import { toast } from 'sonner-native';
 
-import { colors } from '../../constants/Colors';
-import { Requests } from '../../constants/types';
-import { useInfos } from '../../hooks/useGetInfo';
-import { useOpen } from '../../hooks/useOpen';
-import { checkIfEmployed } from '../../lib/helper';
-import { supabase } from '../../lib/supabase';
 import { HStack } from '../HStack';
 import { MyText } from './MyText';
 import VStack from './VStack';
+
+import { colors } from '~/constants/Colors';
+import { PendingRequests } from '~/constants/types';
+import { useInfos } from '~/hooks/useGetInfo';
+import { useOpen } from '~/hooks/useOpen';
+import { useMutation } from 'convex/react';
+import { api } from '~/convex/_generated/api';
+import { CustomModal } from '~/components/Dialogs/CustomModal';
+import { useDecline } from '~/hooks/useDecline';
+import { convexQuery } from '@convex-dev/react-query';
 
 type PreviewWorker = {
   name: any;
@@ -122,168 +126,128 @@ export const UserPreview = ({
   );
 };
 
-export const WorkPreview = ({ item }: { item: Requests }) => {
+export const WorkPreview = ({ item }: { item: PendingRequests }) => {
   const { userId } = useAuth();
   const { onOpen } = useOpen();
   const { getInfoIds } = useInfos();
+  const { isOpen, onClose, onOpen: openDecline } = useDecline();
   const [cancelling, setCancelling] = useState(false);
   const [accepting, setAccepting] = useState(false);
-  const queryClient = useQueryClient();
-  const { id, role, from, to, workspaceId, salary, responsibility, qualities } = item;
-  console.log(item, 'item');
+  const cancelRequest = useMutation(api.request.cancelPendingRequests);
+  const acceptOffer = useMutation(api.worker.acceptOffer);
+  const {
+    data: isEmployed,
+    isPending,
+    isError,
+  } = useQuery(convexQuery(api.worker.checkIfWorkerIsEmployed, { id: item.request.to }));
+  const {
+    request: { qualities, role, salary, responsibility, to, _id, from, pending, accepted },
+    organisation,
+  } = item;
 
   const acceptRequest = async () => {
-    if (!userId) return;
-
+    if (!userId || isPending || isError || !organisation?._id) return;
     setAccepting(true);
-    const isWorking = await checkIfEmployed(userId);
-
-    const isWorkingBool = !!isWorking;
-    if (isWorkingBool) {
-      onOpen();
-      getInfoIds({
-        newWorkspaceId: workspaceId as string,
-        requestId: id,
-        workerId: isWorking?.workerId!,
-        workspaceId: isWorking?.id.toString(),
-      });
-
-      return;
-    }
     try {
-      if (workspaceId) {
-        const { error } = await supabase
-          .from('workspace')
-          .update({
-            salary,
-            responsibility,
-            workerId: to?.userId,
-          })
-          .eq('id', workspaceId);
-        if (error) {
-          toast.error('Something went wrong');
-          return;
-        }
+      if (isEmployed) {
+        onOpen();
+        return;
       }
+      await acceptOffer({ to, from, _id, organizationId: organisation?._id, role });
+      // logic to accept organisation if not employed;
 
-      const { error: err } = await supabase
-        .from('worker')
-        .update({
-          role,
-          bossId: from?.userId,
-          workspaceId: +workspaceId || null,
-          organizationId: from?.organizationId?.id,
-        })
-        .eq('id', to.workerId);
-      if (!err) {
-        const { error } = await supabase
-          .from('request')
-          .update({ accepted: true, pending: false })
-          .eq('id', id);
-        if (error) {
-          toast.error('Something went wrong');
-          return;
-        } else {
-          toast.success('Request has been accepted');
-          router.push('/organization');
-        }
-      }
-      if (err) {
-        toast.error('Something went wrong');
-
-        console.log(err);
-      }
+      toast.success('You have accepted the offer', {
+        description: `From ${organisation.name} as an ${role}`,
+      });
     } catch (error) {
       console.log(error);
       toast.error('Something went wrong');
     } finally {
       setAccepting(false);
-      queryClient.invalidateQueries({ queryKey: ['pending_requests'] });
     }
   };
 
   const rejectRequest = async () => {
     setCancelling(true);
     try {
-      const { error } = await supabase
-        .from('request')
-        .update({ accepted: false, pending: false })
-        .eq('id', id);
-
-      if (!error) {
-        toast.success('Request Canceled');
-      }
-
-      if (error) {
-        toast.error('Something went wrong');
-      }
+      await cancelRequest({ id: _id });
+      toast.success('Request has been declined');
+      onClose();
     } catch (error) {
       console.log(error);
 
       toast.error('Something went wrong');
     } finally {
       setCancelling(false);
-      queryClient.invalidateQueries({ queryKey: ['pending_requests'] });
     }
   };
 
   return (
-    <HStack pr={20} py={10} gap={6}>
-      <Image
-        source={{
-          uri: from?.organizationId?.avatar || 'https://placehold.co/100x100',
-        }}
-        placeholder={require('~/assets/images/pl.png')}
-        style={{ width: 60, height: 60, borderRadius: 9999 }}
-        contentFit="cover"
+    <>
+      <CustomModal
+        onPress={rejectRequest}
+        title="This action is irreversible"
+        isLoading={cancelling}
+        onClose={onClose}
+        isOpen={isOpen}
       />
-      <VStack mr={10} width="90%" justifyContent="space-between" gap={10}>
-        <MyText style={{ width: '100%', paddingRight: 5 }} poppins="Medium" fontSize={12}>
-          {from?.organizationId?.name} wants you to be a representative on their workspace
-        </MyText>
-        <MyText style={{}} poppins="Medium" fontSize={12}>
-          Role : {role}
-        </MyText>
-        <MyText style={{}} poppins="Medium" fontSize={12}>
-          Responsibility : {responsibility}
-        </MyText>
-        <MyText style={{}} poppins="Medium" fontSize={12}>
-          Qualities : {qualities}
-        </MyText>
-        <MyText style={{}} poppins="Medium" fontSize={12}>
-          Payment: {salary} naira
-        </MyText>
-        {item?.accepted && (
-          <MyText style={{ color: 'green' }} poppins="Medium" fontSize={15}>
-            Accepted
+      <HStack pr={20} py={10} gap={6}>
+        <Image
+          source={{
+            uri: organisation?.avatar || 'https://placehold.co/100x100',
+          }}
+          placeholder={require('~/assets/images/pl.png')}
+          style={{ width: 60, height: 60, borderRadius: 9999 }}
+          contentFit="cover"
+        />
+        <VStack mr={10} width="90%" justifyContent="space-between" gap={10}>
+          <MyText style={{ width: '100%', paddingRight: 5 }} poppins="Medium" fontSize={14}>
+            {organisation?.name} wants you to be a representative on their workspace
           </MyText>
-        )}
-        {!item?.accepted && item?.accepted !== null && (
-          <MyText style={{ color: 'red' }} poppins="Medium" fontSize={15}>
-            Declined
+          <MyText style={{}} poppins="Medium" fontSize={12}>
+            Role : {role}
           </MyText>
-        )}
-        {item?.accepted === null && (
-          <HStack gap={10} mt={20}>
-            <Button
-              buttonStyle={{ backgroundColor: '#C0D1FE', borderRadius: 5 }}
-              style={{ borderRadius: 5 }}
-              loading={cancelling}
-              onPress={rejectRequest}
-              titleStyle={{ color: '#0047FF', fontFamily: 'PoppinsMedium' }}>
-              Decline
-            </Button>
-            <Button
-              buttonStyle={{ backgroundColor: '#0047FF', borderRadius: 5 }}
-              style={{ borderRadius: 5 }}
-              loading={accepting}
-              onPress={acceptRequest}
-              titleStyle={{ color: 'white', fontFamily: 'PoppinsMedium' }}>
-              Accept
-            </Button>
-          </HStack>
-        )}
-      </VStack>
-    </HStack>
+          <MyText style={{}} poppins="Medium" fontSize={12}>
+            Responsibility : {responsibility}
+          </MyText>
+          <MyText style={{}} poppins="Medium" fontSize={12}>
+            Qualities : {qualities}
+          </MyText>
+          <MyText style={{}} poppins="Medium" fontSize={12}>
+            Payment: {salary} naira
+          </MyText>
+          {accepted && (
+            <MyText style={{ color: 'green' }} poppins="Medium" fontSize={15}>
+              Accepted
+            </MyText>
+          )}
+          {!accepted && !pending && (
+            <MyText style={{ color: 'red' }} poppins="Medium" fontSize={15}>
+              Declined
+            </MyText>
+          )}
+          {!accepted && pending && (
+            <HStack gap={10} mt={20}>
+              <Button
+                buttonStyle={{ backgroundColor: '#C0D1FE', borderRadius: 5, minWidth: 100 }}
+                style={{ borderRadius: 5 }}
+                loading={cancelling}
+                onPress={openDecline}
+                titleStyle={{ color: '#0047FF', fontFamily: 'PoppinsMedium' }}>
+                Decline
+              </Button>
+              <Button
+                buttonStyle={{ backgroundColor: '#0047FF', borderRadius: 5 }}
+                style={{ borderRadius: 5 }}
+                loading={accepting}
+                onPress={acceptRequest}
+                titleStyle={{ color: 'white', fontFamily: 'PoppinsMedium' }}>
+                Accept
+              </Button>
+            </HStack>
+          )}
+        </VStack>
+      </HStack>
+    </>
   );
 };

@@ -135,8 +135,10 @@ const Profile = () => {
           </HStack>
         </VStack>
         <View style={{ marginTop: 'auto', gap: 10 }}>
-          <MyButton onPress={() => router.push(`/myWorkerProfile/edit/${id}`)} buttonStyle={{width: 250, borderRadius: 7}}>
-            <MyText poppins="Bold" style={{ color: colors.white,  }} fontSize={12}>
+          <MyButton
+            onPress={() => router.push(`/myWorkerProfile/edit/${id}`)}
+            buttonStyle={{ width: '100%', borderRadius: 7, marginHorizontal: 10 }}>
+            <MyText poppins="Bold" style={{ color: colors.white }} fontSize={12}>
               Edit work profile
             </MyText>
           </MyButton>

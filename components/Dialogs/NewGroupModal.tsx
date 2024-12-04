@@ -8,13 +8,12 @@ import React, { useState } from 'react';
 import { StyleSheet, TouchableOpacity, View } from 'react-native';
 import Modal from 'react-native-modal';
 import { toast } from 'sonner-native';
-import { useChatContext } from 'stream-chat-expo';
 
-import { colors } from '../../constants/Colors';
 import { HStack } from '../HStack';
 import { InputComponent } from '../InputComponent';
 import { MyText } from '../Ui/MyText';
 
+import { colors } from '~/constants/Colors';
 import { WorkType } from '~/constants/types';
 import { useDarkMode } from '~/hooks/useDarkMode';
 import { useGroupName } from '~/hooks/useGroupName';
@@ -23,7 +22,7 @@ import { supabase } from '~/lib/supabase';
 export const NewGroupModal = ({ data, id }: { data: WorkType[]; id: string }) => {
   const { isOpen, onClose } = useGroupName();
   const { userId } = useAuth();
-  const { client } = useChatContext();
+
   const [loading, setLoading] = useState(false);
   const query = useQueryClient();
   const [value, setValue] = useState('');
@@ -45,12 +44,6 @@ export const NewGroupModal = ({ data, id }: { data: WorkType[]; id: string }) =>
       }
       if (!error) {
         query.invalidateQueries({ queryKey: ['organization'] });
-        const channel = client.channel('messaging', {
-          members: [userId as string, ...data?.map((staff) => staff.userId?.userId as string)],
-          name: value,
-          image,
-        });
-        await channel.watch();
 
         toast.success('Success', {
           description: 'Group created',

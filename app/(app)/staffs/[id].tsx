@@ -1,9 +1,10 @@
-import { useAuth } from '@clerk/clerk-expo';
+import { convexQuery } from '@convex-dev/react-query';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { BottomSheet, Divider } from '@rneui/themed';
-import { useQueryClient } from '@tanstack/react-query';
+import { useQuery } from '@tanstack/react-query';
+import { useMutation } from 'convex/react';
 import { useLocalSearchParams, useRouter } from 'expo-router';
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useMemo, useState } from 'react';
 import { FlatList, Pressable, StyleSheet, View } from 'react-native';
 import { toast } from 'sonner-native';
 
@@ -22,10 +23,10 @@ import { MyText } from '~/components/Ui/MyText';
 import { UserPreview } from '~/components/Ui/UserPreview';
 import { colors } from '~/constants/Colors';
 import { WorkType } from '~/constants/types';
+import { api } from '~/convex/_generated/api';
+import { Id } from '~/convex/_generated/dataModel';
 import { useDarkMode } from '~/hooks/useDarkMode';
 import { useHandleStaff } from '~/hooks/useHandleStaffs';
-import { useGetMyStaffs, useWorkSpaceWithoutWorker } from '~/lib/queries';
-import { supabase } from '~/lib/supabase';
 
 const allRoles = [
   'All',
@@ -36,67 +37,50 @@ const allRoles = [
   'ICT',
 ];
 const Staffs = () => {
-  const { id } = useLocalSearchParams<{ id: string }>();
-  const { userId } = useAuth();
+  const { id } = useLocalSearchParams<{ id: Id<'users'> }>();
+
   const [showBottom, setShowBottom] = useState(false);
   const [showModal, setShowModal] = useState(false);
   const [loading, setLoading] = useState(false);
-  const [workspaceId, setWorkspaceId] = useState<number | null>(null);
+  const [workspaceId, setWorkspaceId] = useState<Id<'workspaces'> | null>(null);
 
-  const {
-    data: workspaces,
-    isError: isErrorWorkspaces,
-    refetch: refetchWorkspaces,
-    isPending: isPendingWorkspace,
-  } = useWorkSpaceWithoutWorker(userId!);
+  // const {
+  //   data: workspaces,
+  //   isError: isErrorWorkspaces,
+  //   refetch: refetchWorkspaces,
+  //   isPending: isPendingWorkspace,
+  // } = useWorkSpaceWithoutWorker(userId!);
   const [isVisible, setIsVisible] = useState(false);
-  const queryClient = useQueryClient();
 
   const { getItem, item: staff } = useHandleStaff();
   const onNavRole = () => {
-    router.push('/role');
+    router.push('/allStaffs');
   };
   const [role, setRole] = useState('All');
   const router = useRouter();
-  const { data, isPaused, isPending, isError, refetch, isRefetching, isRefetchError } =
-    useGetMyStaffs(id);
+  const { data, isPaused, isPending, isError, refetch, isRefetching, isRefetchError } = useQuery(
+    convexQuery(api.organisation.getStaffsByBossId, { bossId: id! })
+  );
+  const {
+    data: workspaces,
+    isPending: isPendingWorkspace,
+    isError: isErrorWorkspaces,
+    refetch: refetchWorkspaces,
+  } = useQuery(convexQuery(api.workspaces.freeWorkspaces, { ownerId: id }));
   const { darkMode } = useDarkMode();
-
+  const addToWorkspace = useMutation(api.workspaces.addStaffToWorkspace);
   const workers = useMemo(() => {
-    if (!data?.staffs) return [];
+    if (!data) return [];
     if (role === 'All') {
-      return data?.staffs;
+      return data;
     }
 
-    return data?.staffs?.filter((worker) => worker.role === role);
+    return data?.filter((worker) => worker.role === role);
   }, [data, role]);
-  useEffect(() => {
-    const channel = supabase
-      .channel('workcloud')
-      .on(
-        'postgres_changes',
-        {
-          event: '*',
-          schema: 'public',
-          table: 'workspace',
-        },
-        (payload) => {
-          if (payload) {
-            queryClient.invalidateQueries({ queryKey: ['myStaffs'] });
-            queryClient.invalidateQueries({ queryKey: ['assignedWk'] });
-          }
-          console.log('Change received!', payload);
-        }
-      )
-      .subscribe();
 
-    return () => {
-      supabase.removeChannel(channel);
-    };
-  }, []);
-  const handleRefetch = () => {
-    refetch();
-    refetchWorkspaces();
+  const handleRefetch = async () => {
+    await refetch();
+    await refetchWorkspaces();
   };
   if (isError || isRefetchError || isPaused || isErrorWorkspaces) {
     return <ErrorComponent refetch={handleRefetch} />;
@@ -118,6 +102,7 @@ const Staffs = () => {
     getItem(item);
   };
 
+  console.log({ workspaces });
   const array: { icon: any; text: string }[] = [
     {
       icon: 'user-o',
@@ -130,8 +115,8 @@ const Staffs = () => {
 
     staff?.workspaceId
       ? {
-          icon: staff?.workspaceId?.locked ? 'unlock-alt' : 'lock',
-          text: staff?.workspaceId?.locked ? 'Unlock workspace' : 'Lock workspace',
+          icon: staff?.workspace?.locked ? 'unlock-alt' : 'lock',
+          text: staff?.workspace?.locked ? 'Unlock workspace' : 'Lock workspace',
         }
       : {
           icon: 'industry',
@@ -146,50 +131,17 @@ const Staffs = () => {
     setIsVisible(false);
     onShowBottom();
   };
-  const onAddStaff = (id: number) => {
+  const onAddStaff = (id: Id<'workspaces'>) => {
     setWorkspaceId(id);
     setShowModal(true);
     onHideBottom();
   };
-
+  // to update with convex function
   const handleAdd = async () => {
     setLoading(true);
+    if (!workspaceId) return;
     try {
-      const { data, error } = await supabase
-        .from('workspace')
-        .update({
-          workerId: staff?.userId?.userId,
-        })
-        .eq('id', workspaceId!)
-        .select()
-        .single();
-
-      if (error) {
-        toast.error('Something went wrong', {
-          description: 'Failed to add staff to workspace',
-        });
-        return;
-      }
-
-      const { error: err } = await supabase
-        .from('worker')
-        .update({
-          workspaceId: data?.id,
-        })
-        .eq('userId', staff?.userId?.userId!);
-      if (err) {
-        toast.error('Something went wrong', {
-          description: 'Failed to add staff to workspace',
-        });
-        await supabase
-          .from('workspace')
-          .update({
-            workerId: null,
-          })
-          .eq('id', workspaceId!);
-
-        return;
-      }
+      await addToWorkspace({ workspaceId, workerId: staff?._id! });
       toast.success('Success', {
         description: 'Staff added successfully',
       });
@@ -200,6 +152,7 @@ const Staffs = () => {
       setLoading(false);
     }
   };
+  // @ts-ignore
   return (
     <Container>
       <AddStaff />
@@ -257,12 +210,13 @@ const Staffs = () => {
         renderItem={({ item }) => (
           <HStack justifyContent="space-between" alignItems="center">
             <UserPreview
-              id={item?.id}
-              imageUrl={item?.userId?.avatar}
-              name={item?.userId?.name}
+              id={item?.userId}
+              imageUrl={item?.user?.imageUrl!}
+              name={`${item?.user?.first_name} ${item?.user?.last_name}`}
               subText={item?.role}
             />
             <Pressable
+              // @ts-ignore
               onPress={() => showMenu(item)}
               style={({ pressed }) => ({ opacity: pressed ? 0.5 : 1 })}>
               <MaterialCommunityIcons
@@ -298,7 +252,7 @@ const Staffs = () => {
           ItemSeparatorComponent={() => (
             <Divider
               style={{
-                height: StyleSheet.hairlineWidth,
+                height: 1,
                 backgroundColor: darkMode === 'dark' ? 'transparent' : '#ccc',
                 width: '100%',
               }}
@@ -307,8 +261,9 @@ const Staffs = () => {
           data={workspaces}
           renderItem={({ item }) => (
             <Pressable
-              onPress={() => onAddStaff(item.id)}
-              style={({ pressed }) => [{ opacity: pressed ? 0.5 : 1 }, styles.pressed]}>
+              onPress={() => onAddStaff(item._id)}
+              disabled={loading}
+              style={({ pressed }) => [{ opacity: pressed || loading ? 0.5 : 1 }, styles.pressed]}>
               <MyText poppins="Medium" fontSize={20}>
                 {item.role}
               </MyText>

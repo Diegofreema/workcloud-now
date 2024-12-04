@@ -3,11 +3,12 @@ import React from 'react';
 import { StyleSheet, View } from 'react-native';
 import Modal from 'react-native-modal';
 
-import { colors } from '../../constants/Colors';
 import { HStack } from '../HStack';
 import { MyText } from '../Ui/MyText';
 
+import { colors } from '~/constants/Colors';
 import { useDarkMode } from '~/hooks/useDarkMode';
+
 type Props = {
   onPress: () => void;
   title: string;
@@ -49,17 +50,6 @@ export const CustomModal = ({ onPress, title, isLoading, onClose, isOpen, btnTex
 
           <HStack gap={10}>
             <Button
-              titleStyle={{ fontFamily: 'PoppinsMedium', color: colors.dialPad }}
-              buttonStyle={{
-                backgroundColor: colors.lightBlueButton,
-                borderRadius: 5,
-                width: 120,
-              }}
-              onPress={onClose}
-              color={colors.black}>
-              No
-            </Button>
-            <Button
               disabled={isLoading}
               loading={isLoading}
               titleStyle={{ fontFamily: 'PoppinsMedium' }}
@@ -70,6 +60,17 @@ export const CustomModal = ({ onPress, title, isLoading, onClose, isOpen, btnTex
               }}
               onPress={onPress}>
               Yes
+            </Button>
+            <Button
+              titleStyle={{ fontFamily: 'PoppinsMedium', color: colors.dialPad }}
+              buttonStyle={{
+                backgroundColor: colors.lightBlueButton,
+                borderRadius: 5,
+                width: 120,
+              }}
+              onPress={onClose}
+              color={colors.black}>
+              No
             </Button>
           </HStack>
         </View>

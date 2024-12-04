@@ -8,7 +8,7 @@ import { useEffect, useState } from 'react';
 import { FlatList, Pressable, StyleSheet, View } from 'react-native';
 import { toast } from 'sonner-native';
 import { Channel as ChannelType } from 'stream-chat';
-import { useChatContext } from 'stream-chat-expo';
+
 
 import { AuthHeader } from './AuthHeader';
 import { HStack } from './HStack';
@@ -28,15 +28,14 @@ export const GroupDetail = (): JSX.Element => {
   const [isDeleting, setIsDeleting] = useState(false);
   const { darkMode } = useDarkMode();
   const [close, setClose] = useState(false);
-  const { client } = useChatContext();
+
   const { userId } = useAuth();
   const [channel, setChannel] = useState<ChannelType | null>(null);
   console.log(chatId);
 
   useEffect(() => {
     const fetchChannel = async () => {
-      const channel = await client.queryChannels({ id: { $eq: chatId } });
-      setChannel(channel[0]);
+
     };
     fetchChannel();
   }, [chatId]);

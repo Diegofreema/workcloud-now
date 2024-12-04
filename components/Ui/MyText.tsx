@@ -1,8 +1,8 @@
 import { StyleProp, Text, TextStyle, useWindowDimensions } from 'react-native';
 import { RFValue } from 'react-native-responsive-fontsize';
 
-import { fontFamily } from '../../constants';
-import { useDarkMode } from '../../hooks/useDarkMode';
+import { fontFamily } from '~/constants';
+import { useDarkMode } from '~/hooks/useDarkMode';
 
 type Props = {
   style?: StyleProp<TextStyle>;

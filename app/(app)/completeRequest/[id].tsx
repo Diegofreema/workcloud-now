@@ -1,10 +1,19 @@
 import { useAuth } from '@clerk/clerk-expo';
+import { convexQuery } from '@convex-dev/react-query';
 import { Button } from '@rneui/themed';
-import { useQueryClient } from '@tanstack/react-query';
+import { useQuery } from '@tanstack/react-query';
+import { useMutation } from 'convex/react';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useFormik } from 'formik';
 import React, { useEffect } from 'react';
-import { ActivityIndicator, ScrollView, Text, View } from 'react-native';
+import {
+  ActivityIndicator,
+  ScrollView,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  View,
+} from 'react-native';
 import { toast } from 'sonner-native';
 import * as yup from 'yup';
 
@@ -14,13 +23,15 @@ import { InputComponent } from '~/components/InputComponent';
 import { Container } from '~/components/Ui/Container';
 import { ErrorComponent } from '~/components/Ui/ErrorComponent';
 import { LoadingComponent } from '~/components/Ui/LoadingComponent';
+import { MyText } from '~/components/Ui/MyText';
 import { UserPreview } from '~/components/Ui/UserPreview';
 import VStack from '~/components/Ui/VStack';
 import { colors } from '~/constants/Colors';
-import { useDetailsToAdd } from '~/hooks/useDetailsToAdd';
+import { api } from '~/convex/_generated/api';
+import { Id } from '~/convex/_generated/dataModel';
+import { useGetUserId } from '~/hooks/useGetUserId';
 import { useSaved } from '~/hooks/useSaved';
-import { useGetWorkerProfile } from '~/lib/queries';
-import { supabase } from '~/lib/supabase';
+import { useStaffRole } from '~/hooks/useStaffRole';
 
 const validationSchema = yup.object().shape({
   role: yup.string().required('Role is required'),
@@ -30,21 +41,21 @@ const validationSchema = yup.object().shape({
 });
 
 const CompleteRequest = () => {
-  const { id } = useLocalSearchParams<{ id: string }>();
+  const { id } = useLocalSearchParams<{ id: Id<'workers'> }>();
 
-  const { workspaceId, role: workerRole, orgId } = useDetailsToAdd();
+  const selectedRole = useStaffRole((state) => state.role);
 
   const { isOpen, onClose } = useSaved();
   const { userId: isMe } = useAuth();
-
-  const queryClient = useQueryClient();
+  const { id: senderId } = useGetUserId(isMe!);
   const router = useRouter();
-  const { data, isPaused, isPending, isError, refetch, isRefetchError } = useGetWorkerProfile(id);
-
+  const { data, isPaused, isPending, isError, refetch, isRefetchError } = useQuery(
+    convexQuery(api.worker.getSingleWorkerProfile, { id })
+  );
+  const sendRequest = useMutation(api.request.createRequest);
   const {
     values,
     handleChange,
-
     handleSubmit,
     isSubmitting,
     errors,
@@ -61,31 +72,19 @@ const CompleteRequest = () => {
     validationSchema,
     onSubmit: async (values) => {
       const { responsibility, salary, qualities, role } = values;
+      if (!senderId || !data?.user) return;
       try {
-        const { error } = await supabase.from('request').insert({
-          from: isMe,
-          to: data?.worker?.userId?.userId,
-          responsibility,
-          salary: `${salary}`,
-          role: workerRole || role,
-          workspaceId: workspaceId || null,
-          organizationId: +orgId,
+        await sendRequest({
+          role,
+          salary,
           qualities,
+          responsibility,
+          from: senderId,
+          to: data?.user?._id,
         });
-
-        if (!error) {
-          toast.success('Request sent');
-          queryClient.invalidateQueries({
-            queryKey: ['request', isMe, data?.worker?.userId?.userId],
-          });
-          resetForm();
-          router.replace('/pending-staffs');
-        }
-
-        if (error) {
-          console.log(JSON.stringify(error, null, 1));
-          toast.error('Error, failed to send request');
-        }
+        toast.success('Request sent');
+        resetForm();
+        router.replace('/pending-staffs');
       } catch (error) {
         console.log(error);
         toast.error('Error, failed to send request');
@@ -105,10 +104,10 @@ const CompleteRequest = () => {
     return () => clearTimeout(interval);
   }, [isOpen]);
   useEffect(() => {
-    if (workerRole) {
-      setValues({ ...values, role: workerRole });
+    if (selectedRole) {
+      setValues({ ...values, role: selectedRole });
     }
-  }, [workerRole]);
+  }, [selectedRole]);
   if (isError || isRefetchError || isPaused) {
     return <ErrorComponent refetch={refetch} />;
   }
@@ -118,7 +117,7 @@ const CompleteRequest = () => {
   }
 
   const { responsibility, role, salary } = values;
-  const { worker } = data;
+
   return (
     <Container>
       <HeaderNav title="Complete Request" />
@@ -128,23 +127,26 @@ const CompleteRequest = () => {
         contentContainerStyle={{ paddingBottom: 50 }}>
         <View style={{ marginVertical: 10 }}>
           <UserPreview
-            imageUrl={worker?.userId?.avatar}
-            name={worker?.userId?.name}
-            roleText={worker?.role}
-            workPlace={worker?.organizationId?.name}
+            imageUrl={data?.user?.imageUrl!}
+            name={data?.user?.first_name + ' ' + data?.user?.last_name}
+            roleText={data?.worker?.role}
+            workPlace={data?.organization?.name}
             personal
           />
         </View>
 
         <VStack mt={30}>
           <>
-            <InputComponent
-              label="Role"
-              value={role}
-              onChangeText={handleChange('role')}
-              placeholder="Assign a role"
-              keyboardType="default"
-            />
+            <MyText
+              style={{ fontSize: 15, color: 'black', marginBottom: 10, marginLeft: 10 }}
+              poppins="Bold">
+              Role
+            </MyText>
+            <TouchableOpacity style={styles.press} onPress={() => router.push('/staff-role')}>
+              <MyText style={{ fontFamily: 'PoppinsLight', fontSize: 13 }} poppins="Light">
+                {role || 'Select a role'}
+              </MyText>
+            </TouchableOpacity>
             {touched.role && errors.role && (
               <Text style={{ color: 'red', fontWeight: 'bold' }}>{errors.role}</Text>
             )}
@@ -216,3 +218,17 @@ const CompleteRequest = () => {
 };
 
 export default CompleteRequest;
+
+const styles = StyleSheet.create({
+  press: {
+    borderBottomColor: 'transparent',
+    backgroundColor: '#E5E5E5',
+    borderBottomWidth: 0,
+    paddingHorizontal: 8,
+    borderRadius: 5,
+    height: 60,
+    marginHorizontal: 10,
+    justifyContent: 'center',
+    marginBottom: 10,
+  },
+});

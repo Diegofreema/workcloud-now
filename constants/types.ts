@@ -30,15 +30,16 @@ export type User = {
   last_name?: string;
   pushToken?: string;
   organizationId?: Id<'organizations'>;
-  workerId?: Id<'users'>;
-  phoneNumber: string;
-  date_of_birth: string;
+  workerId?: Id<'workers'>;
+  phoneNumber?: string;
+  date_of_birth?: string;
 };
 export type Organization = {
   _id: Id<'organizations'> | undefined;
   avatar: string | null;
   category: string;
-  created_at: string;
+  _creationTime?: number;
+  created_at?: string;
   description: string;
   email: string;
   end: string;
@@ -71,6 +72,8 @@ export type WorkSpace = {
   signedIn: boolean;
   personal: boolean;
 };
+
+export type WorkspaceWithoutOrganization = Omit<WorkSpace, 'organization'>;
 export type UserProfile = Database['public']['Tables']['user']['Row'];
 export type TopSearch = Database['public']['Tables']['organization']['Row'];
 export type ServicePoint = Database['public']['Tables']['servicePoint']['Row'];
@@ -229,20 +232,22 @@ export type WorkerWithWorkspace = {
   bossId: string;
 };
 export type Requests = {
-  created_at: string;
-  from?: Profile;
-  id: number;
+  _creationTime: number;
+  from: Id<'users'>;
+  _id: Id<'requests'>;
   responsibility: string;
   role: string;
   salary: string;
-  to: UserWthWorkerProfile;
+  to: Id<'users'>;
   pending: boolean;
-  workspaceId: string | number;
   qualities: string;
   accepted: boolean;
   unread: boolean;
 };
-
+export type PendingRequests = {
+  request: Requests;
+  organisation: Organization | null;
+};
 export type WK = {
   bossId: string;
   created_at: string;
@@ -286,84 +291,22 @@ export type Followers = {
   organizationId: string;
   followerId: string;
 };
-export type ConnectionType = {
-  id: number;
-  owner: string;
-  connectedTo: Org;
-  created_at: string;
-};
-
-export type WorkerProfile = {
-  profile: {
-    _id: string;
-    createdAt: string;
-    exp: string;
-    gender: string;
-    location: string;
-    qualifications: string;
-    skills: string;
-    updatedAt: string;
-    userId: {
-      _id: string;
-      avatar: {
-        public_id: string;
-        url: string;
-      };
-      email: string;
-      name: string;
-    };
-    assignedWorkspace?: { _id: string; role: string };
-  };
-};
-
-export type WorkerProfileArray = {
-  profile: {
-    _id: string;
-    createdAt: string;
-    exp: string;
-    gender: string;
-    location: string;
-    qualifications: string;
-    skills: string;
-    updatedAt: string;
-    userId: {
-      _id: string;
-      avatar: {
-        public_id: string;
-        url: string;
-      };
-      email: string;
-      name: string;
-    };
-    assignedWorkspace?: string;
-  }[];
-};
 
 export type WorkType = {
-  created_at?: string;
+  _creationTime?: number;
   experience?: string;
-  id?: number;
+  _id?: Id<'workers'>;
   location?: string;
-  organizationId?: number;
+  organizationId?: Id<'organizations'>;
   qualifications?: string;
-  servicePointId?: number;
+  servicePointId?: Id<'servicePoints'>;
   skills?: string;
-  userId?: {
-    avatar: string;
-    birthday: string;
-    created_at: string;
-    email: string;
-    id: number;
-    name: string;
-    organizationId: number;
-    phoneNumber: string;
-    posts: number[];
-    streamToken: string;
-    userId: string;
-    workerId: number;
-  };
-  workspaceId?: Workspace;
-  bossId: string;
+  user: User;
+  organization: Organization | null;
+  workspace: WorkspaceWithoutOrganization;
+  userId?: Id<'users'>;
+  workspaceId?: Id<'workspaces'>;
+  bossId: Id<'users'>;
   role: string;
 };
 

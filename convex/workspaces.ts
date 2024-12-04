@@ -38,6 +38,21 @@ export const getRoles = query({
     return await ctx.db.query('roles').collect();
   },
 });
+
+export const freeWorkspaces = query({
+  args: {
+    ownerId: v.id('users'),
+  },
+  handler: async (ctx, args) => {
+    return await ctx.db
+      .query('workspaces')
+      .filter((q) =>
+        q.and(q.eq(q.field('ownerId'), args.ownerId), q.eq(q.field('workerId'), undefined))
+      )
+      .collect();
+  },
+});
+
 // mutation
 
 export const createWorkspace = mutation({
@@ -75,6 +90,36 @@ export const deleteWorkspace = mutation({
   },
 });
 
+export const addStaffToWorkspace = mutation({
+  args: {
+    workerId: v.id('workers'),
+    workspaceId: v.id('workspaces'),
+  },
+  handler: async (ctx, args) => {
+    await ctx.db.patch(args.workspaceId, {
+      workerId: args.workerId,
+    });
+    await ctx.db.patch(args.workerId, {
+      workspaceId: args.workspaceId,
+    });
+  },
+});
+export const removeFromWorkspace = mutation({
+  args: {
+    workerId: v.id('workers'),
+    workspaceId: v.id('workspaces'),
+  },
+  handler: async (ctx, args) => {
+    await ctx.db.patch(args.workspaceId, {
+      workerId: undefined,
+      locked: true,
+      signedIn: false
+    });
+    await ctx.db.patch(args.workerId, {
+      workspaceId: undefined,
+    });
+  },
+});
 // helper
 // const updateWorkerTableWithBossIdAndWorkspaceId = async (
 //   ctx: QueryCtx,

@@ -17,7 +17,7 @@ import {
 } from 'react-native';
 import Carousel from 'react-native-reanimated-carousel';
 import { toast } from 'sonner-native';
-import { useChatContext } from 'stream-chat-expo';
+
 
 import { EmptyText } from '~/components/EmptyText';
 import { HStack } from '~/components/HStack';
@@ -202,7 +202,7 @@ const Reception = () => {
                     borderRadius: 5,
                     overflow: 'hidden',
                   }}>
-                  <Image src={item.postUrl} style={styles.image} resizeMode="cover" />
+                  <Image src={item.image!} style={styles.image} resizeMode="cover" />
                 </View>
               )}
             />
@@ -258,7 +258,7 @@ const Representatives = ({ data }: { data: WorkerWithWorkspace[] }) => {
 const RepresentativeItem = ({ item }: { item: WorkerWithWorkspace }) => {
   const router = useRouter();
   const { userId: id } = useAuth();
-  const { client } = useChatContext();
+
   const queryClient = useQueryClient();
   const handlePress = async () => {
     if (id === item.userId.userId) return;
@@ -323,11 +323,11 @@ const RepresentativeItem = ({ item }: { item: WorkerWithWorkspace }) => {
   };
 
   const onPress = async () => {
-    const channel = client.channel('messaging', {
-      members: [id!, item?.userId?.userId!],
-    });
+    // const channel = client.channel('messaging', {
+    //   members: [id!, item?.userId?.userId!],
+    // });
 
-    await channel.watch();
+    // await channel.watch();
     // @ts-ignore
     router.push(`/chat/${channel.id}?workerId=${item?.userId?.userId}`);
   };

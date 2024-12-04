@@ -1,9 +1,12 @@
 import { create } from 'zustand';
+
+import { Id } from '~/convex/_generated/dataModel';
 type InfoType = {
-  workspaceId: string;
-  workerId: string;
-  newWorkspaceId: string;
-  requestId: string | number;
+  to: Id<'users'> | null;
+  from: Id<'users'> | null;
+  _id: Id<'requests'> | null;
+  organizationId: Id<'organizations'> | null;
+  role: string;
 };
 type Store = {
   infoIds: InfoType;
@@ -13,21 +16,23 @@ type Store = {
 
 export const useInfos = create<Store>((set) => ({
   infoIds: {
-    workspaceId: '',
-    workerId: '',
-    newWorkspaceId: '',
-    requestId: '',
+    _id: null,
+    from: null,
+    organizationId: null,
+    role: '',
+    to: null,
   },
-  getInfoIds: ({ newWorkspaceId, requestId, workerId, workspaceId }: InfoType) => {
-    set({ infoIds: { workspaceId, workerId, newWorkspaceId, requestId } });
+  getInfoIds: ({ _id, organizationId, to, role, from }: InfoType) => {
+    set({ infoIds: { from, role, organizationId, _id, to } });
   },
   removeInfoIds: () => {
     set({
       infoIds: {
-        workspaceId: '',
-        workerId: '',
-        newWorkspaceId: '',
-        requestId: '',
+        organizationId: null,
+        to: null,
+        from: null,
+        role: '',
+        _id: null,
       },
     });
   },

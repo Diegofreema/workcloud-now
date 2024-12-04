@@ -119,7 +119,7 @@ const Workspace = ({ item }: { item: WorkSpace }) => {
         justifyContent: 'space-between',
       }}>
       <HStack gap={10} alignItems="center">
-        <Avatar rounded source={{ uri: item.organization?.avatar! }} size={50} />
+        <Avatar rounded source={{ uri: item.organization?.avatar! }}   size={50} />
         <VStack>
           <MyText poppins="Bold" style={{ fontSize: 13 }}>
             {item?.role}

@@ -6,7 +6,7 @@ import { useEffect, useState } from 'react';
 import { FlatList, View } from 'react-native';
 import { toast } from 'sonner-native';
 import { Channel as ChannelType } from 'stream-chat';
-import { useChatContext } from 'stream-chat-expo';
+
 
 import { AuthHeader } from './AuthHeader';
 import { EmptyText } from './EmptyText';
@@ -18,7 +18,7 @@ import { ChatMember, useMembers } from '~/hooks/useMembers';
 import { useGetMyStaffs } from '~/lib/queries';
 
 export const AddToGroup = (): JSX.Element => {
-  const { client } = useChatContext();
+
   const { userId } = useAuth();
   const { chatId } = useLocalSearchParams<{ chatId: string }>();
   const [channel, setChannel] = useState<ChannelType | null>(null);
@@ -26,8 +26,7 @@ export const AddToGroup = (): JSX.Element => {
 
   useEffect(() => {
     const fetchChannel = async () => {
-      const channel = await client.queryChannels({ id: { $eq: chatId } });
-      setChannel(channel[0]);
+
     };
     fetchChannel();
   }, [chatId]);
@@ -44,7 +43,7 @@ export const AddToGroup = (): JSX.Element => {
   }
 
   const membersToDisplay = data.staffs.filter(
-    (staff) => !members.some((member) => member.user?.id === staff?.userId?.userId)
+    (staff) => !members.some((member) => member.user?.id === staff?.userId)
   );
   console.log(membersToDisplay.length);
 
@@ -83,12 +82,12 @@ export const AddToGroup = (): JSX.Element => {
         data={membersToDisplay}
         renderItem={({ item }) => (
           <UserPreviewWithBio
-            id={item?.userId?.userId!}
-            imageUrl={item?.userId?.avatar!}
-            name={item?.userId?.name!}
+            id={item?.userId!}
+            imageUrl={item?.user?.imageUrl!}
+            name={item?.user?.first_name!}
             bio={item.experience!}
             skills={item.skills!}
-            onPress={() => onAddMember(item?.userId?.userId!)}
+            onPress={() => onAddMember(item?.userId!)}
           />
         )}
         ListEmptyComponent={() => <EmptyText text="No staffs to add" />}

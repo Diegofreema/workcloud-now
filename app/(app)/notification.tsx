@@ -1,7 +1,11 @@
 import { useAuth } from '@clerk/clerk-expo';
+import { convexQuery } from '@convex-dev/react-query';
 import { Divider } from '@rneui/themed';
-import React, { useEffect, useState } from 'react';
+import { useQuery } from '@tanstack/react-query';
+import { useMutation } from 'convex/react';
+import React, { useState } from 'react';
 import { FlatList } from 'react-native';
+import { toast } from 'sonner-native';
 
 import { MyModal } from '~/components/Dialogs/MyModal';
 import { EmptyText } from '~/components/EmptyText';
@@ -10,106 +14,54 @@ import { Container } from '~/components/Ui/Container';
 import { ErrorComponent } from '~/components/Ui/ErrorComponent';
 import { LoadingComponent } from '~/components/Ui/LoadingComponent';
 import { WorkPreview } from '~/components/Ui/UserPreview';
+import { api } from '~/convex/_generated/api';
 import { useDarkMode } from '~/hooks/useDarkMode';
-import { usePendingRequest } from '~/lib/queries';
-import { supabase } from '~/lib/supabase';
+import { useInfos } from '~/hooks/useGetInfo';
+import { useGetUserId } from '~/hooks/useGetUserId';
 
 const Notification = () => {
-  const { userId: id } = useAuth();
+  const { userId } = useAuth();
+  const { id } = useGetUserId(userId!);
+  const info = useInfos((state) => state.infoIds);
   const [isLoading, setIsLoading] = useState(false);
   const { darkMode } = useDarkMode();
-  const { data, isPaused, isPending, isError, refetch, isRefetching, isRefetchError } =
-    usePendingRequest(id);
-
-  useEffect(() => {
-    if (data) {
-      const markAllAsRead = async () => {
-        try {
-          data.requests.forEach(async (request) => {
-            if (request.unread) {
-              await supabase.from('request').update({ unread: false }).eq('id', request.id);
-            }
-          });
-        } catch (error) {
-          console.log(error);
-        }
-      };
-      markAllAsRead();
-    }
-  }, [data]);
-
-  if (isError || isRefetchError || isPaused || data?.error) {
+  const { data, isPaused, isPending, isError, refetch, isRefetching, isRefetchError } = useQuery(
+    convexQuery(api.request.getPendingRequestsWithOrganization, { id: id! })
+  );
+  const acceptOffer = useMutation(api.worker.acceptOffer);
+  if (isError || isRefetchError || isPaused) {
     return <ErrorComponent refetch={refetch} />;
   }
 
   if (isPending) {
     return <LoadingComponent />;
   }
-  // 6602c083d9c51008cb52b02c
-  const { requests } = data;
 
   const onPress = async () => {
+    if (!info._id || !info.to || !info.from || !info.organizationId) return;
+    const organisation = data.find(
+      (d) => d?.organisation?._id === info.organizationId
+    )?.organisation;
     setIsLoading(true);
-    const { error } = await supabase
-      .from('workspace')
-      .update({
-        workerId: null,
-        locked: true,
-        active: false,
-        signedIn: false,
-        leisure: false,
-      })
-      .eq('id', id!);
-    if (!error) {
+    try {
+      await acceptOffer({
+        from: info.from,
+        _id: info._id,
+        to: info.to,
+        role: info.role,
+        organizationId: info.organizationId,
+      });
+      toast.success('You have accepted the offer', {
+        description: `From ${organisation?.name} as an ${info.role}`,
+      });
+    } catch (error) {
+      console.log(error);
+      toast.error('Something went wrong', {
+        description: 'Could not accept the offer',
+      });
+    } finally {
+      setIsLoading(false);
     }
-
-    // try {
-    //   const { error } = await supabase
-    //     .from('workspace')
-    //     .update({
-    //       salary: salary,
-    //       responsibility: responsibility,
-    //       workerId: to?.userId,
-    //     })
-    //     .eq('id', workspaceId);
-
-    //   const { error: err } = await supabase
-    //     .from('worker')
-    //     .update({
-    //       role: role,
-    //       bossId: from?.userId,
-    //       workspaceId: workspaceId,
-    //       organizationId: from?.organizationId?.id,
-    //     })
-    //     .eq('id', to.workerId);
-    //   if (!error && !err) {
-    //     const { error } = await supabase
-    //       .from('request')
-    //       .delete()
-    //       .eq('id', id);
-    //     Toast.show({
-    //       type: 'success',
-    //       text1: 'Request has been accepted',
-    //     });
-
-    //     router.push('/organization');
-    //   }
-    //   if (error || err) {
-    //     Toast.show({
-    //       type: 'error',
-    //       text1: 'Something went wrong',
-    //     });
-    //     console.log(error || err);
-    //   }
-    // } catch (error) {
-    //   console.log(error);
-    //   Toast.show({
-    //     type: 'error',
-    //     text1: 'Something went wrong',
-    //   });
-    // } finally {
-    //   setAccepting(false);
-    // }
   };
 
   return (
@@ -141,9 +93,9 @@ const Notification = () => {
             paddingBottom: 50,
             flexGrow: 1,
           }}
-          data={requests}
+          data={data}
           renderItem={({ item }) => <WorkPreview item={item} />}
-          keyExtractor={(item) => item?.id.toString()}
+          keyExtractor={(item) => item?.request._id.toString()}
         />
       </Container>
     </>

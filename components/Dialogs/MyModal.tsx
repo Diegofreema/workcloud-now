@@ -3,12 +3,13 @@ import React from 'react';
 import { StyleSheet, View } from 'react-native';
 import Modal from 'react-native-modal';
 
-import { colors } from '../../constants/Colors';
 import { HStack } from '../HStack';
 import { MyText } from '../Ui/MyText';
 
+import { colors } from '~/constants/Colors';
 import { useDarkMode } from '~/hooks/useDarkMode';
 import { useOpen } from '~/hooks/useOpen';
+
 type Props = {
   onPress: () => void;
   title: string;

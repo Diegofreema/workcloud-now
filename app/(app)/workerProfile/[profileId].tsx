@@ -1,13 +1,14 @@
 import { useUser } from '@clerk/clerk-expo';
+import { convexQuery } from '@convex-dev/react-query';
 import { AntDesign, EvilIcons, MaterialCommunityIcons, SimpleLineIcons } from '@expo/vector-icons';
 import { Button } from '@rneui/themed';
-import { useQueryClient } from '@tanstack/react-query';
+import { useQuery } from '@tanstack/react-query';
+import { useMutation } from 'convex/react';
 import { format } from 'date-fns';
 import { useLocalSearchParams, useRouter } from 'expo-router';
-import React, { useEffect, useState } from 'react';
+import React, { useState } from 'react';
 import { ScrollView, View } from 'react-native';
 import { toast } from 'sonner-native';
-import { useChatContext } from 'stream-chat-expo';
 
 import { HStack } from '~/components/HStack';
 import { HeaderNav } from '~/components/HeaderNav';
@@ -18,51 +19,48 @@ import { MyText } from '~/components/Ui/MyText';
 import { UserPreview } from '~/components/Ui/UserPreview';
 import VStack from '~/components/Ui/VStack';
 import { colors } from '~/constants/Colors';
+import { api } from '~/convex/_generated/api';
+import { Id } from '~/convex/_generated/dataModel';
 import { useDarkMode } from '~/hooks/useDarkMode';
-import { useGetRequests, useGetWorkerProfile } from '~/lib/queries';
-import { supabase } from '~/lib/supabase';
+import { useGetUserId } from '~/hooks/useGetUserId';
 
 export const formattedSkills = (text: string) => {
   const arrayOfSkills = text?.split(',');
-  const finishedText = arrayOfSkills?.map((skill, index) => (
+
+  return arrayOfSkills?.map((skill, index) => (
     <MyText poppins="Bold" key={index} style={{ color: colors.nine }}>
       {skill}
     </MyText>
   ));
-  return finishedText;
 };
 
 const Profile = () => {
-  const { profileId } = useLocalSearchParams<{ profileId: string }>();
+  const { profileId } = useLocalSearchParams<{ profileId: Id<'workers'> }>();
 
-  const { client } = useChatContext();
   const { user } = useUser();
+  const { id } = useGetUserId(user?.id!);
   const { darkMode } = useDarkMode();
   const [cancelling, setCancelling] = useState(false);
-  const [isInPending, setIsInPending] = useState(false);
-  const router = useRouter();
-  const { data, isPaused, isPending, isError, refetch, isRefetchError } =
-    useGetWorkerProfile(profileId);
 
+  const router = useRouter();
+  const { data, isPaused, isPending, isError, refetch, isRefetchError, error } = useQuery(
+    convexQuery(api.worker.getSingleWorkerProfile, { id: profileId })
+  );
+
+  console.log(error);
   const {
     data: pendingData,
     isPending: isPendingData,
     isError: isErrorData,
     isPaused: isPausedData,
     refetch: refetchData,
-  } = useGetRequests(user?.id as string, profileId);
-
-  const queryClient = useQueryClient();
-  useEffect(() => {
-    if (pendingData?.request?.pending === true) {
-      setIsInPending(true);
-    } else {
-      setIsInPending(false);
-    }
-  }, [pendingData]);
-  const handleRefetch = () => {
-    refetch();
-    refetchData();
+  } = useQuery(
+    convexQuery(api.request.getPendingRequestsAsBoolean, { from: id!, to: data?.user?._id! })
+  );
+  const cancelPendingRequest = useMutation(api.request.cancelPendingRequests);
+  const handleRefetch = async () => {
+    await refetch();
+    await refetchData();
   };
   if (isError || isRefetchError || isErrorData || isPaused || isPausedData) {
     return <ErrorComponent refetch={handleRefetch} />;
@@ -72,30 +70,16 @@ const Profile = () => {
     return <LoadingComponent />;
   }
 
-  const startChannel = async () => {
-    const channel = client.channel('messaging', {
-      members: [user?.id as string, profileId],
-    });
-    await channel.watch();
-    router.push(`/chat/${channel.id}`);
-  };
+  const isInPending = !!pendingData;
+
+  const startChannel = async () => {};
 
   // const sendMessage = () => {};
   const cancelRequest = async () => {
     setCancelling(true);
+    if (!pendingData) return;
     try {
-      const { error } = await supabase.from('request').delete().eq('id', pendingData.request.id);
-
-      if (!error) {
-        toast.success('Request Canceled');
-        queryClient.invalidateQueries({
-          queryKey: ['request'],
-        });
-      }
-
-      if (error) {
-        toast.error('Something went wrong');
-      }
+      await cancelPendingRequest({ id: pendingData._id });
     } catch (error) {
       console.log(error);
 
@@ -105,33 +89,32 @@ const Profile = () => {
     }
   };
 
-  const { worker } = data;
-
-  const handleRequest = () => {
+  const handleRequest = async () => {
     if (!isInPending) {
       router.push(`/completeRequest/${profileId}`);
       return;
     }
 
-    cancelRequest();
+    await cancelRequest();
   };
+  const showRequestBtn = data?.worker.bossId !== user?.id && !pendingData?.accepted;
   return (
     <Container>
       <ScrollView>
         <HeaderNav title="Profile" />
         <View style={{ marginTop: 10, marginBottom: 20 }}>
           <UserPreview
-            imageUrl={worker?.userId?.avatar}
-            name={worker?.userId?.name}
-            roleText={worker?.role}
-            workPlace={worker?.organizationId?.name}
+            imageUrl={data?.user?.imageUrl!}
+            name={data?.user?.first_name + ' ' + data?.user?.last_name}
+            roleText={data?.worker.role}
+            workPlace={data?.organization?.name}
             personal
             profile
           />
         </View>
 
         <HStack gap={20} mt={20} mb={5}>
-          {worker?.bossId !== user?.id && (
+          {showRequestBtn && (
             <Button
               onPress={handleRequest}
               loading={cancelling}
@@ -139,6 +122,7 @@ const Profile = () => {
               buttonStyle={{
                 backgroundColor: colors.dialPad,
                 borderRadius: 5,
+                minWidth: 120,
               }}>
               {isInPending ? 'Cancel Request' : 'Send Request'}
             </Button>
@@ -155,6 +139,7 @@ const Profile = () => {
             buttonStyle={{
               backgroundColor: colors.lightBlueButton,
               borderRadius: 5,
+              minWidth: 120,
             }}>
             Send Message
           </Button>
@@ -164,13 +149,13 @@ const Profile = () => {
           <HStack gap={5} alignItems="center">
             <AntDesign name="calendar" size={24} color={colors.grayText} />
             <MyText fontSize={12} poppins="Medium" style={{ color: colors.grayText }}>
-              Joined since {format(worker?.created_at, 'do MMMM yyyy')}
+              Joined since {format(data?.worker?._creationTime!, 'do MMMM yyyy')}
             </MyText>
           </HStack>
           <HStack gap={5} alignItems="center">
             <EvilIcons name="location" size={24} color={colors.grayText} />
             <MyText fontSize={12} poppins="Medium" style={{ color: colors.grayText }}>
-              {worker?.location}
+              {data?.worker?.location}
             </MyText>
           </HStack>
         </VStack>
@@ -191,7 +176,7 @@ const Profile = () => {
               color={darkMode === 'dark' ? 'white' : 'black'}
             />
             <MyText poppins="Medium" fontSize={12}>
-              {worker?.qualifications}
+              {data?.worker?.qualifications}
             </MyText>
           </HStack>
         </VStack>
@@ -211,7 +196,7 @@ const Profile = () => {
               color={darkMode === 'dark' ? 'white' : 'black'}
             />
             <MyText poppins="Medium" fontSize={12}>
-              {worker?.experience}
+              {data?.worker?.experience}
             </MyText>
           </HStack>
         </VStack>
@@ -227,7 +212,7 @@ const Profile = () => {
               size={24}
               color={darkMode === 'dark' ? 'white' : 'black'}
             />
-            <VStack gap={5}>{formattedSkills(worker?.skills)}</VStack>
+            <VStack gap={5}>{formattedSkills(data?.worker?.skills || '')}</VStack>
           </HStack>
         </VStack>
       </ScrollView>

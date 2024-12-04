@@ -38,7 +38,12 @@ export const UserPreviewWithBio = ({
         opacity: pressed ? 0.5 : 1,
       })}>
       <HStack alignItems="center" gap={10}>
-        <Image source={{ uri: imageUrl }} style={{ width: 60, height: 60, borderRadius: 9999 }} />
+        <Image
+          source={{ uri: imageUrl }}
+          style={{ width: 60, height: 60, borderRadius: 9999 }}
+          placeholder={require('~/assets/images/boy.png')}
+          placeholderContentFit="cover"
+        />
         <MyText poppins="Bold" fontSize={18}>
           {name}
         </MyText>

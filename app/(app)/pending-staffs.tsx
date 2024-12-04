@@ -1,4 +1,6 @@
 import { useAuth } from '@clerk/clerk-expo';
+import { convexQuery } from '@convex-dev/react-query';
+import { useQuery } from '@tanstack/react-query';
 import React from 'react';
 import { FlatList, View } from 'react-native';
 
@@ -8,14 +10,17 @@ import { Container } from '~/components/Ui/Container';
 import { ErrorComponent } from '~/components/Ui/ErrorComponent';
 import { LoadingComponent } from '~/components/Ui/LoadingComponent';
 import { UserPreview } from '~/components/Ui/UserPreview';
-import { usePendingWorkers } from '~/lib/queries';
+import { api } from '~/convex/_generated/api';
+import { useGetUserId } from '~/hooks/useGetUserId';
 
 const PendingStaffs = () => {
   const { userId: id } = useAuth();
-  const { data, isPaused, isPending, isError, refetch, isRefetching, isRefetchError } =
-    usePendingWorkers(id);
+  const { id: bossId } = useGetUserId(id!);
+  const { data, isPaused, isPending, isError, refetch, isRefetching, isRefetchError } = useQuery(
+    convexQuery(api.request.getPendingStaffsWithoutOrganization, { id: bossId! })
+  );
 
-  if (isError || isRefetchError || isPaused || data?.error) {
+  if (isError || isRefetchError || isPaused) {
     return <ErrorComponent refetch={refetch} />;
   }
 
@@ -34,17 +39,17 @@ const PendingStaffs = () => {
         refreshing={isRefetching}
         showsVerticalScrollIndicator={false}
         contentContainerStyle={{ paddingBottom: 50 }}
-        data={data?.requests}
+        data={data}
         renderItem={({ item }) => (
           <UserPreview
-            imageUrl={item?.to?.avatar}
-            name={item?.to?.name}
+            imageUrl={item?.user?.imageUrl!}
+            name={item?.user?.first_name + ' ' + item?.user?.last_name}
             navigate
-            subText={item?.pending}
-            id={item?.to?.userId}
+            subText={item?.request.pending}
+            id={item?.worker?._id}
           />
         )}
-        keyExtractor={(item) => item?.id.toString()}
+        keyExtractor={(item) => item?.request?._id.toString()}
       />
     </Container>
   );

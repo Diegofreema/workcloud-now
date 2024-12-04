@@ -2,6 +2,7 @@ import { v } from 'convex/values';
 
 import { Id } from '~/convex/_generated/dataModel';
 import { internalMutation, mutation, query, QueryCtx } from '~/convex/_generated/server';
+import { getImageUrl } from '~/convex/organisation';
 
 export const getAllUsers = query({
   args: {},
@@ -163,59 +164,80 @@ export const updateWorkerProfile = mutation({
     });
   },
 });
-
 export const getWorkerProfileWithUser = query({
   args: {
     id: v.id('users'),
   },
   handler: async (ctx, args) => {
+    // Fetch worker
     const worker = await ctx.db
       .query('workers')
       .filter((q) => q.eq(q.field('userId'), args.id))
-      .unique();
+      .first();
+
     if (!worker) return null;
+
+    // Fetch user
     const user = await getUserForWorker(ctx, worker.userId);
-    const organisation = await getOrganisations(ctx, worker?.organizationId!);
-    let orgs = null;
-    if (organisation?.avatar.startsWith('http')) {
-      orgs = organisation;
-    } else {
-      const organizationImg = await ctx.storage.getUrl(organisation?.avatar as Id<'_storage'>);
-      orgs = {
-        ...organisation,
-        avatar: organizationImg,
-      };
-    }
     if (!user) return null;
-    const { _creationTime, imageUrl, ...rest } = user;
 
-    if (imageUrl && imageUrl.startsWith('http')) {
-      return {
-        user: {
-          imageUrl,
-          ...rest,
-        },
-        ...worker,
-        organization: orgs,
-      };
-    } else {
-      const url = await ctx.storage.getUrl(user.imageUrl as Id<'_storage'>);
+    // Fetch and process organization
+    const organisation = await getOrganisations(ctx, worker?.organizationId!);
+    const processedOrganization = organisation
+      ? organisation.avatar.startsWith('http')
+        ? organisation
+        : {
+            ...organisation,
+            avatar: await ctx.storage.getUrl(organisation.avatar as Id<'_storage'>),
+          }
+      : null;
 
-      return {
-        user: {
-          imageUrl: url,
-          ...rest,
-        },
-        ...worker,
-        organization: orgs,
-      };
-    }
+    // Process user image
+    const { _creationTime, imageUrl, ...userRest } = user;
+    const processedImageUrl = imageUrl?.startsWith('http')
+      ? imageUrl
+      : imageUrl
+        ? await ctx.storage.getUrl(imageUrl as Id<'_storage'>)
+        : null;
+
+    // Return processed data
+    return processedImageUrl
+      ? {
+          user: {
+            imageUrl: processedImageUrl,
+            ...userRest,
+          },
+          ...worker,
+          organization: processedOrganization,
+        }
+      : null;
   },
 });
 
-const getUserForWorker = async (ctx: QueryCtx, userId: Id<'users'>) => {
+export const getUserForWorker = async (ctx: QueryCtx, userId: Id<'users'>) => {
   return await ctx.db.get(userId);
 };
-const getWorkerProfile = async (ctx: QueryCtx, workerId: Id<'workers'>) => {
-  return await ctx.db.get(workerId);
+export const getWorkerProfile = async (ctx: QueryCtx, userId: Id<'users'>) => {
+  return await ctx.db
+    .query('workers')
+    .filter((q) => q.eq(q.field('userId'), userId))
+    .first();
+};
+export const getUserByWorkerIdA = async (ctx: QueryCtx, userId: Id<'users'>) => {
+  const user = await ctx.db.get(userId);
+  if (!user) return null;
+  if (user?.imageUrl && user?.imageUrl.startsWith('http')) return user;
+  const imageUrl = await getImageUrl(ctx, user.imageUrl as Id<'_storage'>);
+  return {
+    ...user,
+    imageUrl,
+  };
+};
+
+export const getOrganisationWithoutImageByWorker = async (
+  ctx: QueryCtx,
+  organizationId: Id<'organizations'>
+) => {
+  if (!organizationId) return null;
+  return await ctx.db.get(organizationId);
 };

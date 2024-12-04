@@ -30,6 +30,7 @@ export const Organization = {
   workDays: v.string(),
   workspaceCount: v.number(),
   has_group: v.boolean(),
+  workers: v.optional(v.array(v.id('workers'))),
 };
 
 export const Worker = {
@@ -53,7 +54,17 @@ export const Post = {
 export const Role = {
   role: v.string(),
 };
-
+export const Request = {
+  from: v.id('users'),
+  to: v.id('users'),
+  role: v.string(),
+  salary: v.string(),
+  responsibility: v.string(),
+  qualities: v.string(),
+  accepted: v.boolean(),
+  unread: v.boolean(),
+  pending: v.boolean(),
+};
 export const Workspace = {
   active: v.boolean(),
   leisure: v.boolean(),
@@ -101,4 +112,5 @@ export default defineSchema({
   servicePoints: defineTable(ServicePoints),
   roles: defineTable(Role),
   posts: defineTable(Post),
+  requests: defineTable(Request),
 });

@@ -2,7 +2,7 @@ import { v } from 'convex/values';
 
 import { Id } from '~/convex/_generated/dataModel';
 import { mutation, query, QueryCtx } from '~/convex/_generated/server';
-import { ctx } from 'expo-router/_ctx';
+import { getUserForWorker } from '~/convex/users';
 
 export const getOrganisationsOrNull = query({
   args: {
@@ -125,6 +125,48 @@ export const getPostsByOrganizationId = query({
     return data;
   },
 });
+
+export const getStaffsByBossId = query({
+  args: {
+    bossId: v.id('users'),
+  },
+  handler: async (ctx, args) => {
+    const res = await ctx.db
+      .query('workers')
+      .filter((q) =>
+        q.and(q.eq(q.field('bossId'), args.bossId), q.neq(q.field('userId'), args.bossId))
+      )
+      .collect();
+    return await Promise.all(
+      res.map(async (worker) => {
+        const userProfile = await getUserForWorker(ctx, worker.userId);
+        const organization = await getOrganizationByWorkerOrganizationId(
+          ctx,
+          worker.organizationId!
+        );
+        const workspace = await getWorkspaceByWorkerWorkspaceId(ctx, worker.workspaceId!);
+        if (userProfile?.imageUrl?.startsWith('https')) {
+          return {
+            ...worker,
+            user: userProfile,
+            organization,
+            workspace,
+          };
+        }
+        const imageUrl = await getImageUrl(ctx, userProfile?.imageUrl as Id<'_storage'>);
+        return {
+          ...worker,
+          user: {
+            ...userProfile,
+            imageUrl,
+          },
+          organization,
+          workspace,
+        };
+      })
+    );
+  },
+});
 //  mutations
 
 export const createOrganization = mutation({
@@ -237,4 +279,39 @@ export const getWorkspacesByOrganizationId = async (
 
 export const getImageUrl = async (ctx: QueryCtx, storageId: Id<'_storage'>) => {
   return await ctx.storage.getUrl(storageId);
+};
+
+export const getOrganizationByWorkerOrganizationId = async (
+  ctx: QueryCtx,
+  organizationId: Id<'organizations'>
+) => {
+  const res = await ctx.db.get(organizationId);
+  if (!res) return null;
+  if (res.avatar.startsWith('https')) return res;
+  const organizationAvatar = await ctx.storage.getUrl(res.avatar as Id<'_storage'>);
+  return {
+    ...res,
+    avatar: organizationAvatar,
+  };
+};
+export const getOrganizationByOwnerId = async (ctx: QueryCtx, id: Id<'users'>) => {
+  const res = await ctx.db
+    .query('organizations')
+    .filter((q) => q.eq(q.field('ownerId'), id))
+    .first();
+  if (!res) return null;
+  if (res.avatar.startsWith('https')) return res;
+  const organizationAvatar = await ctx.storage.getUrl(res.avatar as Id<'_storage'>);
+  return {
+    ...res,
+    avatar: organizationAvatar,
+  };
+};
+
+export const getWorkspaceByWorkerWorkspaceId = async (
+  ctx: QueryCtx,
+  workspaceId: Id<'workspaces'>
+) => {
+  if (!workspaceId) return null;
+  return await ctx.db.get(workspaceId);
 };

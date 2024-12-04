@@ -14,7 +14,6 @@ import {
   ImageUploadPreview,
   MessageInput,
   MessageList,
-  useChatContext,
   useMessageContext,
   useMessageInputContext,
 } from 'stream-chat-expo';
@@ -30,15 +29,12 @@ import { useGetWorkerProfile } from '~/lib/queries';
 
 const SingleChat = () => {
   const { chatId } = useLocalSearchParams<{ chatId: string }>();
-  const { client } = useChatContext();
+
   const { darkMode } = useDarkMode();
   const [channel, setChannel] = useState<ChannelType>();
 
   useEffect(() => {
-    const fetchChannel = async () => {
-      const channel = await client.queryChannels({ id: { $eq: chatId } });
-      setChannel(channel[0]);
-    };
+    const fetchChannel = async () => {};
     fetchChannel();
   }, [chatId]);
   if (!channel) return <LoadingComponent />;
@@ -166,7 +162,7 @@ const CustomInput = () => {
 const CustomHeaderComponent = ({ chatId, channel }: { chatId: string; channel: ChannelType }) => {
   const { workerId } = useLocalSearchParams<{ workerId: string }>();
   const members = useMembers((state) => state.members);
-  const { isOnline } = useChatContext();
+
   const { data, isPending, isError, isPaused } = useGetWorkerProfile(workerId);
   const { darkMode } = useDarkMode();
 
@@ -225,9 +221,9 @@ const CustomHeaderComponent = ({ chatId, channel }: { chatId: string; channel: C
                   fontFamily: 'PoppinsMedium',
 
                   fontSize: 8,
-                  color: isOnline ? colors.openBackgroundColor : colors.closeTextColor,
+                  color: colors.closeTextColor,
                 }}>
-                {isOnline ? 'Active' : 'Offline'}
+                Active
               </MyText>
             )}
           </VStack>

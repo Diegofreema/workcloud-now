@@ -1,6 +1,8 @@
 import { useAuth } from '@clerk/clerk-expo';
+import { convexQuery } from '@convex-dev/react-query';
+import { useQuery } from '@tanstack/react-query';
 import { router } from 'expo-router';
-import React, { useEffect, useState } from 'react';
+import React from 'react';
 import { FlatList, View } from 'react-native';
 
 import { EmptyText } from '~/components/EmptyText';
@@ -9,21 +11,16 @@ import { Container } from '~/components/Ui/Container';
 import { ErrorComponent } from '~/components/Ui/ErrorComponent';
 import { LoadingComponent } from '~/components/Ui/LoadingComponent';
 import { UserPreviewWithBio } from '~/components/Ui/UserPreviewWithBio';
-import { Workers } from '~/constants/types';
-import { useGetOtherWorkers } from '~/lib/queries';
+import { api } from '~/convex/_generated/api';
+import { useGetUserId } from '~/hooks/useGetUserId';
 
 const AllStaffs = () => {
   const { userId } = useAuth();
-  const [staffs, setStaffs] = useState<Workers[]>();
 
-  const { data, isPending, isError, isPaused, refetch, isRefetching } = useGetOtherWorkers(userId);
-
-  useEffect(() => {
-    if (data?.worker) {
-      const filteredData = data.worker.filter((worker) => worker?.userId?.userId !== userId);
-      setStaffs(filteredData);
-    }
-  }, [data]);
+  const { id } = useGetUserId(userId!);
+  const { data, isPending, isError, isPaused, refetch, isRefetching } = useQuery(
+    convexQuery(api.worker.getAllOtherWorkers, { bossId: id! })
+  );
 
   // const {
   //   data: pendingData,
@@ -46,7 +43,7 @@ const AllStaffs = () => {
     return <LoadingComponent />;
   }
 
-  const onRefreshing = isRefetching;
+
 
   return (
     <Container>
@@ -54,16 +51,16 @@ const AllStaffs = () => {
       <FlatList
         showsVerticalScrollIndicator={false}
         onRefresh={handleRefetch}
-        refreshing={onRefreshing}
-        data={data.worker}
+        refreshing={isRefetching}
+        data={data}
         renderItem={({ item }) => (
           <UserPreviewWithBio
-            id={item?.userId?.userId}
-            imageUrl={item?.userId?.avatar}
-            name={item?.userId?.name}
+            id={item?.userId}
+            imageUrl={item?.user?.imageUrl!}
+            name={`${item?.user?.first_name} ${item?.user?.last_name}`}
             bio={item?.experience!}
             skills={item?.skills}
-            onPress={() => router.push(`/workerProfile/${item?.userId?.userId}`)}
+            onPress={() => router.push(`/workerProfile/${item?._id}`)}
           />
         )}
         style={{ marginTop: 20 }}

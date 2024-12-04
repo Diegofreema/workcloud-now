@@ -1,46 +1,24 @@
 import { useAuth } from '@clerk/clerk-expo';
+import { convexQuery } from '@convex-dev/react-query';
 import { EvilIcons } from '@expo/vector-icons';
 import { Text } from '@rneui/themed';
-import { useQueryClient } from '@tanstack/react-query';
+import { useQuery } from '@tanstack/react-query';
 import { useRouter } from 'expo-router';
-import { useEffect } from 'react';
 import { Pressable, StyleSheet, View } from 'react-native';
 
-import { colors } from '../constants/Colors';
-import { useDarkMode } from '../hooks/useDarkMode';
-
-import { usePendingRequest } from '~/lib/queries';
-import { supabase } from '~/lib/supabase';
+import { colors } from '~/constants/Colors';
+import { api } from '~/convex/_generated/api';
+import { useDarkMode } from '~/hooks/useDarkMode';
+import { useGetUserId } from '~/hooks/useGetUserId';
 
 export const Header = (): JSX.Element => {
-  const queryClient = useQueryClient();
   const { darkMode } = useDarkMode();
-  const { userId: id } = useAuth();
-  const { data } = usePendingRequest(id);
-  useEffect(() => {
-    const channel = supabase
-      .channel('workcloud')
-      .on(
-        'postgres_changes',
-        {
-          event: 'UPDATE',
-          schema: 'public',
-          table: 'requests',
-        },
-        (payload: any) => {
-          // if (payload) {
-          //   onRefresh(id);
-          // }
-          console.log('Change received!', payload);
-          queryClient.invalidateQueries({ queryKey: ['pending_requests'] });
-        }
-      )
-      .subscribe();
+  const { userId } = useAuth();
+  const { id } = useGetUserId(userId!);
+  const { data } = useQuery(
+    convexQuery(api.request.getPendingRequestsWithOrganization, { id: id! })
+  );
 
-    return () => {
-      supabase.removeChannel(channel);
-    };
-  }, []);
   const router = useRouter();
   const onSearch = () => {
     router.push('/search');
@@ -48,7 +26,7 @@ export const Header = (): JSX.Element => {
   const onNotify = () => {
     router.push('/notification');
   };
-  const numberOfUnread = data?.requests.filter((r) => r.unread).length || 0;
+  const numberOfUnread = data?.filter((r) => r?.request?.unread).length || 0;
   return (
     <View style={styles.container}>
       <Text
