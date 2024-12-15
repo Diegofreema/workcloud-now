@@ -3,8 +3,9 @@ import { Text } from 'react-native';
 import { RFValue } from 'react-native-responsive-fontsize';
 
 import { MyText } from './MyText';
-import { colors } from '../../constants/Colors';
 import { HStack } from '../HStack';
+
+import { colors } from '~/constants/Colors';
 
 type Props = {
   link: any;
@@ -12,11 +13,7 @@ type Props = {
   rightText?: string;
 };
 
-export const HeadingText = ({
-  leftText = 'Connections',
-  rightText = 'See all connections',
-  link,
-}: Props): JSX.Element => {
+export const HeadingText = ({ leftText = 'Connections', rightText, link }: Props): JSX.Element => {
   return (
     <HStack alignItems="center" justifyContent="space-between">
       <MyText poppins="Bold" style={{ fontSize: RFValue(13) }}>

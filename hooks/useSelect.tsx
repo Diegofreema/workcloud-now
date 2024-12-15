@@ -1,9 +1,11 @@
 import { create } from 'zustand';
 
+import { Id } from '~/convex/_generated/dataModel';
+
 export type User = {
   name: string;
   role: string;
-  id: string;
+  id: Id<'workers'>;
   image: string;
 };
 type StaffStore = {

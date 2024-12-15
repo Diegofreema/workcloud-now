@@ -113,10 +113,24 @@ export const removeFromWorkspace = mutation({
     await ctx.db.patch(args.workspaceId, {
       workerId: undefined,
       locked: true,
-      signedIn: false
+      signedIn: false,
     });
     await ctx.db.patch(args.workerId, {
       workspaceId: undefined,
+    });
+  },
+});
+
+export const toggleWorkspace = mutation({
+  args: {
+    workspaceId: v.id('workspaces'),
+  },
+  handler: async (ctx, args) => {
+    const workspace = await ctx.db.get(args.workspaceId);
+    if (!workspace) return;
+    await ctx.db.patch(workspace._id, {
+      locked: !workspace.locked,
+      active: false,
     });
   },
 });

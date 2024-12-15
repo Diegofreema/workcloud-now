@@ -1,6 +1,7 @@
 import { FontAwesome } from '@expo/vector-icons';
 import { Divider } from '@rneui/themed';
 import { useQueryClient } from '@tanstack/react-query';
+import { useMutation } from 'convex/react';
 import { useRouter } from 'expo-router';
 import React from 'react';
 import { FlatList, Pressable, StyleSheet, View } from 'react-native';
@@ -11,12 +12,11 @@ import { HStack } from '../HStack';
 import { MyText } from '../Ui/MyText';
 
 import { colors } from '~/constants/Colors';
+import { api } from '~/convex/_generated/api';
 import { useAddStaff } from '~/hooks/useAddStaff';
 import { useDarkMode } from '~/hooks/useDarkMode';
-import { useData } from '~/hooks/useData';
 import { useHandleStaff } from '~/hooks/useHandleStaffs';
 import { useRemoveUser } from '~/hooks/useRemoveUser';
-import { supabase } from '~/lib/supabase';
 
 const roles = [{ role: 'Add new staff' }];
 export const AddStaff = () => {
@@ -88,15 +88,14 @@ export const AddStaff = () => {
 type Props = {
   isVisible: boolean;
   setIsVisible: (value: boolean) => void;
-  array: { icon: any; text: any }[];
+  array: ({ icon: React.ComponentProps<typeof FontAwesome>['name']; text: string } | undefined)[];
   onBottomOpen: () => void;
 };
 
 export const Menu = ({ isVisible, setIsVisible, array, onBottomOpen }: Props) => {
   const queryClient = useQueryClient();
   const { onOpen } = useRemoveUser();
-
-  const { user } = useData();
+  const toggleWorkspace = useMutation(api.workspaces.toggleWorkspace);
   const router = useRouter();
   const { item } = useHandleStaff();
   const { darkMode } = useDarkMode();
@@ -118,40 +117,14 @@ export const Menu = ({ isVisible, setIsVisible, array, onBottomOpen }: Props) =>
   };
 
   const onUnlockWorkspace = async () => {
-    if (item?.workspace?.locked) {
-      const { error } = await supabase
-        .from('workspace')
-        .update({ locked: false })
-        .eq('id', item?.workspace?._id!);
-      if (!error) {
-        toast.success(`Workspace has been unlocked`);
-
-        onClose();
-        queryClient.invalidateQueries({ queryKey: ['myStaffs'] });
-      }
-
-      if (error) {
-        console.log(error);
-
-        toast.error('Something went wrong', { description: 'Failed to unlock workspace' });
-      }
-    } else {
-      const { error } = await supabase
-        .from('workspace')
-        .update({ locked: true, active: false })
-        .eq('id', item?.workspaceId!);
-      if (!error) {
-        toast.success(`Workspace has been locked`);
-
-        onClose();
-        queryClient.invalidateQueries({ queryKey: ['myStaffs'] });
-      }
-
-      if (error) {
-        console.log(error);
-
-        toast.error('Something went wrong', { description: 'Failed to lock workspace' });
-      }
+    try {
+      await toggleWorkspace({ workspaceId: item?.workspaceId! });
+      toast.success('Success', { description: 'Updated workspace' });
+    } catch (e) {
+      console.log(e);
+      toast.error('Something went wrong', { description: 'Failed to update workspace' });
+    } finally {
+      setIsVisible(false);
     }
   };
   const handlePress = (text: string) => {
@@ -197,29 +170,45 @@ export const Menu = ({ isVisible, setIsVisible, array, onBottomOpen }: Props) =>
             },
           ]}>
           <View style={{ marginTop: 20, width: '100%', gap: 14 }}>
-            {array.map(({ icon, text }, index) => (
-              <Pressable
-                key={index}
-                style={({ pressed }) => [{ opacity: pressed ? 0.5 : 1 }]}
-                onPress={() => handlePress(text)}>
-                <HStack gap={15} alignItems="center" p={10}>
-                  <FontAwesome
-                    name={icon}
-                    size={28}
-                    color={text === 'Remove staff' ? 'red' : darkMode === 'dark' ? '#fff' : 'black'}
-                  />
-                  <MyText
-                    poppins="Medium"
-                    fontSize={13}
-                    style={{
-                      color:
-                        text === 'Remove staff' ? 'red' : darkMode === 'dark' ? '#fff' : 'black',
-                    }}>
-                    {text}
-                  </MyText>
-                </HStack>
-              </Pressable>
-            ))}
+            {array.map((item, index) =>
+              item?.text ? (
+                <Pressable
+                  key={index}
+                  style={({ pressed }) => [{ opacity: pressed ? 0.5 : 1 }]}
+                  onPress={() => handlePress(item?.text!)}>
+                  <HStack gap={15} alignItems="center" p={10}>
+                    {item?.icon && (
+                      <FontAwesome
+                        name={item?.icon}
+                        size={28}
+                        color={
+                          item?.text === 'Remove staff'
+                            ? 'red'
+                            : darkMode === 'dark'
+                              ? '#fff'
+                              : 'black'
+                        }
+                      />
+                    )}
+                    {item?.text && (
+                      <MyText
+                        poppins="Medium"
+                        fontSize={13}
+                        style={{
+                          color:
+                            item?.text === 'Remove staff'
+                              ? 'red'
+                              : darkMode === 'dark'
+                                ? '#fff'
+                                : 'black',
+                        }}>
+                        {item?.text}
+                      </MyText>
+                    )}
+                  </HStack>
+                </Pressable>
+              ) : null
+            )}
           </View>
         </View>
       </Modal>

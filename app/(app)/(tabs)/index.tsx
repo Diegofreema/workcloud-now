@@ -38,7 +38,7 @@ export default function TabOneScreen() {
   }
 
   const firstTen = connections?.slice(0, 10);
-
+  const headerText = connections.length > 10 ? 'See all connections' : '';
   return (
     <Container>
       <OrganizationModal />
@@ -51,7 +51,7 @@ export default function TabOneScreen() {
       />
 
       <View style={{ marginVertical: 10 }}>
-        <HeadingText link="/connections" />
+        <HeadingText link="/connections" rightText={headerText} />
       </View>
 
       <FlatList

@@ -1,5 +1,6 @@
 import { v } from 'convex/values';
 
+import { FullOrgsType } from '~/constants/types';
 import { Id } from '~/convex/_generated/dataModel';
 import { mutation, query, QueryCtx } from '~/convex/_generated/server';
 import { getUserForWorker } from '~/convex/users';
@@ -42,6 +43,7 @@ export const getOrganisationsOrNull = query({
       workspaceCount: orgs.workspaceCount,
       has_group: orgs.has_group,
       avatar: orgsAvatarUrl,
+      searchCount: orgs.searchCount,
     };
   },
 });
@@ -108,7 +110,8 @@ export const getPostsByOrganizationId = query({
       .collect();
 
     if (!res) return null;
-    const data = await Promise.all(
+
+    return await Promise.all(
       res.map(async (r) => {
         if (r.image.startsWith('https')) {
           return r;
@@ -121,11 +124,63 @@ export const getPostsByOrganizationId = query({
         };
       })
     );
-
-    return data;
   },
 });
+export const getTopSearches = query({
+  args: {
+    userId: v.id('users'),
+  },
+  handler: async (ctx, args) => {
+    const findIfLoggedInUserOwnsAnOrganisation = await ctx.db
+      .query('organizations')
+      .withIndex('ownerId', (q) => q.eq('ownerId', args.userId))
+      .first();
+    const takeNumber = findIfLoggedInUserOwnsAnOrganisation ? 6 : 5;
+    const res = await ctx.db
+      .query('organizations')
+      .withIndex('by_search_count')
+      .order('desc')
+      .take(takeNumber);
+    let orgs: FullOrgsType[];
+    if (findIfLoggedInUserOwnsAnOrganisation) {
+      orgs = res.filter((r) => r.ownerId !== args.userId);
+    } else {
+      orgs = res;
+    }
 
+    return await Promise.all(
+      orgs.map(async (org) => {
+        const avatar = await getImageUrl(ctx, org?.avatar as Id<'_storage'>);
+        return {
+          id: org._id,
+          name: org.name,
+          ownerId: org.ownerId,
+          avatar,
+        };
+      })
+    );
+  },
+});
+export const getOrganisationsByServicePointsSearchQuery = query({
+  args: {
+    query: v.string(),
+    ownerId: v.id('users'),
+  },
+  handler: async (ctx, args) => {
+    const servicePoints = await ctx.db
+      .query('servicePoints')
+      .withSearchIndex('description', (q) => q.search('description', args.query))
+      .collect();
+    if (!servicePoints) return [];
+    const organisation = await Promise.all(
+      servicePoints?.map(async (s) => {
+        return await getOrganizationByServicePointOrganizationId(ctx, s.organizationId);
+      })
+    );
+
+    return organisation.filter((org) => org?.ownerId !== args.ownerId);
+  },
+});
 export const getStaffsByBossId = query({
   args: {
     bossId: v.id('users'),
@@ -135,6 +190,51 @@ export const getStaffsByBossId = query({
       .query('workers')
       .filter((q) =>
         q.and(q.eq(q.field('bossId'), args.bossId), q.neq(q.field('userId'), args.bossId))
+      )
+      .collect();
+    return await Promise.all(
+      res.map(async (worker) => {
+        const userProfile = await getUserForWorker(ctx, worker.userId);
+        const organization = await getOrganizationByWorkerOrganizationId(
+          ctx,
+          worker.organizationId!
+        );
+        const workspace = await getWorkspaceByWorkerWorkspaceId(ctx, worker.workspaceId!);
+        if (userProfile?.imageUrl?.startsWith('https')) {
+          return {
+            ...worker,
+            user: userProfile,
+            organization,
+            workspace,
+          };
+        }
+        const imageUrl = await getImageUrl(ctx, userProfile?.imageUrl as Id<'_storage'>);
+        return {
+          ...worker,
+          user: {
+            ...userProfile,
+            imageUrl,
+          },
+          organization,
+          workspace,
+        };
+      })
+    );
+  },
+});
+export const getStaffsByBossIdNotHavingServicePoint = query({
+  args: {
+    bossId: v.id('users'),
+  },
+  handler: async (ctx, args) => {
+    const res = await ctx.db
+      .query('workers')
+      .filter((q) =>
+        q.and(
+          q.eq(q.field('bossId'), args.bossId),
+          q.neq(q.field('userId'), args.bossId),
+          q.eq(q.field('servicePointId'), undefined)
+        )
       )
       .collect();
     return await Promise.all(
@@ -189,6 +289,7 @@ export const createOrganization = mutation({
       has_group: false,
       workspaceCount: 0,
       followersCount: 0,
+      searchCount: 0,
     });
   },
 });
@@ -294,6 +395,22 @@ export const getOrganizationByWorkerOrganizationId = async (
     avatar: organizationAvatar,
   };
 };
+export const getOrganizationByServicePointOrganizationId = async (
+  ctx: QueryCtx,
+  organizationId: Id<'organizations'>
+) => {
+  const res = await ctx.db.get(organizationId);
+  if (!res) return null;
+  const organizationAvatar = await ctx.storage.getUrl(res.avatar as Id<'_storage'>);
+  return {
+    name: res.name,
+    avatar: organizationAvatar,
+    id: res._id,
+    ownerId: res.ownerId,
+    description: res.description,
+  };
+};
+
 export const getOrganizationByOwnerId = async (ctx: QueryCtx, id: Id<'users'>) => {
   const res = await ctx.db
     .query('organizations')

@@ -29,6 +29,7 @@
         "EXPO_PUBLIC_SUPABASE_URL":"https://mckkhgmxgjwjgxwssrfo.supabase.co",
         "EXPO_PUBLIC_CLERK_PUBLISHABLE_KEY":"pk_test_aHVnZS1nYXplbGxlLTI5LmNsZXJrLmFjY291bnRzLmRldiQ"
       }
+
     }
   },
   "submit": {

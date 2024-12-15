@@ -1,22 +1,22 @@
 /* eslint-disable prettier/prettier */
 
-import { Avatar } from '@rneui/themed';
-import { router } from 'expo-router';
-import { FlatList, Pressable, View } from 'react-native';
+import { Avatar } from "@rneui/themed";
+import { router } from "expo-router";
+import { FlatList, Pressable, View } from "react-native";
 
-import { MyText } from './Ui/MyText';
+import { MyText } from "./Ui/MyText";
 
-import { TopSearch } from '~/constants/types';
-import { useStoreSearch } from '~/hooks/useStoreSearch';
+import { SearchType } from "~/constants/types";
+import { useStoreSearch } from "~/hooks/useStoreSearch";
 
 type Props = {
-  data: TopSearch[];
+  data: SearchType[];
 };
 
 export const TSearch = ({ data }: Props): JSX.Element => {
   return (
     <View>
-      <MyText poppins="Bold" fontSize={20}>
+      <MyText poppins="Bold" fontSize={20} style={{ marginBottom: 10 }}>
         Top Searches
       </MyText>
       <FlatList
@@ -30,7 +30,7 @@ export const TSearch = ({ data }: Props): JSX.Element => {
   );
 };
 
-const Item = ({ item }: { item: TopSearch }) => {
+const Item = ({ item }: { item: SearchType }) => {
   const storeOrgs = useStoreSearch((state) => state.storeOrgs);
   const onPress = () => {
     storeOrgs({ name: item.name!, id: item.id.toString()! });

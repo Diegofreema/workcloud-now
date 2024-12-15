@@ -5,14 +5,16 @@ import { StyleSheet, View } from 'react-native';
 import Modal from 'react-native-modal';
 import { toast } from 'sonner-native';
 
-import { colors } from '../../constants/Colors';
 import { HStack } from '../HStack';
 import { InputComponent } from '../InputComponent';
 import { MyText } from '../Ui/MyText';
 import VStack from '../Ui/VStack';
 
+import { colors } from '~/constants/Colors';
+import { Id } from '~/convex/_generated/dataModel';
 import { useDarkMode } from '~/hooks/useDarkMode';
 import { supabase } from '~/lib/supabase';
+
 type Props = {
   onClose: () => void;
   isOpen: boolean;
@@ -20,7 +22,7 @@ type Props = {
     name: string;
     description: string;
   };
-  id: number;
+  id: Id<'servicePoints'>;
 };
 export const EditServicePointModal = ({ onClose, isOpen, prevValues, id }: Props) => {
   const { darkMode } = useDarkMode();

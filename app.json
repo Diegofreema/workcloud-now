@@ -2,7 +2,7 @@
   "expo": {
     "name": "workcloud",
     "slug": "workcloud",
-    "version": "1.0.0",
+    "version": "1.0.1",
     "scheme": "workcloud",
     "web": {
       "bundler": "metro",
@@ -21,14 +21,14 @@
         "expo-build-properties",
         {
           "android": {
-            "minSdkVersion": 24,
             "extraMavenRepos": [
               "../../node_modules/@notifee/react-native/android/libs"
             ],
             "enableProguardInReleaseBuilds": true,
             "extraProguardRules": "-keep public class com.horcrux.svg.** {*;}",
             "allowBackup": false,
-            "enableShrinkResourcesInReleaseBuilds": true
+            "enableShrinkResourcesInReleaseBuilds": true,
+            "versionCode": 5
           }
         }
       ],
@@ -79,7 +79,8 @@
     "ios": {
       "supportsTablet": true,
       "bundleIdentifier": "com.diegodark.workcloud",
-      "bitcode": false
+      "bitcode": false,
+      "runtimeVersion": "1.0.1"
     },
     "android": {
       "adaptiveIcon": {
@@ -87,6 +88,7 @@
         "backgroundColor": "#ffffff"
       },
       "package": "com.diegodark.workcloud",
+      "runtimeVersion": "1.0.1",
       "permissions": [
         "android.permission.BLUETOOTH",
         "android.permission.BLUETOOTH_CONNECT",
@@ -95,8 +97,7 @@
         "android.permission.CAMERA",
         "android.permission.INTERNET",
         "android.permission.MODIFY_AUDIO_SETTINGS",
-        "android.permission.RECORD_AUDIO",
-        "android.permission.SYSTEM_ALERT_WINDOW",
+        "android.permission.RECORD_AUDIO", "android.permission.SYSTEM_ALERT_WINDOW",
         "android.permission.WAKE_LOCK",
         "android.permission.READ_EXTERNAL_STORAGE",
         "android.permission.WRITE_EXTERNAL_STORAGE"

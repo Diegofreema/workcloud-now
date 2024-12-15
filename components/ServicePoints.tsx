@@ -1,92 +1,92 @@
-import { useQueryClient } from '@tanstack/react-query';
+import BottomSheet from '@gorhom/bottom-sheet';
 import { router } from 'expo-router';
-import { useState } from 'react';
+import { useCallback, useRef, useState } from 'react';
 import { FlatList } from 'react-native';
-import { toast } from 'sonner-native';
 
-import { CustomModal } from './Dialogs/CustomModal';
-import { EditServicePointModal } from './Dialogs/EditServicePointModal';
 import { EmptyText } from './EmptyText';
 import { HStack } from './HStack';
 import { ServicePointAction } from './ServicePointAction';
 import { MyText } from './Ui/MyText';
 import VStack from './Ui/VStack';
 
+import { DeleteBottomSheet } from '~/components/Ui/DeleteBottomSheet';
 import { ServicePointType } from '~/constants/types';
-import { supabase } from '~/lib/supabase';
+import { Id } from '~/convex/_generated/dataModel';
 
 type Props = {
   data: ServicePointType[];
 };
 
 export const ServicePoints = ({ data }: Props) => {
+  const ref = useRef<BottomSheet>(null);
+  const [id, setId] = useState<Id<'servicePoints'> | null>(null);
+  const onOpenBottomSheet = () => {
+    ref?.current?.expand();
+  };
+  const onCloseBottomSheet = useCallback(() => {
+    ref.current?.close();
+  }, []);
+  const onGetId = useCallback((id: Id<'servicePoints'>) => {
+    setId(id);
+    onOpenBottomSheet();
+  }, []);
   return (
-    <FlatList
-      style={{ marginTop: 20 }}
-      data={data}
-      showsHorizontalScrollIndicator={false}
-      keyExtractor={(item) => item.id.toString()}
-      renderItem={({ item }) => <ServicePointItem item={item} />}
-      ListEmptyComponent={() => <EmptyText text="No service point yet" />}
-    />
+    <>
+      <FlatList
+        style={{ marginTop: 20 }}
+        data={data}
+        showsHorizontalScrollIndicator={false}
+        keyExtractor={(item) => item._id.toString()}
+        renderItem={({ item }) => <ServicePointItem item={item} onGetId={onGetId} />}
+        ListEmptyComponent={() => <EmptyText text="No service point yet" />}
+      />
+      <DeleteBottomSheet id={id!} ref={ref} onClose={onCloseBottomSheet} />
+    </>
   );
 };
 
-const ServicePointItem = ({ item }: { item: ServicePointType }) => {
+const ServicePointItem = ({
+  item,
+  onGetId,
+}: {
+  item: ServicePointType;
+  onGetId: (id: Id<'servicePoints'>) => void;
+}) => {
   const [visible, setVisible] = useState(false);
-  const queryClient = useQueryClient();
-  const [deleting, setDeleting] = useState(false);
-  const [showDeleteModal, setShowDeleteModal] = useState(false);
-  const [showEditModal, setShowEditModal] = useState(false);
+
   const onOpen = () => setVisible(true);
   const onClose = () => setVisible(false);
 
   const onShowDeleteModal = () => {
     onClose();
-    setShowDeleteModal(true);
+    onGetId(item._id);
   };
-  const handleDelete = async () => {
-    setDeleting(true);
-    try {
-      const { error } = await supabase.from('servicePoint').delete().eq('id', item.id);
-      if (error) {
-        toast.error('Error deleting service point');
-      } else {
-        toast.success('Service point deleted successfully');
-        queryClient.invalidateQueries({ queryKey: ['service_points'] });
-      }
-    } catch (error) {
-      console.log(error);
-
-      toast.error('Error deleting service point');
-    } finally {
-      setDeleting(false);
-      setShowDeleteModal(false);
-    }
-  };
+  // const handleDelete = async () => {
+  //   setDeleting(true);
+  //   try {
+  //     const { error } = await supabase.from('servicePoint').delete().eq('id', item._id);
+  //     if (error) {
+  //       toast.error('Error deleting service point');
+  //     } else {
+  //       toast.success('Service point deleted successfully');
+  //       queryClient.invalidateQueries({ queryKey: ['service_points'] });
+  //     }
+  //   } catch (error) {
+  //     console.log(error);
+  //
+  //     toast.error('Error deleting service point');
+  //   } finally {
+  //     setDeleting(false);
+  //     setShowDeleteModal(false);
+  //   }
+  // };
   const handleEdit = () => {
     onClose();
-    setShowEditModal(true);
+    router.push(`/create-service?editId=${item._id}`);
   };
-  const handleChangeStaff = () => {
-    router.push(`/create-service?editId=${item.id}`);
-  };
+
   return (
     <>
-      <EditServicePointModal
-        onClose={() => setShowEditModal(false)}
-        isOpen={showEditModal}
-        prevValues={{ description: item.description, name: item.name! }}
-        id={item.id}
-      />
-      <CustomModal
-        onPress={handleDelete}
-        title="Are you sure you want to delete this service point?"
-        isLoading={deleting}
-        onClose={() => setShowDeleteModal(false)}
-        isOpen={showDeleteModal}
-        btnText="Delete"
-      />
       <HStack justifyContent="space-between">
         <VStack>
           <MyText poppins="Bold" fontSize={15}>
@@ -102,7 +102,6 @@ const ServicePointItem = ({ item }: { item: ServicePointType }) => {
           onOpen={onOpen}
           handleDelete={onShowDeleteModal}
           handleEdit={handleEdit}
-          handleChangeStaff={handleChangeStaff}
         />
       </HStack>
     </>

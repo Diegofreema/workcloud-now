@@ -9,7 +9,7 @@ type Props = {
   refetch: any;
 };
 
-export const ErrorComponent = ({ refetch }: Props): JSX.Element => {
+export const ErrorComponent = ({ refetch }: Props) => {
   const { darkMode } = useDarkMode();
 
   const handleRefetch = () => {

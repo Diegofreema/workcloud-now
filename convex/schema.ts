@@ -31,6 +31,7 @@ export const Organization = {
   workspaceCount: v.number(),
   has_group: v.boolean(),
   workers: v.optional(v.array(v.id('workers'))),
+  searchCount: v.number(),
 };
 
 export const Worker = {
@@ -97,19 +98,25 @@ export const ServicePoints = {
   name: v.string(),
   organizationId: v.id('organizations'),
   service: v.boolean(),
-  staff: v.string(),
+  staff: v.id('workers'),
 };
 
 export default defineSchema({
   users: defineTable(User),
-  organizations: defineTable(Organization),
+  organizations: defineTable(Organization)
+    .index('ownerId', ['ownerId'])
+    .index('by_search_count', ['searchCount']),
   workers: defineTable(Worker),
   workspaces: defineTable(Workspace)
     .index('workspace', ['organizationId', 'ownerId'])
     .index('personal', ['organizationId', 'personal']),
   connections: defineTable(Connection),
   waitlists: defineTable(WaitList),
-  servicePoints: defineTable(ServicePoints),
+  servicePoints: defineTable(ServicePoints)
+    .searchIndex('description', {
+      searchField: 'description',
+    })
+    .index('by_organisation_id', ['organizationId']),
   roles: defineTable(Role),
   posts: defineTable(Post),
   requests: defineTable(Request),

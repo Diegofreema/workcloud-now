@@ -1,8 +1,9 @@
 /* eslint-disable prettier/prettier */
 
+import { useMutation, useQuery } from 'convex/react';
 import { router, useLocalSearchParams } from 'expo-router';
 import { useCallback, useEffect, useState } from 'react';
-import { Pressable, StyleSheet } from 'react-native';
+import { Pressable, StyleSheet, View } from 'react-native';
 import { toast } from 'sonner-native';
 
 import { ServicePointModal } from '../Dialogs/ServicePointModal';
@@ -13,57 +14,40 @@ import { MyText } from '../Ui/MyText';
 import { UserPreview } from '../Ui/UserPreview';
 import VStack from '../Ui/VStack';
 
+import { colors } from '~/constants/Colors';
+import { api } from '~/convex/_generated/api';
+import { Id } from '~/convex/_generated/dataModel';
 import { useSelect } from '~/hooks/useSelect';
-import { supabase } from '~/lib/supabase';
 
-export const ServicePointForm = (): JSX.Element => {
+export const ServicePointForm = () => {
   const { onDeselect, user, onSelect } = useSelect();
-  const { editId } = useLocalSearchParams<{ editId: string }>();
+  const { editId } = useLocalSearchParams<{ editId: Id<'servicePoints'> }>();
+
   const [fetching, setFetching] = useState(false);
-  const { id } = useLocalSearchParams<{ id: string }>();
+  const { id } = useLocalSearchParams<{ id: Id<'organizations'> }>();
   const [isOpen, setIsOpen] = useState(false);
   const [loading, setLoading] = useState(false);
+  const createServicePoint = useMutation(api.servicePoints.createServicePoint);
+  const updateServicePoint = useMutation(api.servicePoints.updateServicePoint);
+  const servicePoint = useQuery(api.servicePoints.getSingleServicePointAndWorker, {
+    servicePointId: editId,
+  });
   useEffect(() => {
-    if (!editId) return;
+    if (!editId || !servicePoint) return;
     const fetchServicePoint = async () => {
       setFetching(true);
       try {
-        const { data, error } = await supabase
-          .from('servicePoint')
-          .select('*')
-          .eq('id', +editId)
-          .single();
-        if (error) {
-          console.log(error);
-          toast.error('Something went wrong', {
-            description: 'Failed to fetch service point. Please try again',
+        if (servicePoint) {
+          onSelect({
+            id: servicePoint.staff,
+            name: servicePoint?.worker?.first_name! + servicePoint?.worker?.last_name!,
+            role: servicePoint?.worker?.role!,
+            image: servicePoint.worker?.imageUrl!,
           });
-          router.back();
-        }
-        if (data) {
-          const { data: worker, error: workerError } = await supabase
-            .from('worker')
-            .select('*, userId(*)')
-            .eq('servicePointId', data.id)
-            .single();
-          if (workerError) {
-            console.log(workerError);
-            toast.error('Something went wrong', {
-              description: 'Failed to fetch worker. Please try again',
-            });
-            router.back();
-          }
-          if (worker) {
-            onSelect({
-              // @ts-ignore
-              id: worker?.userId?.userId,
-              // @ts-ignore
-              name: worker?.userId?.name,
-              role: worker.role!,
-              // @ts-ignore
-              image: worker.userId?.avatar,
-            });
-          }
+          setValues({
+            name: servicePoint.name,
+            description: servicePoint.description!,
+          });
         }
       } catch (error) {
         console.log(error);
@@ -75,7 +59,7 @@ export const ServicePointForm = (): JSX.Element => {
       }
     };
     fetchServicePoint();
-  }, []);
+  }, [editId, servicePoint]);
   const onClose = useCallback(() => setIsOpen(false), []);
 
   const [values, setValues] = useState({
@@ -90,27 +74,21 @@ export const ServicePointForm = (): JSX.Element => {
   };
   const onChangeStaff = async () => {
     setLoading(true);
+    if (!user) return;
     try {
-      const { error } = await supabase
-        .from('servicePoint')
-        .update({ staff: user?.id! })
-        .eq('id', editId);
-      if (error) {
-        console.log(error);
-
-        return toast.error('Something went wrong', {
-          description: 'Failed to change staff. Please try again',
-        });
-      }
-      if (!error) {
-        toast.success('Staff changed successfully');
-        router.back();
-        onDeselect();
-      }
+      await updateServicePoint({
+        servicePointId: editId,
+        workerId: user.id,
+        name: values.name,
+        description: values.description,
+      });
+      toast.success('Edited successfully');
+      router.back();
+      onDeselect();
     } catch (error) {
       console.log(error);
       toast.error('Something went wrong', {
-        description: 'Failed to change staff. Please try again',
+        description: 'Failed to edit. Please try again',
       });
     } finally {
       setLoading(false);
@@ -118,36 +96,15 @@ export const ServicePointForm = (): JSX.Element => {
   };
   const onCreateServicePoint = async () => {
     setLoading(true);
+    if (!user?.id) return;
     try {
-      const { data, error } = await supabase
-        .from('servicePoint')
-        .insert({
-          name: values.name,
-          description: values.description,
-          organizationId: +id,
-          staff: user?.id!,
-        })
-        .select()
-        .single();
+      await createServicePoint({
+        name: values.name,
+        description: values.description,
+        organisationId: id,
+        workerId: user.id,
+      });
 
-      if (error) {
-        console.log(error);
-        return toast.error('Something went wrong', {
-          description: 'Failed to create service point. Please try again',
-        });
-      }
-      const { error: err } = await supabase
-        .from('worker')
-        .update({ servicePointId: data.id })
-        .eq('userId', user?.id!);
-
-      if (err) {
-        console.log(err);
-        await supabase.from('servicePoint').delete().eq('id', data.id);
-        return toast.error('Something went wrong', {
-          description: 'Failed to create service point. Please try again',
-        });
-      }
       toast.success('Success', {
         description: 'Service point created successfully',
       });
@@ -166,9 +123,9 @@ export const ServicePointForm = (): JSX.Element => {
   };
   const onAddServicePoint = async () => {
     if (editId) {
-      onChangeStaff();
+      await onChangeStaff();
     } else {
-      onCreateServicePoint();
+      await onCreateServicePoint();
     }
   };
   if (fetching) return <LoadingComponent />;
@@ -177,33 +134,41 @@ export const ServicePointForm = (): JSX.Element => {
   return (
     <VStack flex={1}>
       <ServicePointModal text="Service Point Created" isOpen={isOpen} onClose={onClose} />
-      {!editId && (
-        <>
-          <InputComponent
-            label="Quick point name"
-            value={values.name}
-            onChangeText={(text) => handleChange('name', text)}
-            placeholder="Eg. customers service"
-          />
 
-          <InputComponent
-            label="Description"
-            value={values.description}
-            onChangeText={(text) => handleChange('description', text)}
-            placeholder="Describe what this service point is for"
-            multiline
-            textarea
-          />
-        </>
-      )}
+      <>
+        <InputComponent
+          label="Quick point name"
+          value={values.name}
+          onChangeText={(text) => handleChange('name', text)}
+          placeholder="Eg. customers service"
+        />
+
+        <InputComponent
+          label="Description"
+          value={values.description}
+          onChangeText={(text) => handleChange('description', text)}
+          placeholder="Describe what this service point is for"
+          multiline
+          textarea
+        />
+      </>
 
       {user ? (
-        <UserPreview
-          onPress={() => router.push('/select-staff')}
-          name={user.name}
-          imageUrl={user.image}
-          roleText={user.role}
-        />
+        <View
+          style={{
+            borderWidth: 1,
+            borderRadius: 10,
+            padding: 10,
+            borderColor: colors.gray10,
+            marginHorizontal: 10,
+          }}>
+          <UserPreview
+            onPress={() => router.push('/select-staff')}
+            name={user.name}
+            imageUrl={user.image}
+            roleText={user.role}
+          />
+        </View>
       ) : (
         <Pressable
           onPress={() => router.push('/select-staff')}
@@ -217,7 +182,7 @@ export const ServicePointForm = (): JSX.Element => {
         onPress={onAddServicePoint}
         disabled={editId ? isDisabled2 : isDisabled}
         containerStyle={{ marginHorizontal: 10, marginTop: 20 }}
-        buttonStyle={{ height: 55 }}
+        buttonStyle={{ height: 55, width: '100%' }}
         loading={loading}>
         <MyText poppins="Bold" fontSize={15} style={{ color: 'white' }}>
           Proceed

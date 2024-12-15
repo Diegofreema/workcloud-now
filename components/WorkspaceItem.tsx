@@ -18,6 +18,8 @@ export const WorkspaceItem = ({ item, onPress }: { item: Organization; onPress?:
             borderWidth: StyleSheet.hairlineWidth,
             borderColor: 'black',
           }}
+          placeholder={require('~/assets/images/icon.png')}
+          placeholderContentFit="cover"
           contentFit="cover"
         />
       )}

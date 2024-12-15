@@ -103,7 +103,7 @@ const Staffs = () => {
   };
 
   console.log({ workspaces });
-  const array: { icon: any; text: string }[] = [
+  const array = [
     {
       icon: 'user-o',
       text: 'View profile',
@@ -122,7 +122,7 @@ const Staffs = () => {
           icon: 'industry',
           text: 'Assign workspace',
         },
-    {
+    staff?.workspaceId && {
       icon: 'trash-o',
       text: 'Remove staff',
     },
@@ -167,6 +167,7 @@ const Staffs = () => {
         onBottomOpen={onBottomOpen}
         isVisible={isVisible}
         setIsVisible={setIsVisible}
+        // @ts-ignore
         array={array}
       />
       <SelectNewRow id={id} />

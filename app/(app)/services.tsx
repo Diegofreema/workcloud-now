@@ -1,4 +1,5 @@
-import { router, useLocalSearchParams } from 'expo-router';
+import { useQuery } from 'convex/react';
+import { ErrorBoundaryProps, router, useLocalSearchParams } from 'expo-router';
 import React from 'react';
 
 import { HStack } from '~/components/HStack';
@@ -8,23 +9,25 @@ import { Container } from '~/components/Ui/Container';
 import { DottedButton } from '~/components/Ui/DottedButton';
 import { ErrorComponent } from '~/components/Ui/ErrorComponent';
 import { LoadingComponent } from '~/components/Ui/LoadingComponent';
+import { api } from '~/convex/_generated/api';
+import { Id } from '~/convex/_generated/dataModel';
 import { useDetailsToAdd } from '~/hooks/useDetailsToAdd';
-import { useServicePoints } from '~/lib/queries';
+
+export function ErrorBoundary({ retry }: ErrorBoundaryProps) {
+  return <ErrorComponent refetch={retry} />;
+}
 
 const Services = () => {
-  const { id } = useLocalSearchParams<{ id: string }>();
+  const { id } = useLocalSearchParams<{ id: Id<'organizations'> }>();
   const { getData } = useDetailsToAdd();
-  const { data, isError, isPending, refetch } = useServicePoints(+id);
+  const servicePoints = useQuery(api.servicePoints.getServicePoints, { organisationId: id });
 
   const onCreateServicePoint = () => {
-    getData(id);
+    getData({ orgId: id });
     router.push(`/create-service?id=${id}`);
   };
-  if (isError) {
-    return <ErrorComponent refetch={refetch} />;
-  }
 
-  if (isPending) {
+  if (!servicePoints) {
     return <LoadingComponent />;
   }
   return (
@@ -33,7 +36,7 @@ const Services = () => {
       <HStack justifyContent="center">
         <DottedButton text="Add a Service Point" isIcon onPress={onCreateServicePoint} />
       </HStack>
-      <ServicePoints data={data} />
+      <ServicePoints data={servicePoints} />
     </Container>
   );
 };

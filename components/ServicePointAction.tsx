@@ -13,7 +13,7 @@ type Props = {
   onOpen: () => void;
   handleDelete: () => void;
   handleEdit: () => void;
-  handleChangeStaff: () => void;
+
 };
 
 export const ServicePointAction = ({
@@ -22,8 +22,8 @@ export const ServicePointAction = ({
   onOpen,
   handleDelete,
   handleEdit,
-  handleChangeStaff,
-}: Props): JSX.Element => {
+
+}: Props) => {
   const { darkMode } = useDarkMode();
   return (
     <Menu
@@ -52,11 +52,7 @@ export const ServicePointAction = ({
       </MenuItem>
       <MenuDivider />
 
-      <MenuItem onPress={handleChangeStaff}>
-        <MyText poppins="Medium" fontSize={14}>
-          Change staff
-        </MyText>
-      </MenuItem>
+
     </Menu>
   );
 };

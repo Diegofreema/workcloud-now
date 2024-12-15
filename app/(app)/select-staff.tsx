@@ -1,5 +1,7 @@
 import { useAuth } from '@clerk/clerk-expo';
-import { router } from 'expo-router';
+import { useQuery } from 'convex/react';
+import { ErrorBoundaryProps, router } from 'expo-router';
+import React from 'react';
 import { FlatList, View } from 'react-native';
 
 import { AuthHeader } from '~/components/AuthHeader';
@@ -10,20 +12,20 @@ import { LoadingComponent } from '~/components/Ui/LoadingComponent';
 import { MyButton } from '~/components/Ui/MyButton';
 import { MyText } from '~/components/Ui/MyText';
 import { UserPreviewWithBio } from '~/components/Ui/UserPreviewWithBio';
+import { api } from '~/convex/_generated/api';
+import { useGetUserId } from '~/hooks/useGetUserId';
 import { User, useSelect } from '~/hooks/useSelect';
-import { useGetMyStaffs } from '~/lib/queries';
 
+export function ErrorBoundary({ retry }: ErrorBoundaryProps) {
+  return <ErrorComponent refetch={retry} />;
+}
 const SelectStaff = () => {
   const { userId } = useAuth();
   const { onSelect } = useSelect();
-  const { data, isPending, isError, refetch, isRefetching, isRefetchError } =
-    useGetMyStaffs(userId);
+  const { id } = useGetUserId(userId!);
+  const staffs = useQuery(api.organisation.getStaffsByBossIdNotHavingServicePoint, { bossId: id! });
 
-  if (isError || isRefetchError) {
-    return <ErrorComponent refetch={refetch} />;
-  }
-
-  if (isPending) {
+  if (!staffs) {
     return <LoadingComponent />;
   }
 
@@ -31,36 +33,37 @@ const SelectStaff = () => {
     onSelect(item);
     router.back();
   };
-  const { staffs } = data;
+
   return (
     <Container>
       <AuthHeader path="Select Staff" />
       <FlatList
         showsVerticalScrollIndicator={false}
         ItemSeparatorComponent={() => <View style={{ height: 10 }} />}
-        onRefresh={refetch}
-        refreshing={isRefetching}
         data={staffs}
-        renderItem={({ item }) => (
-          <UserPreviewWithBio
-            id={item?.userId?.userId!}
-            imageUrl={item?.userId?.avatar!}
-            name={item?.userId?.name!}
-            bio={item.experience!}
-            skills={item.skills!}
-            onPress={() =>
-              onSelectStaff({
-                id: item?.userId?.userId!,
-                name: item?.userId?.name!,
-                image: item?.userId?.avatar!,
-                role: item.role,
-              })
-            }
-          />
-        )}
+        renderItem={({ item }) => {
+          const fullName = item?.user?.first_name! + ' ' + item?.user?.last_name;
+          return (
+            <UserPreviewWithBio
+              id={item?.userId}
+              imageUrl={item?.user?.imageUrl!}
+              name={fullName}
+              bio={item.experience!}
+              skills={item.skills!}
+              onPress={() =>
+                onSelectStaff({
+                  id: item?._id!,
+                  name: fullName,
+                  image: item?.user?.imageUrl!,
+                  role: item.role!,
+                })
+              }
+            />
+          );
+        }}
         ListEmptyComponent={() => (
           <View style={{ alignItems: 'center', gap: 10 }}>
-            <EmptyText text="No staffs Yet" />
+            <EmptyText text="No free staff" />
             <MyButton onPress={() => router.push('/allStaffs')}>
               <MyText poppins="Bold" style={{ color: 'white', fontSize: 15 }}>
                 Add a new staff

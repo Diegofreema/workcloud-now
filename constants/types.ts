@@ -53,6 +53,7 @@ export type Organization = {
   workDays: string;
   workspaceCount: number;
   has_group: boolean;
+  searchCount: number;
 };
 
 export type WorkSpace = {
@@ -85,7 +86,32 @@ export type Connection = {
   createdAt: number;
   organisation: Organization | null;
 };
-
+export type FullOrgsType = {
+  _id: Id<'organizations'>;
+  avatar: string | Id<'_storage'>;
+  category: string;
+  description: string;
+  email: string;
+  end: string;
+  followers?: Id<'users'>[];
+  followersCount: number;
+  location: string;
+  name: string;
+  ownerId: Id<'users'>;
+  start: string;
+  website: string;
+  workDays: string;
+  workspaceCount: number;
+  has_group: boolean;
+  workers?: Id<'workers'>[];
+  searchCount: number;
+};
+export type SearchType = {
+  id: Id<'organizations'>;
+  name: string;
+  ownerId: Id<'users'>;
+  avatar: string | null;
+};
 export type Org = {
   subTitle?: string;
   avatar: string;
@@ -201,21 +227,21 @@ export type Workers = {
   bossId: string;
   gender: string;
 };
-type UserWthWorkerProfile = {
-  avatar: string;
-  birthday: string;
-  created_at: string;
-  email: string;
-  id: number;
-  name: string;
-  organizationId: number;
-  phoneNumber: string;
-  posts: number[];
-  streamToken: string;
-  userId: string;
-  workerId: Workers;
-  workspaces: number[];
-};
+// type UserWthWorkerProfile = {
+//   avatar: string;
+//   birthday: string;
+//   created_at: string;
+//   email: string;
+//   id: number;
+//   name: string;
+//   organizationId: number;
+//   phoneNumber: string;
+//   posts: number[];
+//   streamToken: string;
+//   userId: string;
+//   workerId: Workers;
+//   workspaces: number[];
+// };
 
 export type WorkerWithWorkspace = {
   created_at: string;
@@ -333,4 +359,22 @@ export type WaitList = {
   customer: Profile;
 };
 
-export type ServicePointType = Database['public']['Tables']['servicePoint']['Row'];
+export type ServicePointType = {
+  _id: Id<'servicePoints'>;
+  _creationTime: number;
+  externalLink?: boolean | undefined;
+  form?: boolean | undefined;
+  organizationId: Id<'organizations'>;
+  description: string;
+  name: string;
+  service: boolean;
+  staff: string;
+};
+
+export type SearchServicePoints = {
+  name: string;
+  avatar: string | null;
+  id: Id<'organizations'>;
+  ownerId: Id<'users'>;
+  description: string;
+};

@@ -70,7 +70,6 @@ const InitialRouteLayout = () => {
     const inTabsGroup = segments[0] === '(app)';
 
     if (isSignedIn && !inTabsGroup) {
-      // @ts-ignore
       router.replace(`/(app)/(tabs)/`);
     } else if (!isSignedIn && inTabsGroup) {
       router.replace('/(auth)/login');
