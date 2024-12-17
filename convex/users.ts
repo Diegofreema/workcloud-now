@@ -79,11 +79,14 @@ export const getUserConnections = query({
     return await Promise.all(
       connections.map(async (connection) => {
         const organisation = await getOrganisations(ctx, connection.connectedTo);
-
+        const avatar = await getImageUrl(ctx, organisation?.avatar as Id<'_storage'>);
         return {
           connectedAt: connection.connectedAt,
           id: connection._id,
-          organisation,
+          organisation: {
+            ...organisation,
+            avatar,
+          },
         };
       })
     );

@@ -1,39 +1,28 @@
+import { useAuth } from '@clerk/clerk-expo';
 import { EvilIcons } from '@expo/vector-icons';
+import { useQuery } from 'convex/react';
 import React from 'react';
 import { FlatList, View } from 'react-native';
 
-import { HeaderNav } from '../../components/HeaderNav';
-import { defaultStyle } from '../../constants/index';
-import { useDarkMode } from '../../hooks/useDarkMode';
-
 import { EmptyText } from '~/components/EmptyText';
+import { HeaderNav } from '~/components/HeaderNav';
 import { Item } from '~/components/Item';
-import { ErrorComponent } from '~/components/Ui/ErrorComponent';
 import { LoadingComponent } from '~/components/Ui/LoadingComponent';
-import { useData } from '~/hooks/useData';
-import { useGetConnection } from '~/lib/queries';
+import { defaultStyle } from '~/constants';
+import { api } from '~/convex/_generated/api';
+import { useDarkMode } from '~/hooks/useDarkMode';
+import { useGetUserId } from '~/hooks/useGetUserId';
 
 const Connections = () => {
   const { darkMode } = useDarkMode();
-  const { user } = useData();
-  const {
-    data: connections,
-    refetch: refetchConnections,
-    isRefetching: isRefetchingConnections,
-    isError: isErrorConnections,
-    isPending: isPendingConnections,
+  const { userId } = useAuth();
+  const { id } = useGetUserId(userId!);
+  const connections = useQuery(api.users.getUserConnections, { ownerId: id });
 
-    isPaused: isConnectionsPaused,
-  } = useGetConnection(user?.id);
-  if (isErrorConnections || isConnectionsPaused) {
-    return <ErrorComponent refetch={refetchConnections} />;
-  }
-
-  if (isPendingConnections) {
+  if (!connections) {
     return <LoadingComponent />;
   }
 
-  const { connections: allConnections } = connections;
   return (
     <View
       style={{
@@ -43,13 +32,11 @@ const Connections = () => {
       }}>
       <HeaderNav title="All Connections" RightComponent={SearchComponent} />
       <FlatList
-        onRefresh={refetchConnections}
-        refreshing={isRefetchingConnections}
         contentContainerStyle={{
           gap: 15,
           paddingBottom: 50,
         }}
-        data={allConnections}
+        data={connections}
         keyExtractor={(item, index) => index.toString()}
         renderItem={({ item, index }) => {
           const lastIndex = [1, 2, 3].length - 1;

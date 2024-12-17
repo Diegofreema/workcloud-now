@@ -57,30 +57,44 @@ const Reception = () => {
 
   // ? useEffect for creating connections
   useEffect(() => {
-    if (!id || !data?.workers || !connection || !from) return;
-    const now = format(new Date(), 'dd/MM/yyy HH:mm');
+    if (!id || !data?.workers || !from) return;
+
+    const now = format(new Date(), 'dd/MM/yyyy, HH:mm:ss');
+    const isWorker = data.workers.find((w) => w?.user?._id === from);
+    const isBoss = data?.ownerId === from;
+
     const onConnect = async () => {
       try {
-        if (!isPending && !connection) {
+        if (connection) {
+          // If connection exists, update the existing connection
+          await updateConnection({
+            id: connection?._id,
+            time: now,
+          });
+        } else if (!isPending) {
+          // If no connection and not pending, create a new connection
           await createConnection({
             connectedAt: now,
             from,
             to: id,
           });
-        } else {
-          await updateConnection({
-            id: connection?._id,
-            time: now,
-          });
         }
       } catch (e) {
-        console.log(e);
+        console.error('Connection error:', e);
       }
     };
-    const isWorker = data.workers.find((w) => w?.user?._id === from);
-    const isBoss = data?.ownerId === from;
-    if (!isWorker && !isBoss) onConnect().catch((e) => console.log(e));
-  }, [id, data?.workers, connection, isPending, from]);
+
+    if (!isBoss || !isWorker) onConnect().catch(console.log);
+  }, [
+    id,
+    data?.workers,
+    data?.ownerId,
+    connection,
+    isPending,
+    from,
+    updateConnection,
+    createConnection,
+  ]);
 
   if (isError) {
     return <ErrorComponent refetch={refetch} />;
@@ -89,7 +103,11 @@ const Reception = () => {
   if (!data || isPending) {
     return <LoadingComponent />;
   }
-
+  console.log(data);
+  const day1 = data?.workDays?.split('-')[0] || '';
+  const day2 = data?.workDays?.split('-')[1] || '';
+  const finalDay1 = day1.charAt(0).toUpperCase() + day1.slice(1);
+  const finalDay2 = day2.charAt(0).toUpperCase() + day2.slice(1);
   return (
     <Container>
       <ScrollView
@@ -102,14 +120,16 @@ const Reception = () => {
           RightComponent={ReceptionRightHeader}
         />
         <HStack gap={10} alignItems="center" my={10}>
-          <Avatar rounded source={{ uri: data?.avatar }} size={50} />
+          <Avatar rounded source={{ uri: data?.avatar! }} size={50} />
           <VStack>
             <MyText poppins="Medium" style={{ color: colors.nine }}>
               Opening hours:
             </MyText>
 
             <HStack gap={20} mb={10} alignItems="center">
-              <MyText poppins="Medium">Monday - Friday</MyText>
+              <MyText poppins="Medium">
+                {finalDay1} - {finalDay2}
+              </MyText>
               <HStack alignItems="center">
                 <View style={styles.subCon}>
                   <MyText

@@ -57,8 +57,10 @@ export const getOrganisationsWithPostAndWorkers = query({
     if (!orgs) return null;
     const posts = await getPosts(ctx, args.id);
     const workers = await getWorkspaceWithWorkerAndUserProfile(ctx, orgs._id);
+    const avatar = await getImageUrl(ctx, orgs.avatar as Id<'_storage'>);
     return {
       ...orgs,
+      avatar,
       posts,
       workers,
     };

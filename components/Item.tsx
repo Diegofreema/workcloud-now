@@ -1,5 +1,5 @@
 import { Avatar } from '@rneui/themed';
-import { formatDistanceToNow, isBefore } from 'date-fns';
+import { formatDistanceToNow, isBefore, parse } from 'date-fns';
 import { useRouter } from 'expo-router';
 import { Pressable, StyleSheet, View } from 'react-native';
 
@@ -24,6 +24,7 @@ export const Item = (item: Connection & { isLastItemOnList?: boolean }) => {
   const startChannel = async () => {
     router.push(`/reception/${item?.organisation?._id}`);
   };
+  const parsedDate = parse(item.connectedAt, 'dd/MM/yyyy, HH:mm:ss', new Date());
   return (
     <Pressable
       //@ts-ignore
@@ -74,7 +75,7 @@ export const Item = (item: Connection & { isLastItemOnList?: boolean }) => {
             Time
           </MyText>
           <MyText poppins="Light" fontSize={9}>
-            {formatDistanceToNow(new Date(item?.connectedAt))} ago
+            {formatDistanceToNow(parsedDate)} ago
           </MyText>
         </VStack>
       </HStack>

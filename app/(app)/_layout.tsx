@@ -1,10 +1,15 @@
 import { useUser } from '@clerk/clerk-expo';
-import { Redirect, Stack, useSegments } from 'expo-router';
+import { ErrorBoundaryProps, Redirect, Stack, useSegments } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
+import React from 'react';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 
+import { ErrorComponent } from '~/components/Ui/ErrorComponent';
 import { useDarkMode } from '~/hooks/useDarkMode';
 
+export function ErrorBoundary({ retry }: ErrorBoundaryProps) {
+  return <ErrorComponent refetch={retry} />;
+}
 export default function AppLayout() {
   const { isSignedIn } = useUser();
   const { darkMode } = useDarkMode();
