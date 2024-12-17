@@ -3,7 +3,7 @@ import { v } from 'convex/values';
 import { FullOrgsType } from '~/constants/types';
 import { Id } from '~/convex/_generated/dataModel';
 import { mutation, query, QueryCtx } from '~/convex/_generated/server';
-import { getUserForWorker } from '~/convex/users';
+import { getUserByWorker, getUserForWorker } from '~/convex/users';
 
 export const getOrganisationsOrNull = query({
   args: {
@@ -44,6 +44,23 @@ export const getOrganisationsOrNull = query({
       has_group: orgs.has_group,
       avatar: orgsAvatarUrl,
       searchCount: orgs.searchCount,
+    };
+  },
+});
+export const getOrganisationsWithPostAndWorkers = query({
+  args: {
+    id: v.id('organizations'),
+  },
+  handler: async (ctx, args) => {
+    const orgs = await ctx.db.get(args.id);
+
+    if (!orgs) return null;
+    const posts = await getPosts(ctx, args.id);
+    const workers = await getWorkspaceWithWorkerAndUserProfile(ctx, orgs._id);
+    return {
+      ...orgs,
+      posts,
+      workers,
     };
   },
 });
@@ -106,7 +123,7 @@ export const getPostsByOrganizationId = query({
   handler: async (ctx, args) => {
     const res = await ctx.db
       .query('posts')
-      .filter((q) => q.eq(q.field('organizationId'), args.organizationId))
+      .withIndex('by_org_id', (q) => q.eq('organizationId', args.organizationId))
       .collect();
 
     if (!res) return null;
@@ -432,3 +449,54 @@ export const getWorkspaceByWorkerWorkspaceId = async (
   if (!workspaceId) return null;
   return await ctx.db.get(workspaceId);
 };
+
+export const getPosts = async (ctx: QueryCtx, orgsId: Id<'organizations'>) => {
+  const res = await ctx.db
+    .query('posts')
+    .withIndex('by_org_id', (q) => q.eq('organizationId', orgsId))
+    .collect();
+
+  if (!res) return [];
+  return await Promise.all(
+    res.map(async (r) => {
+      return await getImageUrl(ctx, r.image as Id<'_storage'>);
+    })
+  );
+};
+
+export const getWorkspaceWithWorkerAndUserProfile = async (
+  ctx: QueryCtx,
+  orgsId: Id<'organizations'>
+) => {
+  const workers = await ctx.db
+    .query('workers')
+    .withIndex('by_org_id', (q) => q.eq('organizationId', orgsId))
+    .collect();
+
+  return await Promise.all(
+    workers.map(async (worker) => {
+      const user = await getUserByWorker(ctx, worker?.userId!);
+      const workspace = await getWorkspaceByWorkerWorkspaceId(ctx, worker?.workspaceId!);
+      return {
+        ...worker,
+        user,
+        workspace,
+      };
+    })
+  );
+};
+
+// mutation
+
+export const increaseSearchCount = mutation({
+  args: {
+    id: v.id('organizations'),
+  },
+  handler: async (ctx, args) => {
+    const org = await ctx.db.get(args.id);
+    if (!org) return;
+    await ctx.db.patch(org._id, {
+      searchCount: org.searchCount + 1,
+    });
+  },
+});

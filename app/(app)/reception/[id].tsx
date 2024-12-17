@@ -1,9 +1,11 @@
 import { useAuth } from '@clerk/clerk-expo';
+import { convexQuery } from '@convex-dev/react-query';
 import { FontAwesome6 } from '@expo/vector-icons';
 import { Avatar } from '@rneui/themed';
-import { useQueryClient } from '@tanstack/react-query';
+import { useQuery as useQueryTanstack, useQueryClient } from '@tanstack/react-query';
+import { useMutation, useQuery } from 'convex/react';
 import { format } from 'date-fns';
-import { router, useLocalSearchParams, useRouter } from 'expo-router';
+import { ErrorBoundaryProps, router, useLocalSearchParams, useRouter } from 'expo-router';
 import React, { useEffect } from 'react';
 import {
   FlatList,
@@ -18,7 +20,6 @@ import {
 import Carousel from 'react-native-reanimated-carousel';
 import { toast } from 'sonner-native';
 
-
 import { EmptyText } from '~/components/EmptyText';
 import { HStack } from '~/components/HStack';
 import { HeaderNav } from '~/components/HeaderNav';
@@ -29,116 +30,65 @@ import { MyText } from '~/components/Ui/MyText';
 import VStack from '~/components/Ui/VStack';
 import { colors } from '~/constants/Colors';
 import { WorkerWithWorkspace } from '~/constants/types';
+import { api } from '~/convex/_generated/api';
+import { Id } from '~/convex/_generated/dataModel';
 import { useDarkMode } from '~/hooks/useDarkMode';
-import { useGetOrg, useGetPosts, useOrgsWorkers } from '~/lib/queries';
+import { useGetUserId } from '~/hooks/useGetUserId';
 import { supabase } from '~/lib/supabase';
 
+export function ErrorBoundary({ retry }: ErrorBoundaryProps) {
+  return <ErrorComponent refetch={retry} />;
+}
+
 const Reception = () => {
+  const { id } = useLocalSearchParams<{ id: Id<'organizations'> }>();
   const { userId } = useAuth();
-  const queryClient = useQueryClient();
-  const { id, search } = useLocalSearchParams<{ id: string; search: string }>();
-  const { data, isPending, error, refetch, isPaused } = useGetOrg(id!);
-
+  const { id: from } = useGetUserId(userId!);
+  const data = useQuery(api.organisation.getOrganisationsWithPostAndWorkers, { id });
   const {
-    data: posts,
-    isPending: isPendingPosts,
-
-    refetch: refetchPosts,
-    isPaused: isPausedPosts,
+    data: connection,
+    isPending,
     isError,
-    isRefetchError,
-  } = useGetPosts(data?.org?.id);
-  const {
-    data: workers,
-    isPending: isPendingWorkers,
-    error: errorWorkers,
-    refetch: refetchWorkers,
-    isPaused: isPausedWorkers,
-  } = useOrgsWorkers(data?.org?.id);
+    refetch,
+  } = useQueryTanstack(convexQuery(api.connection.getConnection, { to: id, from: from! }));
+  const createConnection = useMutation(api.connection.createConnection);
+  const updateConnection = useMutation(api.connection.updateConnection);
   const { width } = useWindowDimensions();
-  // ? useEffect for increasing search count
-  useEffect(() => {
-    const onIncreaseSearchCount = async () => {
-      if (data?.org?.search_count !== undefined) {
-        const { error } = await supabase
-          .from('organization')
-          .update({ search_count: data.org.search_count + 1 })
-          .eq('id', id);
-        queryClient.invalidateQueries({
-          queryKey: ['top_search'],
-        });
-        if (error) {
-          console.error('Error updating search count:', error);
-        }
-      }
-    };
-    if (search === 'true') {
-      console.log('search');
-      onIncreaseSearchCount();
-    }
-  }, [search, id, data?.org?.search_count]);
+
   // ? useEffect for creating connections
   useEffect(() => {
-    if (!id || !userId || !workers?.workers) return;
-    const createConnection = async () => {
-      const { data } = await supabase
-        .from('connections')
-        .select('connectedTo, id')
-        .eq('owner', userId!);
-
-      const connected = data?.find((item) => item?.connectedTo?.toString() === id);
-
-      if (connected) {
-        await supabase
-          .from('connections')
-          .update({
-            created_at: format(new Date(), 'dd/MM/yyyy HH:mm'),
-          })
-          .eq('id', connected?.id);
-      } else {
-        await supabase.from('connections').insert({
-          owner: userId,
-          connectedTo: +id,
-        });
-      }
-
-      if (error) {
-        console.log(error);
-      }
-      if (!error) {
-        queryClient.invalidateQueries({
-          queryKey: ['connections', userId],
-        });
+    if (!id || !data?.workers || !connection || !from) return;
+    const now = format(new Date(), 'dd/MM/yyy HH:mm');
+    const onConnect = async () => {
+      try {
+        if (!isPending && !connection) {
+          await createConnection({
+            connectedAt: now,
+            from,
+            to: id,
+          });
+        } else {
+          await updateConnection({
+            id: connection?._id,
+            time: now,
+          });
+        }
+      } catch (e) {
+        console.log(e);
       }
     };
-    const loggedInUserIsNotAWorker = !workers?.workers?.some(
-      (worker) => worker.userId.userId === userId
-    );
-    if (data?.org?.ownerId !== userId && loggedInUserIsNotAWorker) createConnection();
-  }, [id, userId, workers?.workers]);
+    const isWorker = data.workers.find((w) => w?.user?._id === from);
+    const isBoss = data?.ownerId === from;
+    if (!isWorker && !isBoss) onConnect().catch((e) => console.log(e));
+  }, [id, data?.workers, connection, isPending, from]);
 
-  const handleRefetch = () => {
-    refetch();
-    refetchWorkers();
-    refetchPosts();
-  };
-  if (
-    error ||
-    isPausedWorkers ||
-    isPaused ||
-    errorWorkers ||
-    isError ||
-    isRefetchError ||
-    isPausedPosts
-  ) {
-    return <ErrorComponent refetch={handleRefetch} />;
+  if (isError) {
+    return <ErrorComponent refetch={refetch} />;
   }
-  if (isPending || isPendingWorkers || isPendingPosts) {
+
+  if (!data || isPending) {
     return <LoadingComponent />;
   }
-
-  const { org } = data;
-  const { workers: staffs } = workers;
 
   return (
     <Container>
@@ -147,12 +97,12 @@ const Reception = () => {
         contentContainerStyle={{ paddingBottom: 20, flexGrow: 1 }}
         style={{ flex: 1 }}>
         <HeaderNav
-          title={org?.name}
-          subTitle={org?.category}
+          title={data?.name}
+          subTitle={data?.category}
           RightComponent={ReceptionRightHeader}
         />
         <HStack gap={10} alignItems="center" my={10}>
-          <Avatar rounded source={{ uri: org?.avatar }} size={50} />
+          <Avatar rounded source={{ uri: data?.avatar }} size={50} />
           <VStack>
             <MyText poppins="Medium" style={{ color: colors.nine }}>
               Opening hours:
@@ -167,7 +117,7 @@ const Reception = () => {
                     style={{
                       color: colors.openBackgroundColor,
                     }}>
-                    {org?.start}
+                    {data?.start}
                   </MyText>
                 </View>
                 <Text style={{ marginBottom: 5 }}> - </Text>
@@ -177,7 +127,7 @@ const Reception = () => {
                     style={{
                       color: colors.closeTextColor,
                     }}>
-                    {org?.end}
+                    {data?.end}
                   </MyText>
                 </View>
               </HStack>
@@ -186,15 +136,15 @@ const Reception = () => {
         </HStack>
 
         <View>
-          {posts?.imgUrls?.length > 0 && (
+          {data?.posts?.length > 0 && (
             <Carousel
               loop
               width={width}
               height={150}
               autoPlay
-              data={posts?.imgUrls}
+              data={data?.posts}
               scrollAnimationDuration={1500}
-              renderItem={({ index, item }) => (
+              renderItem={({ item }) => (
                 <View
                   style={{
                     width: width * 0.98,
@@ -202,9 +152,10 @@ const Reception = () => {
                     borderRadius: 5,
                     overflow: 'hidden',
                   }}>
-                  <Image src={item.image!} style={styles.image} resizeMode="cover" />
+                  <Image src={item!} style={styles.image} resizeMode="cover" />
                 </View>
               )}
+              vertical={false}
             />
           )}
         </View>
@@ -216,7 +167,7 @@ const Reception = () => {
           }}>
           Representatives
         </MyText>
-        <Representatives data={staffs} />
+        <Representatives data={data?.workers} />
       </ScrollView>
     </Container>
   );
@@ -261,8 +212,8 @@ const RepresentativeItem = ({ item }: { item: WorkerWithWorkspace }) => {
 
   const queryClient = useQueryClient();
   const handlePress = async () => {
-    if (id === item.userId.userId) return;
-    if (!item?.workspaceId?.active) {
+    if (id === item.user?.clerkId) return;
+    if (!item?.workspace?.active) {
       toast.error('This workspace is currently inactive', {
         description: 'Please try joining another workspace',
       });
@@ -279,7 +230,8 @@ const RepresentativeItem = ({ item }: { item: WorkerWithWorkspace }) => {
       if (customerInWaitList) {
         await supabase.from('waitList').delete().eq('id', customerInWaitList?.id);
         const { error: er } = await supabase.from('waitList').insert({
-          workspace: item?.workspaceId?.id,
+          // @ts-ignore
+          workspace: item?.workspace?._id,
           customer: id,
         });
         if (er) {
@@ -294,11 +246,12 @@ const RepresentativeItem = ({ item }: { item: WorkerWithWorkspace }) => {
             description: 'Please be in a quiet place',
           });
           queryClient.invalidateQueries({ queryKey: ['waitList'] });
-          router.replace(`/wk/${item?.workspaceId?.id}`);
+          router.replace(`/wk/${item?.workspace?._id}`);
         }
       } else {
         const { error } = await supabase.from('waitList').insert({
-          workspace: item?.workspaceId?.id,
+          // @ts-ignore
+          workspace: item?.workspace?._id,
           customer: id,
         });
 
@@ -316,18 +269,13 @@ const RepresentativeItem = ({ item }: { item: WorkerWithWorkspace }) => {
           });
           queryClient.invalidateQueries({ queryKey: ['waitList'] });
 
-          router.replace(`/wk/${item?.workspaceId?.id}`);
+          router.replace(`/wk/${item?.workspace?._id}`);
         }
       }
     }
   };
 
   const onPress = async () => {
-    // const channel = client.channel('messaging', {
-    //   members: [id!, item?.userId?.userId!],
-    // });
-
-    // await channel.watch();
     // @ts-ignore
     router.push(`/chat/${channel.id}?workerId=${item?.userId?.userId}`);
   };
@@ -344,12 +292,12 @@ const RepresentativeItem = ({ item }: { item: WorkerWithWorkspace }) => {
       ]}
       onPress={handlePress}>
       <VStack alignItems="center" justifyContent="center" gap={2}>
-        <Avatar rounded source={{ uri: item?.userId.avatar }} size={50} />
+        <Avatar rounded source={{ uri: item?.user?.imageUrl! }} size={50} />
         <MyText poppins="Medium" fontSize={11} style={{ textAlign: 'center' }}>
           {item?.role}
         </MyText>
 
-        {item?.workspaceId && item?.workspaceId?.active && (
+        {item?.workspace && item?.workspace?.active && (
           <View
             style={{
               backgroundColor: colors.openTextColor,
@@ -363,7 +311,7 @@ const RepresentativeItem = ({ item }: { item: WorkerWithWorkspace }) => {
             </MyText>
           </View>
         )}
-        {item?.workspaceId && !item?.workspaceId?.active && (
+        {item?.workspace && !item?.workspace?.active && (
           <>
             <View
               style={{
@@ -378,7 +326,7 @@ const RepresentativeItem = ({ item }: { item: WorkerWithWorkspace }) => {
               </MyText>
             </View>
 
-            {item?.userId?.userId !== id && (
+            {item?.user?.clerkId !== id && (
               <Pressable
                 onPress={onPress}
                 style={{

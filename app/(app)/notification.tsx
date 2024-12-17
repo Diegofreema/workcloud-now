@@ -3,7 +3,7 @@ import { convexQuery } from '@convex-dev/react-query';
 import { Divider } from '@rneui/themed';
 import { useQuery } from '@tanstack/react-query';
 import { useMutation } from 'convex/react';
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { FlatList } from 'react-native';
 import { toast } from 'sonner-native';
 
@@ -28,7 +28,17 @@ const Notification = () => {
   const { data, isPaused, isPending, isError, refetch, isRefetching, isRefetchError } = useQuery(
     convexQuery(api.request.getPendingRequestsWithOrganization, { id: id! })
   );
+  const markUnread = useMutation(api.request.markRequestAsRead);
   const acceptOffer = useMutation(api.worker.acceptOffer);
+  const unreadRequests = data?.filter((d) => d.request.unread).map((unread) => unread.request._id);
+  useEffect(() => {
+    if (unreadRequests?.length) {
+      const onMark = async () => {
+        await markUnread({ ids: [...unreadRequests] });
+      };
+      onMark().catch(console.log);
+    }
+  }, [unreadRequests, markUnread]);
   if (isError || isRefetchError || isPaused) {
     return <ErrorComponent refetch={refetch} />;
   }

@@ -1,11 +1,8 @@
 import { v } from 'convex/values';
 
 import { mutation, query } from '~/convex/_generated/server';
+import { getOrganizationByOwnerId } from '~/convex/organisation';
 import { getUserByWorkerIdA, getWorkerProfile } from '~/convex/users';
-import {
-  getOrganizationByOwnerId,
-  getOrganizationByWorkerOrganizationId,
-} from '~/convex/organisation';
 
 export const getPendingRequestsAsBoolean = query({
   args: {
@@ -91,5 +88,15 @@ export const createRequest = mutation({
       unread: true,
       pending: true,
     });
+  },
+});
+
+export const markRequestAsRead = mutation({
+  args: {
+    ids: v.array(v.id('requests')),
+  },
+  handler: async (ctx, args) => {
+    const updatePromises = args.ids.map((id) => ctx.db.patch(id, { unread: false }));
+    await Promise.all(updatePromises);
   },
 });

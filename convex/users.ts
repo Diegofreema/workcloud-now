@@ -81,7 +81,7 @@ export const getUserConnections = query({
         const organisation = await getOrganisations(ctx, connection.connectedTo);
 
         return {
-          createdAt: connection._creationTime,
+          connectedAt: connection.connectedAt,
           id: connection._id,
           organisation,
         };
@@ -224,6 +224,17 @@ export const getWorkerProfile = async (ctx: QueryCtx, userId: Id<'users'>) => {
     .first();
 };
 export const getUserByWorkerIdA = async (ctx: QueryCtx, userId: Id<'users'>) => {
+  const user = await ctx.db.get(userId);
+  if (!user) return null;
+  if (user?.imageUrl && user?.imageUrl.startsWith('http')) return user;
+  const imageUrl = await getImageUrl(ctx, user.imageUrl as Id<'_storage'>);
+  return {
+    ...user,
+    imageUrl,
+  };
+};
+export const getUserByWorker = async (ctx: QueryCtx, userId?: Id<'users'>) => {
+  if (!userId) return null;
   const user = await ctx.db.get(userId);
   if (!user) return null;
   if (user?.imageUrl && user?.imageUrl.startsWith('http')) return user;

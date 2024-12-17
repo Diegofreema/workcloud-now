@@ -1,10 +1,10 @@
 import { useAuth } from '@clerk/clerk-expo';
 import { AntDesign } from '@expo/vector-icons';
 import { Avatar, SearchBar } from '@rneui/themed';
-import { useQuery } from 'convex/react';
+import { useMutation, useQuery } from 'convex/react';
 import { ErrorBoundaryProps, useRouter } from 'expo-router';
 import React, { useState } from 'react';
-import { FlatList, Pressable, Text } from 'react-native';
+import { ActivityIndicator, FlatList, Pressable, Text } from 'react-native';
 import { useDebounce } from 'use-debounce';
 
 import { HStack } from '~/components/HStack';
@@ -19,7 +19,6 @@ import { SearchServicePoints } from '~/constants/types';
 import { api } from '~/convex/_generated/api';
 import { useDarkMode } from '~/hooks/useDarkMode';
 import { useGetUserId } from '~/hooks/useGetUserId';
-import { useStoreSearch } from '~/hooks/useStoreSearch';
 
 export function ErrorBoundary({ retry }: ErrorBoundaryProps) {
   return <ErrorComponent refetch={retry} />;
@@ -48,35 +47,40 @@ const Search = () => {
 
   const showResultText = val !== '' && searches;
   console.log({ searches });
+  const loading = val.length > 0 && !searches;
   return (
     <Container>
       <SearchHeader value={value} setValue={setValue} />
       <TSearch data={topSearch} />
       <RecentSearch />
-      <FlatList
-        ListHeaderComponent={() =>
-          showResultText ? (
-            <MyText
-              poppins="Medium"
-              style={{
-                fontSize: 14,
-                marginBottom: 20,
-              }}>
-              Results
-            </MyText>
-          ) : null
-        }
-        style={{ marginTop: 20 }}
-        showsVerticalScrollIndicator={false}
-        data={searches}
-        keyExtractor={(_, index) => index.toString()}
-        renderItem={({ item }) => {
-          return <OrganizationItem item={item!} />;
-        }}
-        ListEmptyComponent={() => (
-          <Text style={{ color: 'white', fontFamily: 'PoppinsBold' }}>No results found</Text>
-        )}
-      />
+      {loading ? (
+        <ActivityIndicator size="large" style={{ marginTop: 30 }} />
+      ) : (
+        <FlatList
+          ListHeaderComponent={() =>
+            showResultText ? (
+              <MyText
+                poppins="Medium"
+                style={{
+                  fontSize: 14,
+                  marginBottom: 20,
+                }}>
+                Results
+              </MyText>
+            ) : null
+          }
+          style={{ marginTop: 20 }}
+          showsVerticalScrollIndicator={false}
+          data={searches}
+          keyExtractor={(_, index) => index.toString()}
+          renderItem={({ item }) => {
+            return <OrganizationItem item={item!} />;
+          }}
+          ListEmptyComponent={() => (
+            <Text style={{ color: 'white', fontFamily: 'PoppinsBold' }}>No results found</Text>
+          )}
+        />
+      )}
     </Container>
   );
 };
@@ -118,17 +122,21 @@ const SearchHeader = ({ value, setValue }: { value: string; setValue: (text: str
 };
 
 const OrganizationItem = ({ item }: { item: SearchServicePoints }) => {
-  const storeOrgs = useStoreSearch((state) => state.storeOrgs);
+  const increaseCount = useMutation(api.organisation.increaseSearchCount);
+
   const router = useRouter();
-  const onPress = () => {
-    storeOrgs({ id: item.id, name: item.name });
+  const onPress = async () => {
     // @ts-ignore
-    router.push(`reception/${item.organizationId.id}`);
+    router.push(`reception/${item.id}`);
+    try {
+      await increaseCount({ id: item.id });
+    } catch (e) {
+      console.log(e);
+    }
   };
   return (
     <Pressable
       style={({ pressed }) => [{ opacity: pressed ? 0.5 : 1, marginBottom: 10 }]}
-      // @ts-ignore
       onPress={onPress}>
       <HStack alignItems="center" gap={10}>
         <Avatar rounded source={{ uri: item.avatar! }} size={50} />

@@ -1,8 +1,7 @@
 import { useAuth } from '@clerk/clerk-expo';
-import { convexQuery } from '@convex-dev/react-query';
 import { EvilIcons } from '@expo/vector-icons';
 import { Text } from '@rneui/themed';
-import { useQuery } from '@tanstack/react-query';
+import { useQuery } from 'convex/react';
 import { useRouter } from 'expo-router';
 import { Pressable, StyleSheet, View } from 'react-native';
 
@@ -11,13 +10,11 @@ import { api } from '~/convex/_generated/api';
 import { useDarkMode } from '~/hooks/useDarkMode';
 import { useGetUserId } from '~/hooks/useGetUserId';
 
-export const Header = (): JSX.Element => {
+export const Header = () => {
   const { darkMode } = useDarkMode();
   const { userId } = useAuth();
   const { id } = useGetUserId(userId!);
-  const { data } = useQuery(
-    convexQuery(api.request.getPendingRequestsWithOrganization, { id: id! })
-  );
+  const data = useQuery(api.request.getPendingRequestsWithOrganization, { id: id! });
 
   const router = useRouter();
   const onSearch = () => {
@@ -27,6 +24,7 @@ export const Header = (): JSX.Element => {
     router.push('/notification');
   };
   const numberOfUnread = data?.filter((r) => r?.request?.unread).length || 0;
+  console.log(numberOfUnread);
   return (
     <View style={styles.container}>
       <Text

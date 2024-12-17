@@ -25,7 +25,7 @@ export type User = {
   _id: Id<'users'>;
   email: string;
   clerkId: string;
-  imageUrl?: string;
+  imageUrl?: string | undefined | null;
   first_name?: string;
   last_name?: string;
   pushToken?: string;
@@ -83,7 +83,7 @@ export type ServicePointWithOrg = ServicePoint & {
 };
 export type Connection = {
   id: Id<'connections'>;
-  createdAt: number;
+  connectedAt: string;
   organisation: Organization | null;
 };
 export type FullOrgsType = {
@@ -201,12 +201,12 @@ export type Wks = {
   leisure: boolean;
   organizationId: Id<'organizations'>;
   ownerId: Id<'users'>;
-  responsibility: string;
-  salary: string;
+  responsibility?: string;
+  salary?: string;
   waitlistCount: number;
   role: string;
-  workerId: Id<'users'>;
-  servicePointId: Id<'servicePoints'>;
+  workerId?: Id<'workers'>;
+  servicePointId?: Id<'servicePoints'>;
   locked: boolean;
   signedIn: boolean;
   personal: boolean;
@@ -244,18 +244,17 @@ export type Workers = {
 // };
 
 export type WorkerWithWorkspace = {
-  created_at: string;
+  _creationTime: number;
   experience?: string;
-  id?: number;
+  _id?: Id<'workers'>;
   location?: string;
-  organizationId?: Organization;
   qualifications?: string;
-  servicePointId?: number;
+  servicePointId?: Id<'servicePoints'>;
   skills: string;
-  userId: Profile;
-  workspaceId?: WK;
-  role: string;
-  bossId: string;
+  user: User | null;
+  workspace?: Wks | null | undefined;
+  role?: string;
+  bossId?: Id<'users'>;
 };
 export type Requests = {
   _creationTime: number;

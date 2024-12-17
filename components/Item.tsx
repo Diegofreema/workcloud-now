@@ -31,7 +31,7 @@ export const Item = (item: Connection & { isLastItemOnList?: boolean }) => {
       style={({ pressed }) => [styles.item, pressed && { opacity: 0.3 }]}>
       <HStack justifyContent="space-between" alignItems="center">
         <HStack gap={7} alignItems="center">
-          <Avatar size={40} rounded source={{ uri: item?.organisation?.avatar }} />
+          <Avatar size={40} rounded source={{ uri: item?.organisation?.avatar! }} />
 
           <VStack>
             <MyText poppins="Bold" fontSize={10}>
@@ -74,7 +74,7 @@ export const Item = (item: Connection & { isLastItemOnList?: boolean }) => {
             Time
           </MyText>
           <MyText poppins="Light" fontSize={9}>
-            {formatDistanceToNow(new Date(item?.createdAt))} ago
+            {formatDistanceToNow(new Date(item?.connectedAt))} ago
           </MyText>
         </VStack>
       </HStack>

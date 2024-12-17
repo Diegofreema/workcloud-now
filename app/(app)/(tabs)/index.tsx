@@ -1,7 +1,8 @@
 import { useAuth } from '@clerk/clerk-expo';
 import { useQuery } from 'convex/react';
+import { ErrorBoundaryProps } from 'expo-router';
 import * as SecureStore from 'expo-secure-store';
-import { useEffect } from 'react';
+import React, { useEffect } from 'react';
 import { FlatList, View } from 'react-native';
 
 import { EmptyText } from '~/components/EmptyText';
@@ -10,10 +11,15 @@ import { Item } from '~/components/Item';
 import { OrganizationModal } from '~/components/OrganizationModal';
 import { ProfileHeader } from '~/components/ProfileHeader';
 import { Container } from '~/components/Ui/Container';
+import { ErrorComponent } from '~/components/Ui/ErrorComponent';
 import { HeadingText } from '~/components/Ui/HeadingText';
 import { LoadingComponent } from '~/components/Ui/LoadingComponent';
 import { api } from '~/convex/_generated/api';
 import { useOrganizationModal } from '~/hooks/useOrganizationModal';
+
+export function ErrorBoundary({ retry }: ErrorBoundaryProps) {
+  return <ErrorComponent refetch={retry} />;
+}
 
 export default function TabOneScreen() {
   const { userId } = useAuth();

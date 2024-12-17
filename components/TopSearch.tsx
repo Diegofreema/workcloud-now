@@ -1,13 +1,14 @@
 /* eslint-disable prettier/prettier */
 
 import { Avatar } from "@rneui/themed";
+import { useMutation } from "convex/react";
 import { router } from "expo-router";
 import { FlatList, Pressable, View } from "react-native";
 
 import { MyText } from "./Ui/MyText";
 
 import { SearchType } from "~/constants/types";
-import { useStoreSearch } from "~/hooks/useStoreSearch";
+import { api } from "~/convex/_generated/api";
 
 type Props = {
   data: SearchType[];
@@ -31,11 +32,15 @@ export const TSearch = ({ data }: Props): JSX.Element => {
 };
 
 const Item = ({ item }: { item: SearchType }) => {
-  const storeOrgs = useStoreSearch((state) => state.storeOrgs);
-  const onPress = () => {
-    storeOrgs({ name: item.name!, id: item.id.toString()! });
+  const increaseCount = useMutation(api.organisation.increaseSearchCount);
+  const onPress = async () => {
     // @ts-ignore
     router.push(`reception/${item.id}?search=true`);
+    try {
+      await increaseCount({ id: item.id });
+    } catch (error) {
+      console.log(error);
+    }
   };
   return (
     <Pressable

@@ -84,6 +84,7 @@ export const Workspace = {
 export const Connection = {
   ownerId: v.id('users'),
   connectedTo: v.id('organizations'),
+  connectedAt: v.string(),
 };
 
 export const WaitList = {
@@ -102,15 +103,15 @@ export const ServicePoints = {
 };
 
 export default defineSchema({
-  users: defineTable(User),
+  users: defineTable(User).index('by_workerId', ['workerId']),
   organizations: defineTable(Organization)
     .index('ownerId', ['ownerId'])
     .index('by_search_count', ['searchCount']),
-  workers: defineTable(Worker),
+  workers: defineTable(Worker).index('by_org_id', ['organizationId']),
   workspaces: defineTable(Workspace)
     .index('workspace', ['organizationId', 'ownerId'])
     .index('personal', ['organizationId', 'personal']),
-  connections: defineTable(Connection),
+  connections: defineTable(Connection).index('by_ownerId_orgId', ['ownerId', 'connectedTo']),
   waitlists: defineTable(WaitList),
   servicePoints: defineTable(ServicePoints)
     .searchIndex('description', {
@@ -118,6 +119,6 @@ export default defineSchema({
     })
     .index('by_organisation_id', ['organizationId']),
   roles: defineTable(Role),
-  posts: defineTable(Post),
+  posts: defineTable(Post).index('by_org_id', ['organizationId']),
   requests: defineTable(Request),
 });
