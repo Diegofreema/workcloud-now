@@ -12,6 +12,8 @@ export const User = {
   workerId: v.optional(v.id('workers')),
   phoneNumber: v.optional(v.string()),
   date_of_birth: v.optional(v.string()),
+  isOnline: v.optional(v.boolean()),
+  lastSeen: v.optional(v.string()),
 };
 
 export const Organization = {
@@ -92,6 +94,26 @@ export const WaitList = {
   workspaceId: v.id('workspaces'),
 };
 
+export const Conversation = {
+  name: v.optional(v.string()),
+  type: v.string(),
+  lastMessage: v.optional(v.string()),
+  participants: v.array(v.id('users')),
+  lastMessageTime: v.optional(v.number()),
+  lastMessageSenderId: v.optional(v.id('users')),
+};
+
+export const Message = {
+  senderId: v.id('users'),
+  recipient: v.id('users'),
+  conversationId: v.id('conversations'),
+  isEdited: v.optional(v.boolean()),
+  content: v.string(),
+  contentType: v.string(),
+  seenId: v.array(v.id('users')),
+  parentMessageId: v.optional(v.id('messages')),
+};
+
 export const ServicePoints = {
   description: v.string(),
   externalLink: v.optional(v.boolean()),
@@ -103,7 +125,7 @@ export const ServicePoints = {
 };
 
 export default defineSchema({
-  users: defineTable(User).index('by_workerId', ['workerId']),
+  users: defineTable(User).index('by_workerId', ['workerId']).index('clerkId', ['clerkId']),
   organizations: defineTable(Organization)
     .index('ownerId', ['ownerId'])
     .index('by_search_count', ['searchCount']),
@@ -121,4 +143,8 @@ export default defineSchema({
   roles: defineTable(Role),
   posts: defineTable(Post).index('by_org_id', ['organizationId']),
   requests: defineTable(Request),
+  conversations: defineTable(Conversation),
+  messages: defineTable(Message)
+    .index('by_conversationId', ['conversationId'])
+    .index('by_conversationId_recipient', ['conversationId', 'recipient']),
 });

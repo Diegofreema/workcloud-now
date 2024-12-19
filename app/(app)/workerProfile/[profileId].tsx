@@ -38,16 +38,15 @@ const Profile = () => {
   const { profileId } = useLocalSearchParams<{ profileId: Id<'workers'> }>();
 
   const { user } = useUser();
-  const { id } = useGetUserId(user?.id!);
+  const { id } = useGetUserId();
   const { darkMode } = useDarkMode();
   const [cancelling, setCancelling] = useState(false);
 
   const router = useRouter();
-  const { data, isPaused, isPending, isError, refetch, isRefetchError, error } = useQuery(
+  const { data, isPaused, isPending, isError, refetch, isRefetchError } = useQuery(
     convexQuery(api.worker.getSingleWorkerProfile, { id: profileId })
   );
 
-  console.log(error);
   const {
     data: pendingData,
     isPending: isPendingData,
@@ -72,9 +71,10 @@ const Profile = () => {
 
   const isInPending = !!pendingData;
 
-  const startChannel = async () => {};
+  const startChannel = async () => {
+    router.push(`/chat/${data?.user?._id!}`);
+  };
 
-  // const sendMessage = () => {};
   const cancelRequest = async () => {
     setCancelling(true);
     if (!pendingData) return;

@@ -1,14 +1,17 @@
+import { useAuth } from '@clerk/clerk-expo';
 import FontAwesome from '@expo/vector-icons/FontAwesome';
-import { Badge, Text } from '@rneui/themed';
+import { Text } from '@rneui/themed';
+import { useQuery } from 'convex/react';
 import { Tabs } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import React from 'react';
 import { View } from 'react-native';
 
+import { UnreadCount } from '~/components/Unread';
 import { fontFamily } from '~/constants';
 import { colors } from '~/constants/Colors';
+import { api } from '~/convex/_generated/api';
 import { useDarkMode } from '~/hooks/useDarkMode';
-import { useUnread } from '~/hooks/useUnread';
 
 /**
  * You can explore the built-in icon families and icons on the web at https://icons.expo.fyi/
@@ -27,7 +30,11 @@ export const unstable_settings = {
 
 export default function TabLayout() {
   const { darkMode } = useDarkMode();
-  const { unread } = useUnread();
+  const { userId: id } = useAuth();
+  const data = useQuery(api.conversation.getUnreadAllMessages, {
+    clerkId: id!,
+  });
+  const showUnreadCount = data && data > 0;
 
   return (
     <>
@@ -76,7 +83,6 @@ export default function TabLayout() {
         <Tabs.Screen
           name="messages"
           options={{
-            href: null,
             title: 'Messages',
             tabBarIcon: ({ focused, size }) => (
               <View>
@@ -85,17 +91,9 @@ export default function TabLayout() {
                   color={focused ? colors.buttonBlue : colors.grayText}
                   size={size}
                 />
-                {unread > 0 && (
-                  <Badge
-                    containerStyle={{
-                      position: 'absolute',
-                      top: -5,
-                      right: -5,
-                    }}
-                    value={`${unread}`}
-                    status="success"
-                  />
-                )}
+                {showUnreadCount ? (
+                  <UnreadCount unread={data} style={{ position: 'absolute', top: -5, right: -8 }} />
+                ) : null}
               </View>
             ),
             tabBarLabel: ({ focused }) => (

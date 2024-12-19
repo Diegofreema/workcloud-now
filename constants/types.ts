@@ -377,3 +377,91 @@ export type SearchServicePoints = {
   ownerId: Id<'users'>;
   description: string;
 };
+
+export type Message = {
+  id: string;
+  text: string;
+  isCurrentUser: boolean;
+  timestamp: string;
+};
+
+export type MessageSection = {
+  title: string;
+  data: Message[];
+};
+
+export type MessageData = {
+  _id: Id<'messages'>;
+  _creationTime: number;
+  isEdited?: boolean | undefined;
+  parentMessageId?: Id<'messages'> | undefined;
+  senderId: Id<'users'>;
+  recipient: Id<'users'>;
+  conversationId: Id<'conversations'>;
+  content: string;
+  contentType: string;
+  seenId: Id<'users'>[];
+};
+
+export type Conversation = {
+  _id: Id<'conversations'>;
+  _creationTime: number;
+  name?: string | undefined;
+  lastMessage?: string | undefined;
+  lastMessageTime?: number | undefined;
+  lastMessageSenderId?: Id<'users'> | undefined;
+  type: string;
+  participants: Id<'users'>[];
+};
+
+export type ConversationAndUserType = {
+  conversation: Conversation;
+  otherUser: User | null;
+};
+
+export type ResultType = {
+  id: Id<'conversations'>;
+  lastMessage: string | undefined;
+  name: string | undefined;
+  lastMessageTime: number | undefined;
+  otherUser: User | null;
+  lastMessageSenderId: Id<'users'> | undefined;
+};
+
+export type DataType = {
+  _id: Id<'messages'>;
+  _creationTime: number;
+  isEdited?: boolean | undefined;
+  parentMessageId?: Id<'messages'> | undefined;
+  senderId: Id<'users'>;
+  recipient: Id<'users'>;
+  conversationId: Id<'conversations'>;
+  content: string;
+  contentType: string;
+  seenId: Id<'users'>[];
+};
+
+export type ChatMessage = {
+  id: string;
+  text: string;
+  isCurrentUser: boolean;
+  timestamp: string;
+};
+
+export type ChatDateGroup = {
+  title: string;
+  data: ChatMessage[];
+};
+
+export type StatusType = 'LoadingFirstPage' | 'CanLoadMore' | 'LoadingMore' | 'Exhausted';
+
+export type GiftChatType = {
+  _id: number | Id<'messages'>;
+  system?: boolean;
+  text: string;
+  _creationTime: Date;
+  user: {
+    _id: number | Id<'users'>;
+    name?: string;
+  };
+};

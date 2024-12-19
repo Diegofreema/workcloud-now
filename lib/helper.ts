@@ -4,9 +4,10 @@ import { router } from 'expo-router';
 import { toast } from 'sonner-native';
 
 import { supabase } from './supabase';
-import { Org } from '../constants/types';
-import { ImagePickerAsset } from "expo-image-picker";
-import { parse } from "date-fns";
+import { ChatDateGroup, DataType, Org } from '../constants/types';
+import { ImagePickerAsset } from 'expo-image-picker';
+import { parse } from 'date-fns';
+import { Id } from '~/convex/_generated/dataModel';
 
 const queryClient = new QueryClient();
 type User = {
@@ -260,8 +261,10 @@ export const trimText = (text: string, maxLength: number = 20) => {
   return text;
 };
 
-
-export const uploadProfilePicture = async (selectedImage: ImagePickerAsset | null, generateUploadUrl: any) => {
+export const uploadProfilePicture = async (
+  selectedImage: ImagePickerAsset | null,
+  generateUploadUrl: any
+) => {
   const uploadUrl = await generateUploadUrl();
   if (!selectedImage) return;
   const response = await fetch(selectedImage?.uri);
@@ -284,4 +287,70 @@ export function convertTimeToDateTime(timeString: string) {
     'yyyy-MM-dd HH:mm',
     currentDate
   );
+}
+
+export const formatDate = (dateString: string) => {
+  const date = new Date(dateString);
+  const today = new Date();
+  const yesterday = new Date(today);
+  yesterday.setDate(today.getDate() - 1);
+
+  if (date.toDateString() === today.toDateString()) {
+    return 'Today';
+  }
+
+  if (date.toDateString() === yesterday.toDateString()) {
+    return 'Yesterday';
+  }
+
+  return date.toLocaleDateString('en-US', {
+    month: 'long',
+    day: 'numeric',
+    year: 'numeric',
+  });
+};
+
+export function transformChatData(
+  messages: DataType[],
+  currentUserId: Id<'users'>
+): ChatDateGroup[] {
+  // Sort messages by creation time in descending order
+  const groupedMessages: Record<string, ChatDateGroup> = {};
+
+  messages.forEach((message) => {
+    // Convert creation time to Date object
+    const messageDate = new Date(message._creationTime);
+    const formattedDate = messageDate.toISOString().split('T')[0];
+
+    // Determine if the message is from the current user
+    const isCurrentUser = message.senderId === currentUserId;
+
+    // Create message object
+    const transformedMessage = {
+      id: message._id,
+      text: message.content,
+      isCurrentUser,
+      timestamp: messageDate.toISOString(),
+      _creationTime: message._creationTime, // Keep original creation time for sorting
+    };
+
+    // Add to grouped messages
+    if (!groupedMessages[formattedDate]) {
+      groupedMessages[formattedDate] = {
+        title: formattedDate,
+        data: [],
+      };
+    }
+
+    groupedMessages[formattedDate].data.push(transformedMessage);
+  });
+
+  // Convert grouped messages to array, sort by date, and order messages chronologically
+  return Object.values(groupedMessages)
+    .sort((a, b) => new Date(b.title).getTime() - new Date(a.title).getTime())
+    .map((group) => ({
+      ...group,
+      // @ts-expect-error
+      data: group.data.sort((a, b) => a._creationTime - b._creationTime),
+    }));
 }

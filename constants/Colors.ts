@@ -39,4 +39,6 @@ export const colors = {
   gray10: '#A1A1A1',
   buttonSmall: '#F2F2F2',
   lightBlueButton: '#DFE8FF',
+  otherChatBubble: '#DAE4FF',
+  time: '#B3B3B3',
 };

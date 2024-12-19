@@ -14,6 +14,7 @@ export const createOrUpdateUserToDb = httpAction(async (ctx, request) => {
         first_name: data.first_name,
         last_name: data.last_name,
         imageUrl: data.image_url,
+        isOnline: true,
       });
       break;
     case 'user.updated':

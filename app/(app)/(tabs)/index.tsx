@@ -70,6 +70,7 @@ export default function TabOneScreen() {
         renderItem={({ item, index }) => {
           const lastIndex = [1, 2, 3].length - 1;
           const isLastItemOnList = index === lastIndex;
+          // @ts-expect-error
           return <Item {...item} isLastItemOnList={isLastItemOnList} />;
         }}
         showsVerticalScrollIndicator={false}

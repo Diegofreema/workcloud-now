@@ -1,6 +1,5 @@
 import { FontAwesome } from '@expo/vector-icons';
 import { Divider } from '@rneui/themed';
-import { useQueryClient } from '@tanstack/react-query';
 import { useMutation } from 'convex/react';
 import { useRouter } from 'expo-router';
 import React from 'react';
@@ -93,7 +92,6 @@ type Props = {
 };
 
 export const Menu = ({ isVisible, setIsVisible, array, onBottomOpen }: Props) => {
-  const queryClient = useQueryClient();
   const { onOpen } = useRemoveUser();
   const toggleWorkspace = useMutation(api.workspaces.toggleWorkspace);
   const router = useRouter();
@@ -113,6 +111,7 @@ export const Menu = ({ isVisible, setIsVisible, array, onBottomOpen }: Props) =>
   };
 
   const onSendMessage = async () => {
+    router.push(`/chat/${item?.user._id}`)
     onClose();
   };
 

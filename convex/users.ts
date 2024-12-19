@@ -18,6 +18,7 @@ export const createUser = internalMutation({
     imageUrl: v.optional(v.string()),
     first_name: v.optional(v.string()),
     last_name: v.optional(v.string()),
+    isOnline: v.boolean(),
   },
   handler: async (ctx, args) => {
     return await ctx.db.insert('users', {
@@ -25,6 +26,16 @@ export const createUser = internalMutation({
     });
   },
 });
+// export const setOnline = internalMutation({
+//   args: {
+//     id: v.id('users'),
+//   },
+//   handler: async (ctx, args) => {
+//     return await ctx.db.patch(args.id, {
+//       isOnline: true,
+//     });
+//   },
+// });
 
 export const getUserByClerkId = query({
   args: {
