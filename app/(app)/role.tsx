@@ -1,4 +1,3 @@
-import { useAuth } from '@clerk/clerk-expo';
 import { convexQuery } from '@convex-dev/react-query';
 import { Input } from '@rneui/themed';
 import { useQuery } from '@tanstack/react-query';
@@ -22,8 +21,8 @@ import { useGetUserId } from '~/hooks/useGetUserId';
 const Role = () => {
   const { getData, personal, setPersonal } = useDetailsToAdd();
   const [value, setValue] = useState('');
-  const { userId } = useAuth();
-  const { organizationId, id, worker } = useGetUserId(userId!);
+
+  const { organizationId, id, worker } = useGetUserId();
   const { data, isPending, isError, refetch } = useQuery(convexQuery(api.workspaces.getRoles, {}));
   const createWorkspace = useMutation(api.workspaces.createWorkspace);
 

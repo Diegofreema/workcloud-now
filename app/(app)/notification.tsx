@@ -1,4 +1,3 @@
-import { useAuth } from '@clerk/clerk-expo';
 import { convexQuery } from '@convex-dev/react-query';
 import { Divider } from '@rneui/themed';
 import { useQuery } from '@tanstack/react-query';
@@ -20,8 +19,7 @@ import { useInfos } from '~/hooks/useGetInfo';
 import { useGetUserId } from '~/hooks/useGetUserId';
 
 const Notification = () => {
-  const { userId } = useAuth();
-  const { id } = useGetUserId(userId!);
+  const { id } = useGetUserId();
   const info = useInfos((state) => state.infoIds);
   const [isLoading, setIsLoading] = useState(false);
   const { darkMode } = useDarkMode();

@@ -40,7 +40,7 @@ export const ServicePointForm = () => {
         if (servicePoint) {
           onSelect({
             id: servicePoint.staff,
-            name: servicePoint?.worker?.first_name! + servicePoint?.worker?.last_name!,
+            name: servicePoint?.worker?.name!,
             role: servicePoint?.worker?.role!,
             image: servicePoint.worker?.imageUrl!,
           });

@@ -50,11 +50,7 @@ export default function TabOneScreen() {
       <OrganizationModal />
 
       <Header />
-      <ProfileHeader
-        id={data?._id!}
-        avatar={data?.imageUrl!}
-        name={data?.first_name + ' ' + data?.last_name}
-      />
+      <ProfileHeader id={data?._id!} avatar={data?.imageUrl!} name={data?.name} />
 
       <View style={{ marginVertical: 10 }}>
         <HeadingText link="/connections" rightText={headerText} />

@@ -7,7 +7,6 @@ import { FlatList, View } from 'react-native';
 import { toast } from 'sonner-native';
 import { Channel as ChannelType } from 'stream-chat';
 
-
 import { AuthHeader } from './AuthHeader';
 import { EmptyText } from './EmptyText';
 import { ErrorComponent } from './Ui/ErrorComponent';
@@ -18,16 +17,13 @@ import { ChatMember, useMembers } from '~/hooks/useMembers';
 import { useGetMyStaffs } from '~/lib/queries';
 
 export const AddToGroup = (): JSX.Element => {
-
   const { userId } = useAuth();
   const { chatId } = useLocalSearchParams<{ chatId: string }>();
-  const [channel, setChannel] = useState<ChannelType | null>(null);
+  const [channel, _] = useState<ChannelType | null>(null);
   const getMembers = useMembers((state) => state.getMembers);
 
   useEffect(() => {
-    const fetchChannel = async () => {
-
-    };
+    const fetchChannel = async () => {};
     fetchChannel();
   }, [chatId]);
 
@@ -84,7 +80,7 @@ export const AddToGroup = (): JSX.Element => {
           <UserPreviewWithBio
             id={item?.userId!}
             imageUrl={item?.user?.imageUrl!}
-            name={item?.user?.first_name!}
+            name={item?.user?.name!}
             bio={item.experience!}
             skills={item.skills!}
             onPress={() => onAddMember(item?.userId!)}

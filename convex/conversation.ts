@@ -4,6 +4,7 @@ import { v } from 'convex/values';
 import { mutation, query, QueryCtx } from './_generated/server';
 
 import { Id } from '~/convex/_generated/dataModel';
+import { getImageUrl } from '~/convex/organisation';
 import { getUserByWorker } from '~/convex/users';
 
 export const getConversations = query({
@@ -90,7 +91,6 @@ export const getSingleConversationWithMessages = query({
   handler: async (ctx, args) => {
     const conversations = await ctx.db.query('conversations').collect();
     if (!conversations) return null;
-    console.log(conversations.length);
     const conversation = conversations.find(
       (c) =>
         (c.participants.length === 2 &&
@@ -142,6 +142,39 @@ export const getMessagesTanstack = query({
       .query('messages')
       .withIndex('by_conversationId', (q) => q.eq('conversationId', args.conversationId!))
       .collect();
+  },
+});
+export const searchConversations = query({
+  args: {
+    query: v.string(),
+    loggedInUserId: v.id('users'),
+  },
+  handler: async (ctx, args) => {
+    const users = await ctx.db
+      .query('users')
+      .withSearchIndex('name', (q) => q.search('name', args.query))
+      .collect();
+    const usersConversationsWithLoggedInUsers = users.map(async (user) => {
+      const conversation = await getConversationsBetweenTwoUsers(
+        ctx,
+        args.loggedInUserId,
+        user._id
+      );
+
+      if (!conversation) return null;
+
+      if (user?.imageUrl?.startsWith('https')) {
+        return user;
+      }
+      const avatar = await getImageUrl(ctx, user.imageUrl as Id<'_storage'>);
+      return {
+        ...user,
+        imageUrl: avatar,
+      };
+    });
+
+    const results = await Promise.all(usersConversationsWithLoggedInUsers);
+    return results.filter((result) => result !== null);
   },
 });
 // mutations
@@ -217,4 +250,21 @@ const getMessagesUnreadCount = async (
     .collect();
   const unreadMessages = messages.filter((m) => !m.seenId.includes(userId));
   return unreadMessages.length || 0;
+};
+
+export const getConversationsBetweenTwoUsers = async (
+  ctx: QueryCtx,
+  loggedInUserId: Id<'users'>,
+  otherUserId: Id<'users'>
+) => {
+  const conversations = await ctx.db.query('conversations').collect();
+  if (!conversations) return null;
+
+  return conversations.find(
+    (c) =>
+      (c.participants.length === 2 &&
+        c.participants[0] === loggedInUserId &&
+        c.participants[1] === otherUserId) ||
+      (c.participants[1] === loggedInUserId && c.participants[0] === otherUserId)
+  );
 };

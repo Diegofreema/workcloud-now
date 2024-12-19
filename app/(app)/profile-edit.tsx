@@ -48,12 +48,9 @@ const ProfileEdit = () => {
       <View style={[styles.container, { backgroundColor: isDarkMode ? 'black' : 'white' }]}>
         <HeaderNav title="Profile" RightComponent={RightComponent} />
       </View>
-      <TopCard
-        id={user?._id}
-        name={user?.first_name + ' ' + user?.last_name}
-        image={user?.imageUrl!}
-      />
+      <TopCard id={user?._id} name={user?.name} image={user?.imageUrl!} />
       <View style={{ marginTop: 20, ...defaultStyle }}>
+        {/* @ts-ignore */}
         <MiddleCard connections={connections} />
       </View>
       <OtherLinks workerId={user?.workerId} />

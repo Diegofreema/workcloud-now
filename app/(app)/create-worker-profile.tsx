@@ -46,7 +46,7 @@ const genders = [
 const CreateProfile = () => {
   const { darkMode } = useDarkMode();
   const { user } = useUser();
-  const { id } = useGetUserId(user?.id!);
+  const { id } = useGetUserId();
   const router = useRouter();
   const createWorkerProfile = useMutation(api.users.createWorkerProfile);
   const updateWorkerIdOnUserTable = useMutation(api.users.updateWorkerIdOnUserTable);

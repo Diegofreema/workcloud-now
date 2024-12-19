@@ -16,8 +16,7 @@ export const createUser = internalMutation({
     email: v.string(),
     clerkId: v.string(),
     imageUrl: v.optional(v.string()),
-    first_name: v.optional(v.string()),
-    last_name: v.optional(v.string()),
+    name: v.string(),
     isOnline: v.boolean(),
   },
   handler: async (ctx, args) => {
@@ -112,8 +111,7 @@ const getOrganisations = async (ctx: QueryCtx, organizationId: Id<'organizations
 export const updateUserById = mutation({
   args: {
     _id: v.id('users'),
-    first_name: v.string(),
-    last_name: v.string(),
+    name: v.string(),
     phoneNumber: v.optional(v.string()),
     imageUrl: v.optional(v.id('_storage')),
   },

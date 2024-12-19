@@ -1,3 +1,4 @@
+import { router } from 'expo-router';
 import { SearchIcon } from 'lucide-react-native';
 import { StyleSheet, TextInput, TouchableOpacity } from 'react-native';
 
@@ -6,13 +7,26 @@ import { useDarkMode } from '~/hooks/useDarkMode';
 
 type Props = {
   placeholder: string;
+  search?: boolean;
+  query?: string;
+  handleChange?: (value: string) => void;
 };
-export const SearchHeader = ({ placeholder }: Props) => {
+export const SearchHeader = ({ placeholder, search, query, handleChange }: Props) => {
   const { darkMode } = useDarkMode();
   const color = darkMode === 'dark' ? colors.white : colors.black;
   return (
-    <TouchableOpacity style={styles.textInputContainer}>
-      <TextInput style={styles.textInput} editable={false} placeholder={placeholder} />
+    <TouchableOpacity
+      activeOpacity={search ? 1 : 0.5}
+      disabled={search}
+      onPress={() => router.push('/search-chat')}
+      style={styles.textInputContainer}>
+      <TextInput
+        style={styles.textInput}
+        value={query}
+        onChangeText={handleChange}
+        editable={false}
+        placeholder={placeholder}
+      />
       <SearchIcon size={30} color={color} />
     </TouchableOpacity>
   );

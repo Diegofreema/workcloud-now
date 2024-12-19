@@ -1,6 +1,4 @@
-import { useAuth } from '@clerk/clerk-expo';
-import { AntDesign } from '@expo/vector-icons';
-import { Avatar, SearchBar } from '@rneui/themed';
+import { Avatar } from '@rneui/themed';
 import { useMutation, useQuery } from 'convex/react';
 import { ErrorBoundaryProps, useRouter } from 'expo-router';
 import React, { useState } from 'react';
@@ -9,6 +7,7 @@ import { useDebounce } from 'use-debounce';
 
 import { HStack } from '~/components/HStack';
 import { RecentSearch } from '~/components/RecentSearch';
+import { SearchComponent } from '~/components/SearchComponent';
 import { TSearch } from '~/components/TopSearch';
 import { Container } from '~/components/Ui/Container';
 import { ErrorComponent } from '~/components/Ui/ErrorComponent';
@@ -17,7 +16,6 @@ import { MyText } from '~/components/Ui/MyText';
 import VStack from '~/components/Ui/VStack';
 import { SearchServicePoints } from '~/constants/types';
 import { api } from '~/convex/_generated/api';
-import { useDarkMode } from '~/hooks/useDarkMode';
 import { useGetUserId } from '~/hooks/useGetUserId';
 
 export function ErrorBoundary({ retry }: ErrorBoundaryProps) {
@@ -26,10 +24,9 @@ export function ErrorBoundary({ retry }: ErrorBoundaryProps) {
 
 const Search = () => {
   const [value, setValue] = useState('');
-  const [val] = useDebounce(value, 1000);
+  const [val] = useDebounce(value, 500);
 
-  const { userId } = useAuth();
-  const { id } = useGetUserId(userId!);
+  const { id } = useGetUserId();
   const topSearch = useQuery(api.organisation.getTopSearches, { userId: id! });
   const searches = useQuery(api.organisation.getOrganisationsByServicePointsSearchQuery, {
     query: val,
@@ -39,18 +36,17 @@ const Search = () => {
   if (!topSearch) {
     return (
       <Container>
-        <SearchHeader value={value} setValue={setValue} />
+        <SearchComponent />
         <LoadingComponent />
       </Container>
     );
   }
 
   const showResultText = val !== '' && searches;
-  console.log({ searches });
   const loading = val.length > 0 && !searches;
   return (
     <Container>
-      <SearchHeader value={value} setValue={setValue} />
+      <SearchComponent value={value} setValue={setValue} />
       <TSearch data={topSearch} />
       <RecentSearch />
       {loading ? (
@@ -86,40 +82,6 @@ const Search = () => {
 };
 
 export default Search;
-
-const SearchHeader = ({ value, setValue }: { value: string; setValue: (text: string) => void }) => {
-  const { darkMode } = useDarkMode();
-  const router = useRouter();
-  const onPress = () => {
-    if (value === '') {
-      router.back();
-    }
-  };
-  return (
-    <SearchBar
-      placeholderTextColor="#ccc"
-      inputStyle={{ backgroundColor: 'transparent', borderWidth: 0, color: 'black' }}
-      containerStyle={{
-        backgroundColor: 'transparent',
-        borderTopWidth: 0,
-        borderBottomWidth: 0,
-      }}
-      inputContainerStyle={{ backgroundColor: 'transparent', borderWidth: 1, borderBottomWidth: 1 }}
-      placeholder="Search by description"
-      onChangeText={setValue}
-      value={value}
-      searchIcon={
-        <AntDesign
-          name={value === '' ? 'arrowleft' : 'search1'}
-          size={25}
-          color={darkMode === 'dark' ? 'white' : 'black'}
-          onPress={onPress}
-        />
-      }
-      round
-    />
-  );
-};
 
 const OrganizationItem = ({ item }: { item: SearchServicePoints }) => {
   const increaseCount = useMutation(api.organisation.increaseSearchCount);

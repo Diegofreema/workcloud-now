@@ -1,4 +1,3 @@
-import { useAuth } from '@clerk/clerk-expo';
 import { convexQuery } from '@convex-dev/react-query';
 import { EvilIcons } from '@expo/vector-icons';
 import { useQuery } from '@tanstack/react-query';
@@ -25,8 +24,7 @@ import { useDarkMode } from '~/hooks/useDarkMode';
 import { useGetUserId } from '~/hooks/useGetUserId';
 
 const MyOrg = () => {
-  const { userId } = useAuth();
-  const { id } = useGetUserId(userId!);
+  const { id } = useGetUserId();
   const { data, isPending, isError, refetch, error } = useQuery(
     convexQuery(api.organisation.getOrganizationWithOwnerAndWorkspaces, {
       ownerId: id as Id<'users'>,
@@ -84,7 +82,7 @@ const MyOrg = () => {
                   fontSize: 10,
                   color: darkMode === 'dark' ? colors.white : colors.black,
                 }}>
-                {data?.owner?.first_name} | Admin
+                {data?.owner?.name?.split(' ')?.[0]} | Admin
               </Text>
             </View>
           </View>

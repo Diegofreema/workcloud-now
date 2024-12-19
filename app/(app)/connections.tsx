@@ -1,4 +1,3 @@
-import { useAuth } from '@clerk/clerk-expo';
 import { EvilIcons } from '@expo/vector-icons';
 import { useQuery } from 'convex/react';
 import React from 'react';
@@ -15,8 +14,8 @@ import { useGetUserId } from '~/hooks/useGetUserId';
 
 const Connections = () => {
   const { darkMode } = useDarkMode();
-  const { userId } = useAuth();
-  const { id } = useGetUserId(userId!);
+
+  const { id } = useGetUserId();
   const connections = useQuery(api.users.getUserConnections, { ownerId: id });
 
   if (!connections) {
@@ -41,6 +40,7 @@ const Connections = () => {
         renderItem={({ item, index }) => {
           const lastIndex = [1, 2, 3].length - 1;
           const isLastItemOnList = index === lastIndex;
+          // @ts-expect-error
           return <Item {...item} isLastItemOnList={isLastItemOnList} />;
         }}
         showsVerticalScrollIndicator={false}

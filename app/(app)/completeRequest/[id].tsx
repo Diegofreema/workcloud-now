@@ -1,4 +1,3 @@
-import { useAuth } from '@clerk/clerk-expo';
 import { convexQuery } from '@convex-dev/react-query';
 import { Button } from '@rneui/themed';
 import { useQuery } from '@tanstack/react-query';
@@ -46,8 +45,7 @@ const CompleteRequest = () => {
   const selectedRole = useStaffRole((state) => state.role);
 
   const { isOpen, onClose } = useSaved();
-  const { userId: isMe } = useAuth();
-  const { id: senderId } = useGetUserId(isMe!);
+  const { id: senderId } = useGetUserId();
   const router = useRouter();
   const { data, isPaused, isPending, isError, refetch, isRefetchError } = useQuery(
     convexQuery(api.worker.getSingleWorkerProfile, { id })
@@ -128,7 +126,7 @@ const CompleteRequest = () => {
         <View style={{ marginVertical: 10 }}>
           <UserPreview
             imageUrl={data?.user?.imageUrl!}
-            name={data?.user?.first_name + ' ' + data?.user?.last_name}
+            name={data?.user?.name}
             roleText={data?.worker?.role}
             workPlace={data?.organization?.name}
             personal

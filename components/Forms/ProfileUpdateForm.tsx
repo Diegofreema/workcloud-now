@@ -55,20 +55,19 @@ export const ProfileUpdateForm = ({ person }: { person: User }) => {
     onSubmit: async () => {
       const { firstName, lastName, phoneNumber } = values;
 
+      const name = `${firstName} ${lastName}`;
       try {
         if (selectedImage) {
           const storageId = await uploadProfilePicture(selectedImage, generateUploadUrl);
           await updateUser({
-            first_name: firstName,
-            last_name: lastName,
+            name,
             phoneNumber,
             _id: person._id,
             imageUrl: storageId,
           });
         } else {
           await updateUser({
-            first_name: firstName,
-            last_name: lastName,
+            name,
             phoneNumber,
             _id: person._id,
           });
@@ -87,8 +86,8 @@ export const ProfileUpdateForm = ({ person }: { person: User }) => {
 
   useEffect(() => {
     if (person) {
-      setFieldValue('firstName', person?.first_name);
-      setFieldValue('lastName', person?.last_name);
+      setFieldValue('firstName', person?.name?.split(' ')[0]);
+      setFieldValue('lastName', person?.name?.split(' ')[1]);
       setFieldValue('email', person?.email);
       setFieldValue('date_of_birth', person.date_of_birth);
       setFieldValue('phoneNumber', person.phoneNumber);
@@ -98,6 +97,7 @@ export const ProfileUpdateForm = ({ person }: { person: User }) => {
   }, [person]);
 
   const pickImageAsync = async () => {
+    setLoading(true);
     const result = await ImagePicker.launchImageLibraryAsync({
       mediaTypes: ImagePicker.MediaTypeOptions.Images,
       allowsEditing: true,
@@ -106,6 +106,7 @@ export const ProfileUpdateForm = ({ person }: { person: User }) => {
     if (!result.canceled) {
       setSelectedImage(result.assets[0]);
     }
+    setLoading(false);
   };
 
   if (!person) return <LoadingComponent />;
@@ -122,7 +123,7 @@ export const ProfileUpdateForm = ({ person }: { person: User }) => {
           <Image
             contentFit="cover"
             style={{ width: 100, height: 100, borderRadius: 50 }}
-            source={{ uri: selectedImage?.uri || person.imageUrl }}
+            source={{ uri: selectedImage?.uri || person.imageUrl! }}
           />
 
           {loading ? (

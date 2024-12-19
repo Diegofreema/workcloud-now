@@ -40,7 +40,7 @@ const Images = ({ item }: { item: Connection }) => {
   };
   return (
     <Pressable onPress={startChannel}>
-      <Avatar rounded size={70} source={{ uri: item?.organisation?.avatar }} />
+      <Avatar rounded size={70} source={{ uri: item?.organisation?.avatar! }} />
     </Pressable>
   );
 };

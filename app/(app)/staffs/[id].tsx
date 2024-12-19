@@ -213,7 +213,7 @@ const Staffs = () => {
             <UserPreview
               id={item?.userId}
               imageUrl={item?.user?.imageUrl!}
-              name={`${item?.user?.first_name} ${item?.user?.last_name}`}
+              name={item?.user?.name}
               subText={item?.role}
             />
             <Pressable

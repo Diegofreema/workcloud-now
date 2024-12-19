@@ -12,9 +12,8 @@ export type connections =
 export type OwnerType = {
   clerkId: string;
   email: string;
-  first_name?: string;
   imageUrl?: string | null;
-  last_name?: string;
+  name: string;
   organizationId?: string;
   phoneNumber?: string;
   workerId?: Id<'workers'>;
@@ -26,8 +25,7 @@ export type User = {
   email: string;
   clerkId: string;
   imageUrl?: string | undefined | null;
-  first_name?: string;
-  last_name?: string;
+  name: string;
   pushToken?: string;
   organizationId?: Id<'organizations'>;
   workerId?: Id<'workers'>;
@@ -75,12 +73,8 @@ export type WorkSpace = {
 };
 
 export type WorkspaceWithoutOrganization = Omit<WorkSpace, 'organization'>;
-export type UserProfile = Database['public']['Tables']['user']['Row'];
 export type TopSearch = Database['public']['Tables']['organization']['Row'];
-export type ServicePoint = Database['public']['Tables']['servicePoint']['Row'];
-export type ServicePointWithOrg = ServicePoint & {
-  organizationId: Organization;
-};
+
 export type Connection = {
   id: Id<'connections'>;
   connectedAt: string;

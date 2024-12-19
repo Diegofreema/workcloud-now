@@ -11,8 +11,7 @@ export const createOrUpdateUserToDb = httpAction(async (ctx, request) => {
       await ctx.runMutation(internal.users.createUser, {
         clerkId: data.id,
         email: data.email_addresses[0].email_address,
-        first_name: data.first_name,
-        last_name: data.last_name,
+        name: data.first_name + ' ' + data.last_name,
         imageUrl: data.image_url,
         isOnline: true,
       });

@@ -1,9 +1,11 @@
 import { useMutation } from 'convex/react';
 import { SendIcon } from 'lucide-react-native';
-import React, { useCallback, useState } from 'react';
+import React, { useState } from 'react';
 import { KeyboardAvoidingView, Platform, StyleSheet, Text, View } from 'react-native';
 import { Bubble, GiftedChat, Send, SystemMessage } from 'react-native-gifted-chat';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+
+import { EmptyChat } from '~/components/EmptyChat';
 import { colors } from '~/constants/Colors';
 import { DataType, StatusType } from '~/constants/types';
 import { api } from '~/convex/_generated/api';
@@ -32,29 +34,32 @@ export const ChatComponent = ({
   const createMessage = useMutation(api.conversation.createMessages);
   const [text, setText] = useState('');
   const insets = useSafeAreaInsets();
-  const messages = [
-    ...data?.map((message) => {
-      return {
-        _id: message?._id,
-        text: message?.content,
-        createdAt: new Date(message?._creationTime),
-        user: {
-          _id: message?.senderId,
-          name: message.senderId === loggedInUserId ? 'You' : otherUserName,
+  const hasItem = data?.length > 0;
+  const messages = hasItem
+    ? [
+        ...data?.map((message) => {
+          return {
+            _id: message?._id,
+            text: message?.content,
+            createdAt: new Date(message?._creationTime),
+            user: {
+              _id: message?.senderId,
+              name: message.senderId === loggedInUserId ? 'You' : otherUserName,
+            },
+          };
+        }),
+        {
+          _id: 0,
+          system: true,
+          text: '',
+          createdAt: new Date(createdAt),
+          user: {
+            _id: 0,
+            name: 'Bot',
+          },
         },
-      };
-    }),
-    {
-      _id: 0,
-      system: true,
-      text: '',
-      createdAt: new Date(createdAt),
-      user: {
-        _id: 0,
-        name: 'Bot',
-      },
-    },
-  ];
+      ]
+    : [];
 
   const onSend = async () => {
     await createMessage({
@@ -91,6 +96,7 @@ export const ChatComponent = ({
         renderUsernameOnMessage
         infiniteScroll
         loadEarlier={loadEarlier}
+        renderChatEmpty={() => <EmptyChat />}
         onLoadEarlier={onLoadMore}
         renderUsername={(user) => (
           <Text style={{ fontSize: 10, color: colors.black, paddingLeft: 7 }}>{user.name}</Text>
@@ -98,6 +104,8 @@ export const ChatComponent = ({
         renderBubble={(props) => {
           return (
             <Bubble
+              onLongPress={console.log}
+              onPress={() => console.warn('Press')}
               {...props}
               textStyle={{
                 right: {

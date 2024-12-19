@@ -1,4 +1,3 @@
-import { useAuth } from '@clerk/clerk-expo';
 import { useMutation, useQuery } from 'convex/react';
 import { useRouter } from 'expo-router';
 import { useFormik } from 'formik';
@@ -43,8 +42,7 @@ const genders = [
 const CreateProfile = () => {
   const { darkMode } = useDarkMode();
 
-  const { userId } = useAuth();
-  const { id } = useGetUserId(userId!);
+  const { id } = useGetUserId();
   const data = useQuery(api.users.getWorkerProfileWithUser, { id: id as Id<'users'> });
   const updateWorkerProfile = useMutation(api.users.updateWorkerProfile);
   const router = useRouter();
@@ -64,7 +62,7 @@ const CreateProfile = () => {
           if (!data?._id) return;
           await updateWorkerProfile({ _id: data?._id, ...values });
 
-          toast.success(`${data?.user?.first_name} your work profile has been updated`);
+          toast.success(`${data?.user?.name} your work profile has been updated`);
           router.back();
         } catch (error: any) {
           toast.error(error?.response?.data.error);

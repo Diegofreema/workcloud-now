@@ -1,4 +1,3 @@
-import { useAuth } from '@clerk/clerk-expo';
 import { convexQuery } from '@convex-dev/react-query';
 import { useQuery } from '@tanstack/react-query';
 import React from 'react';
@@ -14,8 +13,7 @@ import { api } from '~/convex/_generated/api';
 import { useGetUserId } from '~/hooks/useGetUserId';
 
 const PendingStaffs = () => {
-  const { userId: id } = useAuth();
-  const { id: bossId } = useGetUserId(id!);
+  const { id: bossId } = useGetUserId();
   const { data, isPaused, isPending, isError, refetch, isRefetching, isRefetchError } = useQuery(
     convexQuery(api.request.getPendingStaffsWithoutOrganization, { id: bossId! })
   );
@@ -43,7 +41,7 @@ const PendingStaffs = () => {
         renderItem={({ item }) => (
           <UserPreview
             imageUrl={item?.user?.imageUrl!}
-            name={item?.user?.first_name + ' ' + item?.user?.last_name}
+            name={item?.user?.name}
             navigate
             subText={item?.request.pending}
             id={item?.worker?._id}

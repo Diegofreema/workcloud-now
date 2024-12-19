@@ -1,7 +1,5 @@
-import { useAuth } from '@clerk/clerk-expo';
 import { FontAwesome } from '@expo/vector-icons';
 import { Divider } from '@rneui/themed';
-import { useQueryClient } from '@tanstack/react-query';
 import { useRouter } from 'expo-router';
 import React from 'react';
 import { FlatList, Pressable, StyleSheet, View } from 'react-native';
@@ -15,7 +13,6 @@ import { colors } from '~/constants/Colors';
 import { OwnerType } from '~/constants/types';
 import { Id } from '~/convex/_generated/dataModel';
 import { useDarkMode } from '~/hooks/useDarkMode';
-import { useGetUserId } from '~/hooks/useGetUserId';
 import { useSelectRow } from '~/hooks/useSelectRow';
 
 const roles = [
@@ -57,19 +54,17 @@ const roles = [
   'Customers Support',
 ];
 export const SelectRow = ({
-  organizationId,
   profile,
 }: {
   organizationId: Id<'organizations'>;
   profile: OwnerType;
 }) => {
   const { isOpen, onClose } = useSelectRow();
-  const queryClient = useQueryClient();
+
   const router = useRouter();
   const { darkMode } = useDarkMode();
-  const { userId } = useAuth();
-  const { id } = useGetUserId(userId!);
-  const createWorkspace = async (role: string) => {
+
+  const createWorkspace = async () => {
     if (!profile?.workerId) {
       toast.info('Failed to create workspace', {
         description: "Please create a worker's profile first",

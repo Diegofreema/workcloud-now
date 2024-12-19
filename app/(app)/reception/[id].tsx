@@ -42,8 +42,8 @@ export function ErrorBoundary({ retry }: ErrorBoundaryProps) {
 
 const Reception = () => {
   const { id } = useLocalSearchParams<{ id: Id<'organizations'> }>();
-  const { userId } = useAuth();
-  const { id: from } = useGetUserId(userId!);
+
+  const { id: from } = useGetUserId();
   const data = useQuery(api.organisation.getOrganisationsWithPostAndWorkers, { id });
   const {
     data: connection,
@@ -103,7 +103,6 @@ const Reception = () => {
   if (!data || isPending) {
     return <LoadingComponent />;
   }
-  console.log(data);
   const day1 = data?.workDays?.split('-')[0] || '';
   const day2 = data?.workDays?.split('-')[1] || '';
   const finalDay1 = day1.charAt(0).toUpperCase() + day1.slice(1);

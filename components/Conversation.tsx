@@ -1,4 +1,3 @@
-import { useAuth } from '@clerk/clerk-expo';
 import { Avatar } from '@rneui/themed';
 import { useQuery } from 'convex/react';
 import { formatDistanceToNow } from 'date-fns';
@@ -15,7 +14,7 @@ import { colors } from '~/constants/Colors';
 import { ResultType } from '~/constants/types';
 import { api } from '~/convex/_generated/api';
 import { useGetUserId } from '~/hooks/useGetUserId';
-import { trimText } from "~/lib/helper";
+import { trimText } from '~/lib/helper';
 
 type Props = {
   conversation: ResultType;
@@ -43,7 +42,7 @@ export const Conversation = ({ conversation }: Props) => {
           <Avatar rounded size={50} source={{ uri: otherUser?.imageUrl! }} />
           <VStack>
             <MyText poppins="Medium" fontSize={12}>
-              {otherUser?.first_name} {otherUser?.last_name}
+              {otherUser?.name}
             </MyText>
             <HStack alignItems="center" gap={3}>
               {isMine && <CheckCheck size={20} color={colors.buttonBlue} />}

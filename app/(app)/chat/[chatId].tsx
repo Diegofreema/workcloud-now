@@ -49,11 +49,11 @@ const SingleChat = () => {
 
   return (
     <Container noPadding>
-      <ChatHeader name={otherUser?.first_name!} imageUrl={otherUser?.imageUrl!} />
+      <ChatHeader name={otherUser?.name!} imageUrl={otherUser?.imageUrl!} />
       <ChatComponent
         conversationId={conversationData?.conversation?._id!}
         otherUserId={userToChat}
-        otherUserName={conversationData?.otherUser?.first_name!}
+        otherUserName={conversationData?.otherUser?.name!}
         createdAt={conversationData?.conversation?._creationTime!}
         loggedInUserId={loggedInUserId!}
         data={data || []}

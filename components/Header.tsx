@@ -1,4 +1,3 @@
-import { useAuth } from '@clerk/clerk-expo';
 import { EvilIcons } from '@expo/vector-icons';
 import { Text } from '@rneui/themed';
 import { useQuery } from 'convex/react';
@@ -12,8 +11,8 @@ import { useGetUserId } from '~/hooks/useGetUserId';
 
 export const Header = () => {
   const { darkMode } = useDarkMode();
-  const { userId } = useAuth();
-  const { id } = useGetUserId(userId!);
+
+  const { id } = useGetUserId();
   const data = useQuery(api.request.getPendingRequestsWithOrganization, { id: id! });
 
   const router = useRouter();

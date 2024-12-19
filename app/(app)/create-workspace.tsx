@@ -1,4 +1,3 @@
-import { useAuth } from '@clerk/clerk-expo';
 import { FontAwesome } from '@expo/vector-icons';
 import DateTimePicker from '@react-native-community/datetimepicker';
 import { Button } from '@rneui/themed';
@@ -55,8 +54,7 @@ const CreateWorkSpace = () => {
   const [avatar, setAvatar] = useState<string>('https://placehold.co/100x100');
   const [selectedImage, setSelectedImage] = useState<ImagePicker.ImagePickerAsset | null>(null);
 
-  const { userId } = useAuth();
-  const { id } = useGetUserId(userId!);
+  const { id } = useGetUserId();
   const [show, setShow] = useState(false);
   const [show2, setShow2] = useState(false);
   const { darkMode } = useDarkMode();

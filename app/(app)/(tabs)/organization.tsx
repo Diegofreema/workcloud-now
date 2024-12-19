@@ -1,4 +1,3 @@
-import { useUser } from '@clerk/clerk-expo';
 import { convexQuery } from '@convex-dev/react-query';
 import { FontAwesome } from '@expo/vector-icons';
 import { Avatar } from '@rneui/themed';
@@ -24,8 +23,7 @@ import { useDarkMode } from '~/hooks/useDarkMode';
 import { useGetUserId } from '~/hooks/useGetUserId';
 
 const Organization = () => {
-  const { user } = useUser();
-  const { id, worker } = useGetUserId(user?.id!);
+  const { id, worker } = useGetUserId();
   const { data, isPending, isError, refetch } = useQuery(
     convexQuery(api.organisation.getOrganisationsOrNull, { ownerId: id! })
   );
@@ -119,7 +117,7 @@ const Workspace = ({ item }: { item: WorkSpace }) => {
         justifyContent: 'space-between',
       }}>
       <HStack gap={10} alignItems="center">
-        <Avatar rounded source={{ uri: item.organization?.avatar! }}   size={50} />
+        <Avatar rounded source={{ uri: item.organization?.avatar! }} size={50} />
         <VStack>
           <MyText poppins="Bold" style={{ fontSize: 13 }}>
             {item?.role}

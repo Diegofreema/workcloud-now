@@ -105,7 +105,7 @@ const Profile = () => {
         <View style={{ marginTop: 10, marginBottom: 20 }}>
           <UserPreview
             imageUrl={data?.user?.imageUrl!}
-            name={data?.user?.first_name + ' ' + data?.user?.last_name}
+            name={data?.user?.name}
             roleText={data?.worker.role}
             workPlace={data?.organization?.name}
             personal

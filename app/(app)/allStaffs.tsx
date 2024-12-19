@@ -1,4 +1,3 @@
-import { useAuth } from '@clerk/clerk-expo';
 import { convexQuery } from '@convex-dev/react-query';
 import { useQuery } from '@tanstack/react-query';
 import { router } from 'expo-router';
@@ -15,9 +14,7 @@ import { api } from '~/convex/_generated/api';
 import { useGetUserId } from '~/hooks/useGetUserId';
 
 const AllStaffs = () => {
-  const { userId } = useAuth();
-
-  const { id } = useGetUserId(userId!);
+  const { id } = useGetUserId();
   const { data, isPending, isError, isPaused, refetch, isRefetching } = useQuery(
     convexQuery(api.worker.getAllOtherWorkers, { bossId: id! })
   );
@@ -43,8 +40,6 @@ const AllStaffs = () => {
     return <LoadingComponent />;
   }
 
-
-
   return (
     <Container>
       <HeaderNav title="Add staff" />
@@ -57,7 +52,7 @@ const AllStaffs = () => {
           <UserPreviewWithBio
             id={item?.userId}
             imageUrl={item?.user?.imageUrl!}
-            name={`${item?.user?.first_name} ${item?.user?.last_name}`}
+            name={item?.user?.name!}
             bio={item?.experience!}
             skills={item?.skills}
             onPress={() => router.push(`/workerProfile/${item?._id}`)}

@@ -1,4 +1,3 @@
-import { useAuth } from '@clerk/clerk-expo';
 import { AntDesign, EvilIcons, MaterialCommunityIcons, SimpleLineIcons } from '@expo/vector-icons';
 import { useQuery } from 'convex/react';
 import { format } from 'date-fns';
@@ -21,8 +20,7 @@ import { useDarkMode } from '~/hooks/useDarkMode';
 import { useGetUserId } from '~/hooks/useGetUserId';
 
 const Profile = () => {
-  const { userId } = useAuth();
-  const { id } = useGetUserId(userId!);
+  const { id } = useGetUserId();
   const data = useQuery(api.users.getWorkerProfileWithUser, { id: id as Id<'users'> });
   const { darkMode } = useDarkMode();
   console.log({ user: data?.user });
@@ -54,7 +52,7 @@ const Profile = () => {
         <View style={{ marginTop: 10, marginBottom: 20 }}>
           <UserPreview
             imageUrl={data?.user.imageUrl!}
-            name={data?.user?.first_name + ' ' + data?.user?.last_name}
+            name={data?.user?.name}
             roleText={data?.role}
             workPlace={data?.organization?.name!}
             personal

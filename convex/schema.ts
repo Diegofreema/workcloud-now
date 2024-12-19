@@ -5,8 +5,7 @@ export const User = {
   email: v.string(),
   clerkId: v.string(),
   imageUrl: v.optional(v.string()),
-  first_name: v.optional(v.string()),
-  last_name: v.optional(v.string()),
+  name: v.string(),
   pushToken: v.optional(v.string()),
   organizationId: v.optional(v.id('organizations')),
   workerId: v.optional(v.id('workers')),
@@ -125,7 +124,12 @@ export const ServicePoints = {
 };
 
 export default defineSchema({
-  users: defineTable(User).index('by_workerId', ['workerId']).index('clerkId', ['clerkId']),
+  users: defineTable(User)
+    .index('by_workerId', ['workerId'])
+    .index('clerkId', ['clerkId'])
+    .searchIndex('name', {
+      searchField: 'name',
+    }),
   organizations: defineTable(Organization)
     .index('ownerId', ['ownerId'])
     .index('by_search_count', ['searchCount']),

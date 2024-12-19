@@ -1,4 +1,3 @@
-import { useAuth } from '@clerk/clerk-expo';
 import { useQuery } from 'convex/react';
 import { ErrorBoundaryProps, router } from 'expo-router';
 import React from 'react';
@@ -20,9 +19,8 @@ export function ErrorBoundary({ retry }: ErrorBoundaryProps) {
   return <ErrorComponent refetch={retry} />;
 }
 const SelectStaff = () => {
-  const { userId } = useAuth();
   const { onSelect } = useSelect();
-  const { id } = useGetUserId(userId!);
+  const { id } = useGetUserId();
   const staffs = useQuery(api.organisation.getStaffsByBossIdNotHavingServicePoint, { bossId: id! });
 
   if (!staffs) {
@@ -42,7 +40,7 @@ const SelectStaff = () => {
         ItemSeparatorComponent={() => <View style={{ height: 10 }} />}
         data={staffs}
         renderItem={({ item }) => {
-          const fullName = item?.user?.first_name! + ' ' + item?.user?.last_name;
+          const fullName = item?.user?.name!;
           return (
             <UserPreviewWithBio
               id={item?.userId}
