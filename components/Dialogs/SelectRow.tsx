@@ -126,10 +126,10 @@ export const SelectRow = ({
                   ]}
                 />
               )}
-              keyExtractor={(item, index) => index.toString()}
+              keyExtractor={(_, index) => index.toString()}
               renderItem={({ item }) => (
                 <Pressable
-                  onPress={() => createWorkspace(item)}
+                  onPress={() => createWorkspace()}
                   style={({ pressed }) => [{ opacity: pressed ? 0.5 : 1 }]}>
                   <HStack justifyContent="space-between" alignItems="center" p={10}>
                     <MyText fontSize={13} poppins="Medium">

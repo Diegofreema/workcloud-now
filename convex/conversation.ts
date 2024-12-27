@@ -5,7 +5,7 @@ import { mutation, query, QueryCtx } from './_generated/server';
 
 import { Id } from '~/convex/_generated/dataModel';
 import { getImageUrl } from '~/convex/organisation';
-import { getUserByWorker } from '~/convex/users';
+import { getUserByUserId } from '~/convex/users';
 
 export const getConversations = query({
   args: {
@@ -25,7 +25,7 @@ export const getConversations = query({
         .filter((m) => m.participants.includes(args.userId))
         .map(async (c) => {
           const otherUserId = c.participants.find((p) => p !== args.userId);
-          const otherUser = await getUserByWorker(ctx, otherUserId);
+          const otherUser = await getUserByUserId(ctx, otherUserId);
           return {
             id: c._id,
             lastMessage: c.lastMessage,

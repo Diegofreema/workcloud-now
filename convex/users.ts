@@ -1,5 +1,6 @@
 import { v } from 'convex/values';
 
+import { User } from '~/constants/types';
 import { Id } from '~/convex/_generated/dataModel';
 import { internalMutation, mutation, query, QueryCtx } from '~/convex/_generated/server';
 import { getImageUrl } from '~/convex/organisation';
@@ -235,26 +236,22 @@ export const getWorkerProfile = async (ctx: QueryCtx, userId: Id<'users'>) => {
     .filter((q) => q.eq(q.field('userId'), userId))
     .first();
 };
-export const getUserByWorkerIdA = async (ctx: QueryCtx, userId: Id<'users'>) => {
-  const user = await ctx.db.get(userId);
-  if (!user) return null;
-  if (user?.imageUrl && user?.imageUrl.startsWith('http')) return user;
-  const imageUrl = await getImageUrl(ctx, user.imageUrl as Id<'_storage'>);
-  return {
-    ...user,
-    imageUrl,
-  };
-};
-export const getUserByWorker = async (ctx: QueryCtx, userId?: Id<'users'>) => {
+
+export const getUserByUserId = async (ctx: QueryCtx, userId?: Id<'users'>) => {
   if (!userId) return null;
   const user = await ctx.db.get(userId);
   if (!user) return null;
-  if (user?.imageUrl && user?.imageUrl.startsWith('http')) return user;
-  const imageUrl = await getImageUrl(ctx, user.imageUrl as Id<'_storage'>);
-  return {
-    ...user,
-    imageUrl,
-  };
+
+  return await helperToGetUser(ctx, user);
+};
+
+export const getUserByWorkerId = async (ctx: QueryCtx, workerId: Id<'workers'>) => {
+  const user = await ctx.db
+    .query('users')
+    .filter((q) => q.eq(q.field('workerId'), workerId))
+    .first();
+  if (!user) return null;
+  return await helperToGetUser(ctx, user);
 };
 
 export const getOrganisationWithoutImageByWorker = async (
@@ -263,4 +260,13 @@ export const getOrganisationWithoutImageByWorker = async (
 ) => {
   if (!organizationId) return null;
   return await ctx.db.get(organizationId);
+};
+
+const helperToGetUser = async (ctx: QueryCtx, user: User) => {
+  if (user?.imageUrl && user?.imageUrl.startsWith('http')) return user;
+  const imageUrl = await getImageUrl(ctx, user?.imageUrl as Id<'_storage'>);
+  return {
+    ...user,
+    imageUrl,
+  };
 };

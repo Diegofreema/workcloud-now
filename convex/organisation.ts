@@ -3,7 +3,7 @@ import { v } from 'convex/values';
 import { FullOrgsType } from '~/constants/types';
 import { Id } from '~/convex/_generated/dataModel';
 import { mutation, query, QueryCtx } from '~/convex/_generated/server';
-import { getUserByWorker, getUserForWorker } from '~/convex/users';
+import { getUserByUserId, getUserForWorker } from '~/convex/users';
 
 export const getOrganisationsOrNull = query({
   args: {
@@ -214,10 +214,7 @@ export const getStaffsByBossId = query({
     return await Promise.all(
       res.map(async (worker) => {
         const userProfile = await getUserForWorker(ctx, worker.userId);
-        const organization = await getOrganizationByWorkerOrganizationId(
-          ctx,
-          worker.organizationId!
-        );
+        const organization = await getOrganizationByOrganizationId(ctx, worker.organizationId!);
         const workspace = await getWorkspaceByWorkerWorkspaceId(ctx, worker.workspaceId!);
         if (userProfile?.imageUrl?.startsWith('https')) {
           return {
@@ -259,10 +256,7 @@ export const getStaffsByBossIdNotHavingServicePoint = query({
     return await Promise.all(
       res.map(async (worker) => {
         const userProfile = await getUserForWorker(ctx, worker.userId);
-        const organization = await getOrganizationByWorkerOrganizationId(
-          ctx,
-          worker.organizationId!
-        );
+        const organization = await getOrganizationByOrganizationId(ctx, worker.organizationId!);
         const workspace = await getWorkspaceByWorkerWorkspaceId(ctx, worker.workspaceId!);
         if (userProfile?.imageUrl?.startsWith('https')) {
           return {
@@ -401,7 +395,7 @@ export const getImageUrl = async (ctx: QueryCtx, storageId: Id<'_storage'>) => {
   return await ctx.storage.getUrl(storageId);
 };
 
-export const getOrganizationByWorkerOrganizationId = async (
+export const getOrganizationByOrganizationId = async (
   ctx: QueryCtx,
   organizationId: Id<'organizations'>
 ) => {
@@ -477,7 +471,7 @@ export const getWorkspaceWithWorkerAndUserProfile = async (
 
   return await Promise.all(
     workers.map(async (worker) => {
-      const user = await getUserByWorker(ctx, worker?.userId!);
+      const user = await getUserByUserId(ctx, worker?.userId!);
       const workspace = await getWorkspaceByWorkerWorkspaceId(ctx, worker?.workspaceId!);
       return {
         ...worker,

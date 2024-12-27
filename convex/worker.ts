@@ -2,7 +2,7 @@ import { v } from 'convex/values';
 
 import { Id } from '~/convex/_generated/dataModel';
 import { mutation, query } from '~/convex/_generated/server';
-import { getOrganisationWithoutImageByWorker, getUserByWorkerIdA } from '~/convex/users';
+import { getOrganisationWithoutImageByWorker, getUserByUserId } from '~/convex/users';
 
 export const getAllOtherWorkers = query({
   args: {
@@ -18,7 +18,7 @@ export const getAllOtherWorkers = query({
 
     return Promise.all(
       res.map(async (r) => {
-        const user = await getUserByWorkerIdA(ctx, r.userId);
+        const user = await getUserByUserId(ctx, r.userId);
         const organization = await getOrganisationWithoutImageByWorker(
           ctx,
           r.organizationId as Id<'organizations'>
@@ -41,7 +41,7 @@ export const getSingleWorkerProfile = query({
   handler: async (ctx, args) => {
     const worker = await ctx.db.get(args.id);
     if (!worker) return null;
-    const user = await getUserByWorkerIdA(ctx, worker.userId);
+    const user = await getUserByUserId(ctx, worker.userId);
     const organization = await getOrganisationWithoutImageByWorker(
       ctx,
       worker.organizationId as Id<'organizations'>

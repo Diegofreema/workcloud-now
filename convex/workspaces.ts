@@ -2,6 +2,9 @@ import { v } from 'convex/values';
 
 import { Id } from '~/convex/_generated/dataModel';
 import { mutation, query, QueryCtx } from '~/convex/_generated/server';
+import { getOrganizationByOrganizationId } from '~/convex/organisation';
+import { getUserByWorkerId } from '~/convex/users';
+import { getWaitlist } from '~/convex/waitlist';
 
 export const getUserWorkspaceOrNull = query({
   args: { workerId: v.id('workers') },
@@ -53,8 +56,47 @@ export const freeWorkspaces = query({
   },
 });
 
-// mutation
+export const getWorkspaceWithWaitingList = query({
+  args: {
+    workspaceId: v.id('workspaces'),
+  },
+  handler: async (ctx, args) => {
+    const workspace = await ctx.db.get(args.workspaceId);
+    if (!workspace) return;
+    const [organization, worker, waitlist] = await Promise.all([
+      getOrganizationByOrganizationId(ctx, workspace.organizationId),
+      getUserByWorkerId(ctx, workspace?.workerId!),
+      getWaitlist({ ctx, workspaceId: workspace._id }),
+    ]);
 
+    return {
+      organization,
+      worker,
+      waitlist,
+      workspace,
+    };
+  },
+});
+// mutation
+export const toggleWorkspaceStatus = mutation({
+  args: {
+    workspaceId: v.id('workspaces'),
+    type: v.union(v.literal('active'), v.literal('leisure')),
+  },
+  handler: async (ctx, args) => {
+    const workspace = await ctx.db.get(args.workspaceId);
+    if (!workspace) return;
+    if (args.type === 'active') {
+      await ctx.db.patch(workspace._id, {
+        active: !workspace.active,
+      });
+    } else {
+      await ctx.db.patch(workspace._id, {
+        leisure: !workspace.leisure,
+      });
+    }
+  },
+});
 export const createWorkspace = mutation({
   args: {
     ownerId: v.id('users'),

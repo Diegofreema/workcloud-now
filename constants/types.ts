@@ -346,12 +346,12 @@ export type Workspace = {
 };
 
 export type WaitList = {
-  id: number;
-  created_at: number;
-  workspace: number;
-  customer: Profile;
+  customer: User | null;
+  _id: Id<'waitlists'>;
+  _creationTime: number;
+  workspaceId: Id<'workspaces'>;
+  customerId: Id<'users'>;
 };
-
 export type ServicePointType = {
   _id: Id<'servicePoints'>;
   _creationTime: number;

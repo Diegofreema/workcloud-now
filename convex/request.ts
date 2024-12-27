@@ -2,7 +2,7 @@ import { v } from 'convex/values';
 
 import { mutation, query } from '~/convex/_generated/server';
 import { getOrganizationByOwnerId } from '~/convex/organisation';
-import { getUserByWorkerIdA, getWorkerProfile } from '~/convex/users';
+import { getUserByUserId, getWorkerProfile } from '~/convex/users';
 
 export const getPendingRequestsAsBoolean = query({
   args: {
@@ -29,7 +29,7 @@ export const getPendingStaffsWithoutOrganization = query({
 
     return await Promise.all(
       res.map(async (r) => {
-        const user = await getUserByWorkerIdA(ctx, r.to);
+        const user = await getUserByUserId(ctx, r.to);
         const worker = await getWorkerProfile(ctx, r.to);
         return {
           request: r,

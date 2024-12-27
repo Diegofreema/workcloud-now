@@ -1,11 +1,8 @@
-import { useAuth } from '@clerk/clerk-expo';
 import { Avatar, BottomSheet, Icon, Switch } from '@rneui/themed';
-import { useStreamVideoClient } from '@stream-io/video-react-native-sdk';
-import { useQueryClient } from '@tanstack/react-query';
+import { useMutation, useQuery } from 'convex/react';
 import { formatDistanceToNow } from 'date-fns';
-import * as Crypto from 'expo-crypto';
-import { router, useLocalSearchParams } from 'expo-router';
-import React, { useCallback, useEffect, useState } from 'react';
+import { Redirect, router, useLocalSearchParams } from 'expo-router';
+import React, { useCallback, useMemo, useState } from 'react';
 import { FlatList, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { toast } from 'sonner-native';
 
@@ -14,7 +11,6 @@ import { WaitListModal } from '~/components/Dialogs/WaitListModal';
 import { HStack } from '~/components/HStack';
 import { HeaderNav } from '~/components/HeaderNav';
 import { Container } from '~/components/Ui/Container';
-import { ErrorComponent } from '~/components/Ui/ErrorComponent';
 import { LoadingComponent } from '~/components/Ui/LoadingComponent';
 import { MyButton } from '~/components/Ui/MyButton';
 import { MyText } from '~/components/Ui/MyText';
@@ -22,123 +18,72 @@ import { UserPreview } from '~/components/Ui/UserPreview';
 import VStack from '~/components/Ui/VStack';
 import { colors } from '~/constants/Colors';
 import { WaitList } from '~/constants/types';
+import { api } from '~/convex/_generated/api';
+import { Id } from '~/convex/_generated/dataModel';
 import { useDarkMode } from '~/hooks/useDarkMode';
+import { useGetUserId } from '~/hooks/useGetUserId';
 import { useToken } from '~/hooks/useToken';
-import { useGetWaitList, useGetWk } from '~/lib/queries';
 import { supabase } from '~/lib/supabase';
 
 const Work = () => {
-  const { id } = useLocalSearchParams<{ id: string }>();
+  const { id } = useLocalSearchParams<{ id: Id<'workspaces'> }>();
   const [showMenu, setShowMenu] = useState(false);
-  const { userId } = useAuth();
+  const { id: loggedInUser } = useGetUserId();
   const [customerId, setCustomerId] = useState('');
   const [leaving, setLeaving] = useState(false);
-  const [isActive, setIsActive] = useState(false);
-  const [isLeisure, setIsLeisure] = useState(false);
+
   const [isVisible, setIsVisible] = useState(false);
   const [loading, setLoading] = useState(false);
   const { getWorkspaceId } = useToken();
-  const queryClient = useQueryClient();
+
   const { darkMode } = useDarkMode();
-  const client = useStreamVideoClient();
-  const { data, isPaused, isPending, isError, refetch, isRefetchError } = useGetWk(id);
 
-  const {
-    data: waitListData,
-    isPaused: isPausedWaitList,
-    isPending: isPendingWaitList,
-    isError: isErrorWaitList,
-    refetch: refetchWaitList,
-  } = useGetWaitList(id);
-  useEffect(() => {
-    if (data) {
-      setIsActive(data?.wks?.active);
-      setIsLeisure(data?.wks?.leisure);
-    }
-  }, [data]);
-  // ? useEffect to check if the workspace is locked
-  useEffect(() => {
-    if (data?.wks?.locked) {
-      toast.info('Workspace has been locked', {
-        description: 'Please wait for admin to unlock it',
-      });
-      router.replace('/');
-    }
-  }, [data?.wks?.locked]);
+  const data = useQuery(api.workspaces.getWorkspaceWithWaitingList, { workspaceId: id });
+
+  const isLocked = useMemo(() => data?.workspace.locked || false, [data?.workspace.locked]);
+  const isWorker = data?.worker?._id === loggedInUser;
+  const isActive = useMemo(() => {
+    if (!data || !data?.workspace?.active) return false;
+    return data?.workspace?.active;
+  }, [data?.workspace?.active]);
+  const isLeisure = useMemo(() => {
+    if (!data || !data?.workspace?.leisure) return false;
+    return data?.workspace?.leisure;
+  }, [data?.workspace?.active]);
   // ? useEffect to check if the user is in the wait list
-  useEffect(() => {
-    // Skip if user is the worker, data is still loading, or waitlist is undefined
-    if (userId === data?.wks.workerId.userId || isPendingWaitList || !waitListData?.waitList)
-      return;
+  const isInWaitList = useMemo(() => {
+    if (!data) return true;
+    return !!data.waitlist.find((w) => w?.customerId === loggedInUser);
+  }, [data, loggedInUser]);
 
-    // Check if user is in the wait list
-    const isInWaitList = waitListData.waitList.some((item) => item.customer.userId === userId);
-
-    if (!isInWaitList) {
-      toast.info('You have been removed from this lobby', {
-        description: `We hope to see you again`,
-      });
-      router.replace('/');
-    }
-  }, [waitListData?.waitList, userId, data?.wks.workerId.userId, isPendingWaitList]);
   // ? useEffect to subscribe to the workspace channel
-  useEffect(() => {
-    const channel = supabase
-      .channel('workspace')
-      .on(
-        'postgres_changes',
-        {
-          event: '*',
-          schema: 'public',
-        },
-        (payload) => {
-          if (payload) {
-            queryClient.invalidateQueries({ queryKey: ['wk'] });
-            queryClient.invalidateQueries({ queryKey: ['waitList'] });
-            queryClient.invalidateQueries({
-              queryKey: ['pending_requests'],
-            });
-            queryClient.invalidateQueries({
-              queryKey: ['myStaffs'],
-            });
-          }
-          console.log('Change received!', payload);
-        }
-      )
-      .subscribe();
 
-    return () => {
-      supabase.removeChannel(channel);
-    };
-  }, []);
-
-  const onLongPress = useCallback((customerId: string) => {
-    if (userId !== data?.wks?.workerId?.userId) return;
-    setCustomerId(customerId);
-    setShowMenu(true);
-  }, []);
+  const onLongPress = useCallback(
+    (customerId: string) => {
+      if (!isWorker) return;
+      setCustomerId(customerId);
+      setShowMenu(true);
+    },
+    [isWorker]
+  );
   const onHideWaitList = useCallback(() => {
     setShowMenu(false);
   }, []);
+  if (isLocked) {
+    toast.info('Workspace has been locked', {
+      description: 'Please wait for admin to unlock it',
+    });
+    return <Redirect href="/" />;
+  }
+  if (!isWorker && !isInWaitList) {
+    toast.info('You have been removed from this lobby', {
+      description: `We hope to see you again`,
+    });
+    return <Redirect href="/" />;
+  }
   const onRemove = async () => {
     setLeaving(true);
     try {
-      const { error } = await supabase
-        .from('waitList')
-        .delete()
-        .eq('workspace', data?.wks.id!)
-        .eq('customer', customerId);
-      if (error) {
-        toast.error('Failed to remove from lobby', {
-          description: 'Something went wrong',
-        });
-      }
-      if (!error) {
-        toast.success('Removed from lobby', {
-          description: 'You have successfully removed someone from your lobby',
-        });
-        onHideWaitList();
-      }
     } catch (error) {
       console.log(error);
       toast.error('Failed to remove from lobby', {
@@ -152,20 +97,6 @@ const Work = () => {
   const onLeave = async () => {
     setLeaving(true);
     try {
-      const { error } = await supabase
-        .from('waitList')
-        .delete()
-        .eq('workspace', Number(data?.wks.id!))
-        .eq('customer', userId!); // Use userId instead of customerId
-
-      if (error) {
-        console.log(error.message);
-        toast.error('Failed to leave the lobby', {
-          description: 'Something went wrong',
-        });
-        return; // Exit the function early if there's an error
-      }
-
       // If we reach here, it means the deletion was successful
       toast.success('You have left the lobby', {
         description: 'Hope to see you back soon!',
@@ -182,15 +113,7 @@ const Work = () => {
     }
   };
 
-  const handleRefetch = () => {
-    refetch();
-    refetchWaitList();
-  };
-  if (isError || isRefetchError || isPaused || isPausedWaitList || isErrorWaitList) {
-    return <ErrorComponent refetch={handleRefetch} />;
-  }
-
-  if (isPending || isPendingWaitList) {
+  if (!data) {
     return <LoadingComponent />;
   }
   const showModal = () => {
@@ -254,36 +177,21 @@ const Work = () => {
       setLoading(false);
     }
   };
+  const { workspace, waitlist, organization, worker } = data;
   const toggleSignIn = async () => {
     setLoading(true);
-    if (wks.signedIn) {
-      onSignOff();
+    if (workspace?.signedIn) {
+      await onSignOff();
     } else {
-      onSignIn();
+      await onSignIn();
     }
   };
   const onClose = () => {
     setIsVisible(false);
   };
-  const { wks } = data;
-
-  const { waitList } = waitListData;
 
   const onAddToCall = async (item: WaitList) => {
-    getWorkspaceId(item?.id);
-
-    if (userId === wks?.workerId?.userId) {
-      const call = client?.call('default', Crypto.randomUUID());
-      await call?.getOrCreate({
-        ring: true,
-        data: {
-          members: [
-            { user_id: wks?.workerId?.userId, role: 'admin' },
-            { user_id: item?.customer.userId },
-          ],
-        },
-      });
-    }
+    getWorkspaceId(item?.customerId);
   };
 
   return (
@@ -301,18 +209,18 @@ const Work = () => {
           showsVerticalScrollIndicator={false}
           contentContainerStyle={{ flexGrow: 1 }}
           style={styles.container}>
-          <HeaderNav title="Workspace" subTitle={`${wks.organizationId.name} lobby`} />
+          <HeaderNav title="Workspace" subTitle={`${organization?.name} lobby`} />
           <View style={{ marginTop: 20 }} />
           <UserPreview
-            name={wks.workerId.name}
-            imageUrl={wks.workerId.avatar}
-            subText={wks.role}
+            name={worker?.name}
+            imageUrl={worker?.imageUrl!}
+            subText={workspace?.role}
             workspace
-            active={wks.active}
+            active={workspace?.active}
           />
-          {userId === wks?.workerId?.userId && (
+          {isWorker && (
             <Buttons
-              signedIn={wks.signedIn}
+              signedIn={workspace?.signedIn}
               onShowModal={showModal}
               onProcessors={onProcessors}
               onSignOff={toggleSignIn}
@@ -336,7 +244,7 @@ const Work = () => {
                     color: darkMode === 'dark' ? 'white' : 'black',
                     fontFamily: 'PoppinsBold',
                   }}>
-                  {userId === wks?.workerId?.userId ? 'Waiting in your lobby' : 'Waiting in lobby'}
+                  {isWorker ? 'Waiting in your lobby' : 'Waiting in lobby'}
                 </Text>
                 <View style={styles.rounded}>
                   <Text
@@ -345,22 +253,22 @@ const Work = () => {
                       fontFamily: 'PoppinsMedium',
                       fontSize: 12,
                     }}>
-                    {waitList?.length}
+                    {waitlist?.length}
                   </Text>
                 </View>
               </HStack>
             )}
             scrollEnabled={false}
-            data={waitList}
+            data={waitlist}
             renderItem={({ item }) => (
               <Profile
                 item={item}
                 onAddToCall={onAddToCall}
-                onLongPress={() => onLongPress(item.customer.userId)}
+                onLongPress={() => onLongPress(item?._id)}
               />
             )}
           />
-          {userId !== wks?.workerId?.userId && (
+          {!isWorker && (
             <View
               style={{
                 marginBottom: 20,
@@ -469,12 +377,12 @@ const Profile = ({
   return (
     <Pressable style={{ width: '30%' }} onPress={() => onAddToCall(item)} onLongPress={onLongPress}>
       <VStack flex={1} alignItems="center" justifyContent="center">
-        <Avatar rounded size={50} source={{ uri: item?.customer?.avatar }} />
+        <Avatar rounded size={50} source={{ uri: item?.customer?.imageUrl! }} />
         <MyText poppins="Medium" fontSize={13}>
           {item?.customer?.name.split(' ')[0]}
         </MyText>
         <MyText poppins="Light" fontSize={10} style={{ textAlign: 'center' }}>
-          {formatDistanceToNow(item.created_at)}
+          {formatDistanceToNow(item?._creationTime)}
         </MyText>
       </VStack>
     </Pressable>
@@ -492,36 +400,32 @@ const BottomActive = ({
   active: boolean;
   leisure: boolean;
   isVisible: boolean;
-  id: any;
+  id: Id<'workspaces'>;
 }) => {
   const { darkMode } = useDarkMode();
-
+  const toggleActiveStatus = useMutation(api.workspaces.toggleWorkspaceStatus);
   const toggleActive = async () => {
-    const { error } = await supabase.from('workspace').update({ active: !active }).eq('id', id);
-    if (error) {
-      toast.error('Failed to update active status', {
-        description: 'Something went wrong',
-      });
-    }
-
-    if (!error) {
+    try {
+      await toggleActiveStatus({ workspaceId: id, type: 'active' });
       toast.success('Active status updated', {
         description: 'Your active status has been updated',
+      });
+    } catch {
+      toast.error('Failed to update active status', {
+        description: 'Something went wrong',
       });
     }
   };
 
   const toggleLeisure = async () => {
-    const { error } = await supabase.from('workspace').update({ leisure: !leisure }).eq('id', id);
-    if (error) {
-      toast.error('Failed to update leisure status', {
-        description: 'Something went wrong',
-      });
-    }
-
-    if (!error) {
+    try {
+      await toggleActiveStatus({ workspaceId: id, type: 'leisure' });
       toast.success('Leisure status updated', {
         description: 'Your leisure status has been updated',
+      });
+    } catch {
+      toast.error('Failed to update leisure status', {
+        description: 'Something went wrong',
       });
     }
   };
@@ -565,7 +469,7 @@ const BottomActive = ({
 
       <VStack gap={10} mx={10} mt={20}>
         <HStack alignItems="center" gap={5}>
-          <VStack>
+          <VStack style={{ flex: 1 }}>
             <Text style={[styles.header, { color: darkMode === 'dark' ? 'white' : 'black' }]}>
               Active
             </Text>
@@ -573,10 +477,12 @@ const BottomActive = ({
               This shows if you are active or not active
             </Text>
           </VStack>
-          <Switch value={active} onValueChange={toggleActive} />
+          <VStack style={{ alignSelf: 'flex-end' }}>
+            <Switch value={active} onValueChange={toggleActive} />
+          </VStack>
         </HStack>
         <HStack alignItems="center" gap={10}>
-          <VStack>
+          <VStack flex={1}>
             <Text style={[styles.header, { color: darkMode === 'dark' ? 'white' : 'black' }]}>
               Leisure
             </Text>
