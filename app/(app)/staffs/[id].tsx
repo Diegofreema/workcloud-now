@@ -66,9 +66,9 @@ const Staffs = () => {
     isPending: isPendingWorkspace,
     isError: isErrorWorkspaces,
     refetch: refetchWorkspaces,
-  } = useQuery(convexQuery(api.workspaces.freeWorkspaces, { ownerId: id }));
+  } = useQuery(convexQuery(api.workspace.freeWorkspaces, { ownerId: id }));
   const { darkMode } = useDarkMode();
-  const addToWorkspace = useMutation(api.workspaces.addStaffToWorkspace);
+  const addToWorkspace = useMutation(api.workspace.addStaffToWorkspace);
   const workers = useMemo(() => {
     if (!data) return [];
     if (role === 'All') {

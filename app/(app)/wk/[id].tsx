@@ -38,7 +38,7 @@ const Work = () => {
 
   const { darkMode } = useDarkMode();
 
-  const data = useQuery(api.workspaces.getWorkspaceWithWaitingList, { workspaceId: id });
+  const data = useQuery(api.workspace.getWorkspaceWithWaitingList, { workspaceId: id });
 
   const isLocked = useMemo(() => data?.workspace.locked || false, [data?.workspace.locked]);
   const isWorker = data?.worker?._id === loggedInUser;
@@ -403,7 +403,7 @@ const BottomActive = ({
   id: Id<'workspaces'>;
 }) => {
   const { darkMode } = useDarkMode();
-  const toggleActiveStatus = useMutation(api.workspaces.toggleWorkspaceStatus);
+  const toggleActiveStatus = useMutation(api.workspace.toggleWorkspaceStatus);
   const toggleActive = async () => {
     try {
       await toggleActiveStatus({ workspaceId: id, type: 'active' });

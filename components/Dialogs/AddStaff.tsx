@@ -93,7 +93,7 @@ type Props = {
 
 export const Menu = ({ isVisible, setIsVisible, array, onBottomOpen }: Props) => {
   const { onOpen } = useRemoveUser();
-  const toggleWorkspace = useMutation(api.workspaces.toggleWorkspace);
+  const toggleWorkspace = useMutation(api.workspace.toggleWorkspace);
   const router = useRouter();
   const { item } = useHandleStaff();
   const { darkMode } = useDarkMode();
@@ -111,7 +111,7 @@ export const Menu = ({ isVisible, setIsVisible, array, onBottomOpen }: Props) =>
   };
 
   const onSendMessage = async () => {
-    router.push(`/chat/${item?.user._id}`)
+    router.push(`/chat/${item?.user._id}`);
     onClose();
   };
 

@@ -23,8 +23,8 @@ const Role = () => {
   const [value, setValue] = useState('');
 
   const { organizationId, id, worker } = useGetUserId();
-  const { data, isPending, isError, refetch } = useQuery(convexQuery(api.workspaces.getRoles, {}));
-  const createWorkspace = useMutation(api.workspaces.createWorkspace);
+  const { data, isPending, isError, refetch } = useQuery(convexQuery(api.workspace.getRoles, {}));
+  const createWorkspace = useMutation(api.workspace.createWorkspace);
 
   const filteredData = useMemo(() => {
     if (value.trim() === '') return data;

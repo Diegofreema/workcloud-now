@@ -20,7 +20,7 @@ export const RemoveUser = () => {
 
   const [deleting, setDeleting] = useState(false);
   const { item } = useHandleStaff();
-  const onRemoveUser = useMutation(api.workspaces.removeFromWorkspace);
+  const onRemoveUser = useMutation(api.workspace.removeFromWorkspace);
   const removeUser = async () => {
     setDeleting(true);
     try {

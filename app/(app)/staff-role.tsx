@@ -1,4 +1,3 @@
-import { useAuth } from '@clerk/clerk-expo';
 import { convexQuery } from '@convex-dev/react-query';
 import { Input } from '@rneui/themed';
 import { useQuery } from '@tanstack/react-query';
@@ -19,7 +18,7 @@ import { useStaffRole } from '~/hooks/useStaffRole';
 const StaffRoles = () => {
   const [value, setValue] = useState('');
   const setRole = useStaffRole((state) => state.setRole);
-  const { data, isPending, isError, refetch } = useQuery(convexQuery(api.workspaces.getRoles, {}));
+  const { data, isPending, isError, refetch } = useQuery(convexQuery(api.workspace.getRoles, {}));
 
   const filteredData = useMemo(() => {
     if (value.trim() === '') return data;

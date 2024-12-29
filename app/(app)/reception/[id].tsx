@@ -209,7 +209,7 @@ const RepresentativeItem = ({ item }: { item: WorkerWithWorkspace }) => {
   const router = useRouter();
   const { userId: id } = useAuth();
   const { id: customerId } = useGetUserId();
-  // const handleWaitlist = useMutation(api.waitlist.handleWaitlist);
+  const handleWaitlist = useMutation(api.workspace.handleWaitlist);
   const { workspace, user } = item;
   const handlePress = async () => {
     if (id === item.user?.clerkId) return;
@@ -221,10 +221,11 @@ const RepresentativeItem = ({ item }: { item: WorkerWithWorkspace }) => {
     }
 
     try {
-      // await handleWaitlist({ customerId: customerId!, workspaceId: workspace._id, joinedAt: now });
+      await handleWaitlist({ customerId: customerId!, workspaceId: workspace._id, joinedAt: now });
       toast.success('Welcome', {
         description: 'Please be in a quite environment',
       });
+      router.push(`/wk/${item?.workspace?._id}`);
     } catch (error) {
       console.log(error);
       toast.error('An Error occurred', {

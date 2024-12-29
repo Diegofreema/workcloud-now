@@ -33,7 +33,7 @@ const Organization = () => {
     isPending: isPendingWorkspace,
     isError: isErrorWorkspace,
     refetch: refetchWorkspace,
-  } = useQuery(convexQuery(api.workspaces.getUserWorkspaceOrNull, { workerId: worker! }));
+  } = useQuery(convexQuery(api.workspace.getUserWorkspaceOrNull, { workerId: worker! }));
 
   const handleRefetch = () => {
     refetch();

@@ -77,6 +77,33 @@ export const getWorkspaceWithWaitingList = query({
   },
 });
 // mutation
+
+export const handleWaitlist = mutation({
+  args: {
+    customerId: v.id('users'),
+    workspaceId: v.id('workspaces'),
+    joinedAt: v.string(),
+  },
+  handler: async (ctx, { customerId, workspaceId, joinedAt }) => {
+    const isInWaitlist = await ctx.db
+      .query('waitlists')
+      .withIndex('by_customer_id_workspace_id', (q) =>
+        q.eq('workspaceId', workspaceId).eq('customerId', customerId)
+      )
+      .first();
+    if (isInWaitlist) {
+      await ctx.db.patch(isInWaitlist._id, {
+        joinedAt,
+      });
+    } else {
+      await ctx.db.insert('waitlists', {
+        customerId,
+        workspaceId,
+        joinedAt,
+      });
+    }
+  },
+});
 export const toggleWorkspaceStatus = mutation({
   args: {
     workspaceId: v.id('workspaces'),

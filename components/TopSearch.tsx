@@ -1,14 +1,14 @@
 /* eslint-disable prettier/prettier */
 
-import { Avatar } from "@rneui/themed";
-import { useMutation } from "convex/react";
-import { router } from "expo-router";
-import { FlatList, Pressable, View } from "react-native";
+import { Avatar } from '@rneui/themed';
+import { useMutation } from 'convex/react';
+import { router } from 'expo-router';
+import { FlatList, Pressable, View } from 'react-native';
 
-import { MyText } from "./Ui/MyText";
+import { MyText } from './Ui/MyText';
 
-import { SearchType } from "~/constants/types";
-import { api } from "~/convex/_generated/api";
+import { SearchType } from '~/constants/types';
+import { api } from '~/convex/_generated/api';
 
 type Props = {
   data: SearchType[];
