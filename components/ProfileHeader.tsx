@@ -22,7 +22,13 @@ export const ProfileHeader = (user: PartUser): JSX.Element | undefined => {
           alignItems: 'center',
           gap: 10,
         }}>
-        <Image style={styles.image} source={user?.avatar} contentFit="cover" />
+        <Image
+          style={styles.image}
+          source={user?.avatar}
+          contentFit="cover"
+          placeholder={require('~/assets/images/boy.png')}
+          placeholderContentFit="cover"
+        />
         <View>
           <MyText
             poppins="Bold"

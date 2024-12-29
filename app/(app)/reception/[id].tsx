@@ -1,15 +1,12 @@
 import { useAuth } from '@clerk/clerk-expo';
-import { convexQuery } from '@convex-dev/react-query';
 import { FontAwesome6 } from '@expo/vector-icons';
 import { Avatar } from '@rneui/themed';
-import { useQuery as useQueryTanstack, useQueryClient } from '@tanstack/react-query';
 import { useMutation, useQuery } from 'convex/react';
-import { format } from 'date-fns';
+import { Image } from 'expo-image';
 import { ErrorBoundaryProps, router, useLocalSearchParams, useRouter } from 'expo-router';
-import React, { useEffect } from 'react';
+import React, { useEffect, useMemo } from 'react';
 import {
   FlatList,
-  Image,
   Pressable,
   ScrollView,
   StyleSheet,
@@ -34,7 +31,7 @@ import { api } from '~/convex/_generated/api';
 import { Id } from '~/convex/_generated/dataModel';
 import { useDarkMode } from '~/hooks/useDarkMode';
 import { useGetUserId } from '~/hooks/useGetUserId';
-import { supabase } from '~/lib/supabase';
+import { now } from '~/lib/helper';
 
 export function ErrorBoundary({ retry }: ErrorBoundaryProps) {
   return <ErrorComponent refetch={retry} />;
@@ -45,62 +42,39 @@ const Reception = () => {
 
   const { id: from } = useGetUserId();
   const data = useQuery(api.organisation.getOrganisationsWithPostAndWorkers, { id });
-  const {
-    data: connection,
-    isPending,
-    isError,
-    refetch,
-  } = useQueryTanstack(convexQuery(api.connection.getConnection, { to: id, from: from! }));
-  const createConnection = useMutation(api.connection.createConnection);
-  const updateConnection = useMutation(api.connection.updateConnection);
-  const { width } = useWindowDimensions();
 
+  const handleConnection = useMutation(api.connection.handleConnection);
+
+  const { width } = useWindowDimensions();
+  const isWorker = useMemo(() => {
+    if (!data) return false;
+    const index = data.workers.findIndex((w) => w?.user?._id === from);
+    return index > -1;
+  }, [data, from]);
+  const isBoss = useMemo(() => {
+    if (!data) return true;
+    return data?.ownerId === from;
+  }, [data, from]);
   // ? useEffect for creating connections
   useEffect(() => {
-    if (!id || !data?.workers || !from) return;
-
-    const now = format(new Date(), 'dd/MM/yyyy, HH:mm:ss');
-    const isWorker = data.workers.find((w) => w?.user?._id === from);
-    const isBoss = data?.ownerId === from;
+    if (!id || !from || isBoss || isWorker) return;
 
     const onConnect = async () => {
       try {
-        if (connection) {
-          // If connection exists, update the existing connection
-          await updateConnection({
-            id: connection?._id,
-            time: now,
-          });
-        } else if (!isPending) {
-          // If no connection and not pending, create a new connection
-          await createConnection({
-            connectedAt: now,
-            from,
-            to: id,
-          });
-        }
+        await handleConnection({
+          connectedAt: now,
+          from,
+          to: id,
+        });
       } catch (e) {
         console.error('Connection error:', e);
       }
     };
 
-    if (!isBoss || !isWorker) onConnect().catch(console.log);
-  }, [
-    id,
-    data?.workers,
-    data?.ownerId,
-    connection,
-    isPending,
-    from,
-    updateConnection,
-    createConnection,
-  ]);
+    onConnect().catch(console.log);
+  }, [id, isBoss, isWorker, from, handleConnection]);
 
-  if (isError) {
-    return <ErrorComponent refetch={refetch} />;
-  }
-
-  if (!data || isPending) {
+  if (!data) {
     return <LoadingComponent />;
   }
   const day1 = data?.workDays?.split('-')[0] || '';
@@ -171,7 +145,13 @@ const Reception = () => {
                     borderRadius: 5,
                     overflow: 'hidden',
                   }}>
-                  <Image src={item!} style={styles.image} resizeMode="cover" />
+                  <Image
+                    source={{ uri: item! }}
+                    style={styles.image}
+                    contentFit="cover"
+                    placeholder={require('~/assets/images/pl.png')}
+                    placeholderContentFit="cover"
+                  />
                 </View>
               )}
               vertical={false}
@@ -228,75 +208,33 @@ const Representatives = ({ data }: { data: WorkerWithWorkspace[] }) => {
 const RepresentativeItem = ({ item }: { item: WorkerWithWorkspace }) => {
   const router = useRouter();
   const { userId: id } = useAuth();
-
-  const queryClient = useQueryClient();
+  const { id: customerId } = useGetUserId();
+  // const handleWaitlist = useMutation(api.waitlist.handleWaitlist);
+  const { workspace, user } = item;
   const handlePress = async () => {
     if (id === item.user?.clerkId) return;
-    if (!item?.workspace?.active) {
-      toast.error('This workspace is currently inactive', {
+    if (!workspace?.active || workspace?.leisure) {
+      toast.info('This workspace is currently inactive', {
         description: 'Please try joining another workspace',
       });
       return;
     }
-    const { data, error: err } = await supabase
-      .from('waitList')
-      .select()
-      // @ts-ignore
-      .eq('workspace', item?.workspaceId?.id);
 
-    if (!err) {
-      const customerInWaitList = data?.find((c) => c.customer === id);
-      if (customerInWaitList) {
-        await supabase.from('waitList').delete().eq('id', customerInWaitList?.id);
-        const { error: er } = await supabase.from('waitList').insert({
-          // @ts-ignore
-          workspace: item?.workspace?._id,
-          customer: id,
-        });
-        if (er) {
-          console.log(er);
-          toast.error('Something went wrong', {
-            description: 'Please try joining again',
-          });
-        }
-
-        if (!er) {
-          toast.success('Welcome back to our workspace', {
-            description: 'Please be in a quiet place',
-          });
-          queryClient.invalidateQueries({ queryKey: ['waitList'] });
-          router.replace(`/wk/${item?.workspace?._id}`);
-        }
-      } else {
-        const { error } = await supabase.from('waitList').insert({
-          // @ts-ignore
-          workspace: item?.workspace?._id,
-          customer: id,
-        });
-
-        if (error) {
-          console.log(error);
-
-          toast.error('Something went wrong', {
-            description: 'Please try joining again',
-          });
-        }
-
-        if (!error) {
-          toast.success('Welcome to our workspace', {
-            description: 'Please be in a quiet place',
-          });
-          queryClient.invalidateQueries({ queryKey: ['waitList'] });
-
-          router.replace(`/wk/${item?.workspace?._id}`);
-        }
-      }
+    try {
+      // await handleWaitlist({ customerId: customerId!, workspaceId: workspace._id, joinedAt: now });
+      toast.success('Welcome', {
+        description: 'Please be in a quite environment',
+      });
+    } catch (error) {
+      console.log(error);
+      toast.error('An Error occurred', {
+        description: 'Failed to join workspace, please try again later',
+      });
     }
   };
 
-  const onPress = async () => {
-    // @ts-ignore
-    router.push(`/chat/${channel.id}?workerId=${item?.userId?.userId}`);
+  const onMessage = async () => {
+    router.push(`/chat/${user?._id}`);
   };
 
   return (
@@ -347,7 +285,7 @@ const RepresentativeItem = ({ item }: { item: WorkerWithWorkspace }) => {
 
             {item?.user?.clerkId !== id && (
               <Pressable
-                onPress={onPress}
+                onPress={onMessage}
                 style={{
                   backgroundColor: '#C0D1FE',
                   padding: 7,

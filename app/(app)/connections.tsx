@@ -16,7 +16,7 @@ const Connections = () => {
   const { darkMode } = useDarkMode();
 
   const { id } = useGetUserId();
-  const connections = useQuery(api.users.getUserConnections, { ownerId: id });
+  const connections = useQuery(api.connection.getUserConnections, { ownerId: id });
 
   if (!connections) {
     return <LoadingComponent />;

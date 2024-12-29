@@ -1,7 +1,6 @@
 import { ActivityIndicator, View } from 'react-native';
 
-import { defaultStyle } from '../../constants/index';
-
+import { defaultStyle } from '~/constants';
 import { useDarkMode } from '~/hooks/useDarkMode';
 
 export const LoadingComponent = (): JSX.Element => {

@@ -1,5 +1,5 @@
 import { Avatar } from '@rneui/themed';
-import { formatDistanceToNow, isBefore, parse } from 'date-fns';
+import { isBefore, parse } from 'date-fns';
 import { useRouter } from 'expo-router';
 import { Pressable, StyleSheet, View } from 'react-native';
 
@@ -9,6 +9,7 @@ import VStack from './Ui/VStack';
 
 import { colors } from '~/constants/Colors';
 import { Connection } from '~/constants/types';
+import { formatDateToNowHelper } from '~/lib/helper';
 
 export const Item = (item: Connection & { isLastItemOnList?: boolean }) => {
   const router = useRouter();
@@ -75,7 +76,7 @@ export const Item = (item: Connection & { isLastItemOnList?: boolean }) => {
             Time
           </MyText>
           <MyText poppins="Light" fontSize={9}>
-            {formatDistanceToNow(parsedDate)} ago
+            {formatDateToNowHelper(parsedDate)} ago
           </MyText>
         </VStack>
       </HStack>

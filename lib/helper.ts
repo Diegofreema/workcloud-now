@@ -6,7 +6,7 @@ import { toast } from 'sonner-native';
 import { supabase } from './supabase';
 import { ChatDateGroup, DataType, Org } from '../constants/types';
 import { ImagePickerAsset } from 'expo-image-picker';
-import { parse } from 'date-fns';
+import { format, formatDistanceToNow, parse } from 'date-fns';
 import { Id } from '~/convex/_generated/dataModel';
 
 const queryClient = new QueryClient();
@@ -354,3 +354,21 @@ export function transformChatData(
       data: group.data.sort((a, b) => a._creationTime - b._creationTime),
     }));
 }
+
+export const formatDateToNowHelper = (date: Date): string => {
+  const formattedDistance = formatDistanceToNow(date);
+
+  const replacements: Record<string, string> = {
+    'less than a minute': '1 min',
+    '1 minute': '1 min',
+    minutes: 'mins',
+    '1 hour': '1 hr',
+    hours: 'hrs',
+  };
+
+  return Object.entries(replacements).reduce(
+    (result, [search, replace]) => result.replace(search, replace),
+    formattedDistance
+  );
+};
+export const now = format(new Date(), 'dd/MM/yyyy, HH:mm:ss');

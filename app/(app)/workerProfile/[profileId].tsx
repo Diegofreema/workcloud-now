@@ -71,7 +71,7 @@ const Profile = () => {
 
   const isInPending = !!pendingData;
 
-  const startChannel = async () => {
+  const onMessage = async () => {
     router.push(`/chat/${data?.user?._id!}`);
   };
 
@@ -129,7 +129,7 @@ const Profile = () => {
           )}
 
           <Button
-            onPress={startChannel}
+            onPress={onMessage}
             loading={cancelling}
             titleStyle={{
               fontFamily: 'PoppinsMedium',

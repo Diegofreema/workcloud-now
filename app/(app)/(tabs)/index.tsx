@@ -24,7 +24,7 @@ export function ErrorBoundary({ retry }: ErrorBoundaryProps) {
 export default function TabOneScreen() {
   const { userId } = useAuth();
   const data = useQuery(api.users.getUserByClerkId, { clerkId: userId! });
-  const connections = useQuery(api.users.getUserConnections, { ownerId: data?._id });
+  const connections = useQuery(api.connection.getUserConnections, { ownerId: data?._id });
   const loaded = !!SecureStore.getItem('loaded');
 
   useEffect(() => {

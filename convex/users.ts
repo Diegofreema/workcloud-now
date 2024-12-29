@@ -77,34 +77,7 @@ export const getUserById = query({
   },
 });
 
-export const getUserConnections = query({
-  args: {
-    ownerId: v.optional(v.id('users')),
-  },
-  handler: async (ctx, args) => {
-    const connections = await ctx.db
-      .query('connections')
-      .filter((q) => q.eq(q.field('ownerId'), args.ownerId))
-      .order('desc')
-      .collect();
-    return await Promise.all(
-      connections.map(async (connection) => {
-        const organisation = await getOrganisations(ctx, connection.connectedTo);
-        const avatar = await getImageUrl(ctx, organisation?.avatar as Id<'_storage'>);
-        return {
-          connectedAt: connection.connectedAt,
-          id: connection._id,
-          organisation: {
-            ...organisation,
-            avatar,
-          },
-        };
-      })
-    );
-  },
-});
-
-const getOrganisations = async (ctx: QueryCtx, organizationId: Id<'organizations'>) => {
+export const getOrganisations = async (ctx: QueryCtx, organizationId: Id<'organizations'>) => {
   if (!organizationId) return null;
   return await ctx.db.get(organizationId);
 };

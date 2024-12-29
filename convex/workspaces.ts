@@ -3,8 +3,7 @@ import { v } from 'convex/values';
 import { Id } from '~/convex/_generated/dataModel';
 import { mutation, query, QueryCtx } from '~/convex/_generated/server';
 import { getOrganizationByOrganizationId } from '~/convex/organisation';
-import { getUserByWorkerId } from '~/convex/users';
-import { getWaitlist } from '~/convex/waitlist';
+import { getUserByUserId, getUserByWorkerId } from '~/convex/users';
 
 export const getUserWorkspaceOrNull = query({
   args: { workerId: v.id('workers') },
@@ -183,3 +182,25 @@ export const toggleWorkspace = mutation({
 //   workspaceId: Id<'workspaces'>,
 //   workerId: Id<'users'>
 // ) => {};
+
+export const getWaitlist = async ({
+  ctx,
+  workspaceId,
+}: {
+  ctx: QueryCtx;
+  workspaceId: Id<'workspaces'>;
+}) => {
+  const waitlists = await ctx.db
+    .query('waitlists')
+    .filter((q) => q.eq(q.field('workspaceId'), workspaceId))
+    .collect();
+  if (!waitlists) return [];
+  const usersInWaitlist = waitlists.map(async (waitlist) => {
+    const customer = await getUserByUserId(ctx, waitlist.customerId);
+    return {
+      ...waitlist,
+      customer,
+    };
+  });
+  return await Promise.all(usersInWaitlist);
+};

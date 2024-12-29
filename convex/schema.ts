@@ -91,6 +91,7 @@ export const Connection = {
 export const WaitList = {
   customerId: v.id('users'),
   workspaceId: v.id('workspaces'),
+  joinedAt: v.string(),
 };
 
 export const Conversation = {
@@ -137,8 +138,13 @@ export default defineSchema({
   workspaces: defineTable(Workspace)
     .index('workspace', ['organizationId', 'ownerId'])
     .index('personal', ['organizationId', 'personal']),
-  connections: defineTable(Connection).index('by_ownerId_orgId', ['ownerId', 'connectedTo']),
-  waitlists: defineTable(WaitList),
+  connections: defineTable(Connection)
+    .index('by_ownerId_orgId', ['ownerId', 'connectedTo'])
+    .index('by_createdAt', ['connectedAt']),
+  waitlists: defineTable(WaitList).index('by_customer_id_workspace_id', [
+    'workspaceId',
+    'customerId',
+  ]),
   servicePoints: defineTable(ServicePoints)
     .searchIndex('description', {
       searchField: 'description',

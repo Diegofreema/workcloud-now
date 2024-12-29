@@ -1,5 +1,5 @@
 import { MessageSquarePlus } from 'lucide-react-native';
-import { useWindowDimensions, View } from 'react-native';
+import { Platform, useWindowDimensions, View } from 'react-native';
 import { RFPercentage } from 'react-native-responsive-fontsize';
 
 import { MyText } from '~/components/Ui/MyText';
@@ -24,11 +24,18 @@ export const EmptyChat = () => {
           backgroundColor: color,
           padding: 20,
           borderRadius: 100,
+          transform: [{ rotateY: Platform.OS === 'android' ? '180deg' : '0deg' }],
         }}>
         <MessageSquarePlus size={100} color={colorIcon} />
       </View>
 
-      <MyText poppins="Bold" fontSize={RFPercentage(2)} style={{ marginTop: 20 }}>
+      <MyText
+        poppins="Bold"
+        fontSize={RFPercentage(2)}
+        style={{
+          marginTop: 20,
+          transform: [{ rotateY: Platform.OS === 'android' ? '180deg' : '0deg' }],
+        }}>
         Conversation is empty, send a text!
       </MyText>
     </View>

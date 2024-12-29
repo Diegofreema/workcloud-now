@@ -26,7 +26,7 @@ const ProfileEdit = () => {
   const { signOut } = useAuth();
   const { id } = useLocalSearchParams<{ id: string }>();
   const user = useQuery(api.users.getUserById, { id: id as Id<'users'> });
-  const connections = useQuery(api.users.getUserConnections, { ownerId: id as Id<'users'> });
+  const connections = useQuery(api.connection.getUserConnections, { ownerId: id as Id<'users'> });
   const { darkMode } = useDarkMode();
 
   if (!user || !connections) {
