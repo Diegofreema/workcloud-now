@@ -1,9 +1,10 @@
 import { useAuth } from '@clerk/clerk-expo';
 import { useQuery } from 'convex/react';
-import { ErrorBoundaryProps } from 'expo-router';
+import { ErrorBoundaryProps, useLocalSearchParams } from 'expo-router';
 import * as SecureStore from 'expo-secure-store';
 import React, { useEffect } from 'react';
 import { FlatList, View } from 'react-native';
+import { toast } from 'sonner-native';
 
 import { EmptyText } from '~/components/EmptyText';
 import { Header } from '~/components/Header';
@@ -23,6 +24,7 @@ export function ErrorBoundary({ retry }: ErrorBoundaryProps) {
 
 export default function TabOneScreen() {
   const { userId } = useAuth();
+  const { removed } = useLocalSearchParams<{ removed: string }>();
   const data = useQuery(api.users.getUserByClerkId, { clerkId: userId! });
   const connections = useQuery(api.connection.getUserConnections, { ownerId: data?._id });
   const loaded = !!SecureStore.getItem('loaded');
@@ -35,6 +37,13 @@ export default function TabOneScreen() {
       onOpen();
     }
   }, [data?.organizationId, data?.organizationId, loaded]);
+  useEffect(() => {
+    if (removed) {
+      toast.info('You have been removed from this lobby', {
+        description: `We hope to see you again`,
+      });
+    }
+  }, [removed, toast]);
 
   SecureStore.setItem('loaded', '1');
   const { onOpen } = useOrganizationModal();

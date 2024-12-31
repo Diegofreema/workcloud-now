@@ -345,12 +345,20 @@ export type Workspace = {
   signedIn: boolean;
 };
 
+export type WorkspaceButtonProps = {
+  onShowModal: () => void;
+  onProcessors: () => void;
+  onSignOff: () => void;
+  loading: boolean;
+  signedIn: boolean;
+};
 export type WaitList = {
   customer: User | null;
   _id: Id<'waitlists'>;
   _creationTime: number;
   workspaceId: Id<'workspaces'>;
   customerId: Id<'users'>;
+  joinedAt: string;
 };
 export type ServicePointType = {
   _id: Id<'servicePoints'>;

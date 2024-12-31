@@ -2,6 +2,7 @@ import { useAuth } from '@clerk/clerk-expo';
 import { FontAwesome6 } from '@expo/vector-icons';
 import { Avatar } from '@rneui/themed';
 import { useMutation, useQuery } from 'convex/react';
+import { format } from 'date-fns';
 import { Image } from 'expo-image';
 import { ErrorBoundaryProps, router, useLocalSearchParams, useRouter } from 'expo-router';
 import React, { useEffect, useMemo } from 'react';
@@ -62,7 +63,7 @@ const Reception = () => {
     const onConnect = async () => {
       try {
         await handleConnection({
-          connectedAt: now,
+          connectedAt: format(Date.now(), 'dd/MM/yyyy, HH:mm:ss'),
           from,
           to: id,
         });
@@ -221,7 +222,12 @@ const RepresentativeItem = ({ item }: { item: WorkerWithWorkspace }) => {
     }
 
     try {
-      await handleWaitlist({ customerId: customerId!, workspaceId: workspace._id, joinedAt: now });
+      console.log(now);
+      await handleWaitlist({
+        customerId: customerId!,
+        workspaceId: workspace._id,
+        joinedAt: format(Date.now(), 'dd/MM/yyyy, HH:mm:ss'),
+      });
       toast.success('Welcome', {
         description: 'Please be in a quite environment',
       });

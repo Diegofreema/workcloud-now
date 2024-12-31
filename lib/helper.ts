@@ -1,12 +1,12 @@
 import { QueryClient } from '@tanstack/react-query';
 import axios from 'axios';
-import { router } from 'expo-router';
+import { format, formatDistanceToNow, isWithinInterval, parse } from 'date-fns';
+import { ImagePickerAsset } from 'expo-image-picker';
 import { toast } from 'sonner-native';
 
 import { supabase } from './supabase';
-import { ChatDateGroup, DataType, Org } from '../constants/types';
-import { ImagePickerAsset } from 'expo-image-picker';
-import { format, formatDistanceToNow, parse } from 'date-fns';
+
+import { ChatDateGroup, DataType, Org } from '~/constants/types';
 import { Id } from '~/convex/_generated/dataModel';
 
 const queryClient = new QueryClient();
@@ -97,82 +97,6 @@ export const uploadPostImage = async (postUrl: string, organizationId: string) =
   }
 };
 
-export const deletePost = async (id: number) => {
-  const { error } = await supabase.from('posts').delete().eq('id', id);
-  if (error) {
-    throw error.message;
-  }
-};
-
-export const exitWaitList = async (workspaceId: number, customerId: string) => {
-  const { error: err, data } = await supabase
-    .from('waitList')
-    .select('*')
-    .eq('workspaceId', workspaceId);
-  if (!err) {
-    const customerToRemove = data.find((item) => item?.customer === customerId);
-    await supabase
-      .from('waitList')
-      .delete()
-      .eq('customer', customerToRemove?.customer as string);
-  }
-
-  router.back();
-};
-
-export const onDeleteImage = async (path: string) => {
-  try {
-    const { error } = await supabase.storage.from('avatars').remove([path]);
-    if (error) {
-      console.log(error);
-      throw error.message;
-    }
-  } catch (error) {
-    console.log(error);
-  }
-};
-
-const queryKey = [
-  'wk',
-  'waitList',
-  'pending_requests',
-  'myStaffs',
-  'connections',
-  'organization',
-  'assignedWk',
-  'profile',
-  'posts',
-  'wks',
-  'wk',
-  'personal',
-  'search',
-  'search_name',
-  'workers',
-  'personal_workers',
-  'other_workers',
-  'pending_worker',
-  'pending_requests',
-  'worker',
-  'request',
-  'single',
-  'single_orgs',
-  'get_single_orgs',
-  'use_organization',
-  'followers',
-];
-export const onRefresh = async () => {
-  queryClient.invalidateQueries({
-    predicate: (query) => {
-      queryKey.forEach((key) => {
-        if (query.queryKey?.includes(key)) {
-          return true;
-        }
-      });
-      return false;
-    },
-  });
-};
-
 export const onFollow = async (id: number, name: string, userId: string) => {
   try {
     const { error } = await supabase.from('followers').insert({
@@ -233,26 +157,6 @@ export const onUnFollow = async (id: number, name: string, userId: string) => {
   }
 };
 
-export const checkIfEmployed = async (userId: string) => {
-  try {
-    const { data, error } = await supabase
-      .from('workspace')
-      .select()
-      .eq('workerId', userId)
-      .single();
-
-    if (error) {
-      console.log(error, 'error');
-    }
-
-    if (!error && data?.workerId) {
-      return data;
-    }
-  } catch (error: any) {
-    console.log(error, 'error');
-  }
-};
-
 export const trimText = (text: string, maxLength: number = 20) => {
   if (text.length > maxLength) {
     return text.substring(0, maxLength) + '...';
@@ -288,6 +192,10 @@ export function convertTimeToDateTime(timeString: string) {
     currentDate
   );
 }
+export const convertStringToDate = (dateString: string): string => {
+  const date = parse(dateString, 'dd/MM/yyyy, HH:mm:ss', new Date());
+  return formatDateToNowHelper(date);
+};
 
 export const formatDate = (dateString: string) => {
   const date = new Date(dateString);
@@ -371,4 +279,17 @@ export const formatDateToNowHelper = (date: Date): string => {
     formattedDistance
   );
 };
-export const now = format(new Date(), 'dd/MM/yyyy, HH:mm:ss');
+export const now = format(Date.now(), 'dd/MM/yyyy, HH:mm:ss');
+
+export const checkIfOpen = (open: string, end: string): boolean => {
+  const now = new Date();
+
+  const openTime = parse(open, 'HH:mm', now);
+
+  const closeTime = parse(end, 'HH:mm', now);
+
+  return isWithinInterval(now, {
+    start: openTime,
+    end: closeTime,
+  });
+};

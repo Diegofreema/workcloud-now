@@ -1,5 +1,5 @@
 import { Avatar } from '@rneui/themed';
-import { isBefore, parse } from 'date-fns';
+import { parse } from 'date-fns';
 import { useRouter } from 'expo-router';
 import { Pressable, StyleSheet, View } from 'react-native';
 
@@ -9,18 +9,13 @@ import VStack from './Ui/VStack';
 
 import { colors } from '~/constants/Colors';
 import { Connection } from '~/constants/types';
-import { formatDateToNowHelper } from '~/lib/helper';
+import { checkIfOpen, formatDateToNowHelper } from '~/lib/helper';
 
 export const Item = (item: Connection & { isLastItemOnList?: boolean }) => {
   const router = useRouter();
   if (!item.organisation) return null;
-  const [hours, minutes] = item?.organisation?.end.split(':').map(Number);
 
-  const date = new Date();
-  date.setHours(hours);
-  date.setMinutes(minutes);
-
-  const isOpen = isBefore(new Date(), date);
+  const isOpen = checkIfOpen(item?.organisation?.start, item?.organisation?.end);
 
   const startChannel = async () => {
     router.push(`/reception/${item?.organisation?._id}`);
