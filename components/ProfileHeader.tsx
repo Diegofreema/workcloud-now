@@ -5,6 +5,7 @@ import { Pressable, StyleSheet, View } from 'react-native';
 import { MyText } from './Ui/MyText';
 
 import { useDarkMode } from '~/hooks/useDarkMode';
+import { Avatar } from '~/components/Ui/Avatar';
 
 type PartUser = {
   id: string;
@@ -22,13 +23,7 @@ export const ProfileHeader = (user: PartUser): JSX.Element | undefined => {
           alignItems: 'center',
           gap: 10,
         }}>
-        <Image
-          style={styles.image}
-          source={user?.avatar}
-          contentFit="cover"
-          placeholder={require('~/assets/images/boy.png')}
-          placeholderContentFit="cover"
-        />
+        <Avatar image={user?.avatar} />
         <View>
           <MyText
             poppins="Bold"

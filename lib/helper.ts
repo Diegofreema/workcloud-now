@@ -1,15 +1,16 @@
-import { QueryClient } from '@tanstack/react-query';
 import axios from 'axios';
 import { format, formatDistanceToNow, isWithinInterval, parse } from 'date-fns';
+import { DocumentPickerResult } from 'expo-document-picker';
+import * as FileSystem from 'expo-file-system';
 import { ImagePickerAsset } from 'expo-image-picker';
-import { toast } from 'sonner-native';
+import * as MediaLibrary from 'expo-media-library';
+import { Platform } from 'react-native';
 
 import { supabase } from './supabase';
 
-import { ChatDateGroup, DataType, Org } from '~/constants/types';
+import { ChatDateGroup, DataType } from '~/constants/types';
 import { Id } from '~/convex/_generated/dataModel';
 
-const queryClient = new QueryClient();
 type User = {
   email: string;
   userId: string;
@@ -18,16 +19,116 @@ type User = {
   streamToken: string;
   avatar: string;
 };
-export const createOrg = async (orgData: Org) => {
-  try {
-    const { data } = await axios.post(
-      'https://workserver-plum.vercel.app/organization/create',
-      orgData
-    );
 
-    return data;
-  } catch (error: any) {
-    return { error: error.response.data.error };
+export const uriToBase64 = async (uri: string): Promise<string> => {
+  try {
+    const downloadResult = await FileSystem.downloadAsync(
+      uri,
+      FileSystem.cacheDirectory + 'temp_image.jpg'
+    );
+    const localUri = downloadResult.uri;
+
+    // Read the file and convert to base64
+    const base64 = await FileSystem.readAsStringAsync(localUri, {
+      encoding: FileSystem.EncodingType.Base64,
+    });
+
+    // Clean up temporary file if we downloaded it
+
+    await FileSystem.deleteAsync(localUri);
+
+    return base64;
+  } catch (error) {
+    console.error('Error converting image to base64:', error);
+    throw error;
+  }
+};
+
+async function saveFile(uri: string, filename: string, mimeType: string) {
+  if (Platform.OS === 'android') {
+    const permissions = await FileSystem.StorageAccessFramework.requestDirectoryPermissionsAsync();
+
+    if (permissions.granted) {
+      const base64 = await FileSystem.readAsStringAsync(uri, {
+        encoding: FileSystem.EncodingType.Base64,
+      });
+
+      await FileSystem.StorageAccessFramework.createFileAsync(
+        permissions.directoryUri,
+        filename,
+        mimeType
+      )
+        .then(async (uri) => {
+          await FileSystem.writeAsStringAsync(uri, base64, {
+            encoding: FileSystem.EncodingType.Base64,
+          });
+        })
+        .catch((e) => console.log(e));
+    }
+  }
+}
+export async function download(imgUrl: string) {
+  const filename = 'image.png';
+  const result = await FileSystem.downloadAsync(imgUrl, FileSystem.documentDirectory + filename);
+
+  // Log the download result
+  console.log({ result });
+
+  // Save the downloaded file
+  await saveFile(result.uri, filename, result.headers['Content-Type']);
+}
+export const saveImageToGallery = async (imageUri: string): Promise<boolean> => {
+  let isDownloaded = false;
+  try {
+    // Request permissions
+    const { status } = await MediaLibrary.requestPermissionsAsync();
+    if (status !== 'granted') {
+      throw new Error('Permission not granted');
+    }
+    const downloadResult = await FileSystem.downloadAsync(
+      imageUri,
+      FileSystem.cacheDirectory + 'temp_image.jpg'
+    );
+    const localUri = downloadResult.uri;
+
+    // Read the file and convert to base64
+    const base64 = await FileSystem.readAsStringAsync(localUri, {
+      encoding: FileSystem.EncodingType.Base64,
+    });
+    // Clean up temporary file if we downloaded it
+
+    await FileSystem.deleteAsync(localUri);
+
+    // Generate unique filename
+    const filename = `${Date.now()}.jpg`;
+
+    // Define save path based on platform
+    const destinationUri = Platform.select({
+      ios: `${FileSystem.documentDirectory}${filename}`,
+      android: `${FileSystem.cacheDirectory}${filename}`,
+    });
+
+    if (!destinationUri) {
+      throw new Error('Could not determine file path');
+    }
+
+    // Download or copy the image
+    await FileSystem.copyAsync({
+      from: base64,
+      to: destinationUri,
+    });
+
+    // Save to device gallery
+    const asset = await MediaLibrary.createAssetAsync(destinationUri);
+    await MediaLibrary.createAlbumAsync('workcloud', asset, false);
+
+    // Clean up temporary file
+    await FileSystem.deleteAsync(destinationUri);
+    isDownloaded = true;
+    return isDownloaded;
+  } catch (error) {
+    console.error('Error saving image:', error);
+    throw error;
   }
 };
 
@@ -66,18 +167,6 @@ export const createUser = async (user: User) => {
     return null;
   }
 };
-export const updateOrg = async (orgData: Org) => {
-  try {
-    const { data } = await axios.post(
-      'https://workserver-plum.vercel.app/organization/update',
-      orgData
-    );
-
-    return data;
-  } catch (error: any) {
-    return { error: error.response.data.error };
-  }
-};
 
 export const checkLength = (value: string) => {
   if (!value) return '';
@@ -85,75 +174,6 @@ export const checkLength = (value: string) => {
     return value.substring(0, 25) + '...';
   } else {
     return value;
-  }
-};
-
-export const uploadPostImage = async (postUrl: string, organizationId: string) => {
-  const { error } = await supabase
-    .from('posts')
-    .insert({ postUrl, organizationId: Number(organizationId) });
-  if (error) {
-    throw error.message;
-  }
-};
-
-export const onFollow = async (id: number, name: string, userId: string) => {
-  try {
-    const { error } = await supabase.from('followers').insert({
-      organizationId: id,
-      followerId: userId,
-    });
-    if (error) {
-      console.log('following error', error);
-      toast.error('Failed to follow', {
-        description: 'Please try again later',
-      });
-    } else {
-      queryClient.invalidateQueries({
-        queryKey: ['followers', id],
-      });
-      queryClient.invalidateQueries({
-        queryKey: ['use_organization'],
-      });
-      toast.success(`You are now following ${name}`);
-    }
-  } catch (error) {
-    console.log(error);
-
-    toast.error('Failed to follow', {
-      description: 'Please try again later',
-    });
-  }
-};
-
-export const onUnFollow = async (id: number, name: string, userId: string) => {
-  try {
-    const { error } = await supabase
-      .from('followers')
-      .delete()
-      .eq('organizationId', id)
-      .eq('followerId', userId);
-    if (error) {
-      console.log('unfollowing error', error);
-
-      toast.error('Failed to unfollow', {
-        description: 'Please try again later',
-      });
-    } else {
-      queryClient.invalidateQueries({
-        queryKey: ['followers', id],
-      });
-      queryClient.invalidateQueries({
-        queryKey: ['use_organization'],
-      });
-      toast.success(`You are no longer following ${name}`);
-    }
-  } catch (error) {
-    console.log(error);
-
-    toast.error('Failed to unfollow', {
-      description: 'Please try again later',
-    });
   }
 };
 
@@ -168,19 +188,36 @@ export const trimText = (text: string, maxLength: number = 20) => {
 export const uploadProfilePicture = async (
   selectedImage: ImagePickerAsset | null,
   generateUploadUrl: any
-) => {
+): Promise<{ storageId: Id<'_storage'>; uploadUrl: string }> => {
   const uploadUrl = await generateUploadUrl();
-  if (!selectedImage) return;
-  const response = await fetch(selectedImage?.uri);
+
+  const response = await fetch(selectedImage?.uri!);
   const blob = await response.blob();
   const result = await fetch(uploadUrl, {
     method: 'POST',
     body: blob,
-    headers: { 'Content-Type': selectedImage.mimeType! },
+    headers: { 'Content-Type': selectedImage?.mimeType! },
   });
   const { storageId } = await result.json();
 
-  return storageId;
+  return { storageId, uploadUrl };
+};
+export const uploadDoc = async (
+  selectedDoc: DocumentPickerResult | null,
+  generateUploadUrl: any
+): Promise<{ storageId: Id<'_storage'>; uploadUrl: string }> => {
+  const uploadUrl = await generateUploadUrl();
+
+  const response = await fetch(selectedDoc?.assets?.[0]?.uri!);
+  const blob = await response.blob();
+  const result = await fetch(uploadUrl, {
+    method: 'POST',
+    body: blob,
+    headers: { 'Content-Type': selectedDoc?.assets?.[0]?.mimeType! },
+  });
+  const { storageId } = await result.json();
+
+  return { storageId, uploadUrl };
 };
 
 export function convertTimeToDateTime(timeString: string) {

@@ -88,7 +88,7 @@ const Notification = () => {
           ItemSeparatorComponent={() => (
             <Divider
               style={{
-                height: 10,
+                height: 2,
                 backgroundColor: darkMode === 'dark' ? 'transparent' : '#ccc',
                 width: '100%',
               }}

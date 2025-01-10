@@ -1,6 +1,6 @@
 import { useAuth } from '@clerk/clerk-expo';
 import { useQuery } from 'convex/react';
-import { ErrorBoundaryProps, useLocalSearchParams } from 'expo-router';
+import { ErrorBoundaryProps, useLocalSearchParams, useRouter } from 'expo-router';
 import * as SecureStore from 'expo-secure-store';
 import React, { useEffect } from 'react';
 import { FlatList, View } from 'react-native';
@@ -24,11 +24,13 @@ export function ErrorBoundary({ retry }: ErrorBoundaryProps) {
 
 export default function TabOneScreen() {
   const { userId } = useAuth();
-  const { removed } = useLocalSearchParams<{ removed: string }>();
+  const { removed, locked } = useLocalSearchParams<{ removed: string; locked: string }>();
   const data = useQuery(api.users.getUserByClerkId, { clerkId: userId! });
   const connections = useQuery(api.connection.getUserConnections, { ownerId: data?._id });
   const loaded = !!SecureStore.getItem('loaded');
-
+  const title = removed ? 'You have been removed from this lobby' : 'Workspace has been locked';
+  const description = removed ? 'We hope to see you again' : 'Please wait for admin to unlock it';
+  const router = useRouter();
   useEffect(() => {
     if (loaded) return;
     if (!data) return;
@@ -38,12 +40,13 @@ export default function TabOneScreen() {
     }
   }, [data?.organizationId, data?.organizationId, loaded]);
   useEffect(() => {
-    if (removed) {
-      toast.info('You have been removed from this lobby', {
-        description: `We hope to see you again`,
+    if (removed || locked) {
+      toast.info(title, {
+        description,
       });
+      router.setParams({ removed: '', locked: '' });
     }
-  }, [removed, toast]);
+  }, [removed, toast, locked, description, title, router]);
 
   SecureStore.setItem('loaded', '1');
   const { onOpen } = useOrganizationModal();

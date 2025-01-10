@@ -35,7 +35,7 @@ export const ImagePreview = () => {
     setLoading(true);
     if (!id) return;
     try {
-      const storageId = await uploadProfilePicture(selectedImage, generateUploadUrl);
+      const { storageId } = await uploadProfilePicture(selectedImage, generateUploadUrl);
       await createPosts({ organizationId: id, storageId });
       toast.success('Uploaded image');
       removeUrl();

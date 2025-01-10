@@ -17,7 +17,7 @@ export const ChatHeader = ({ imageUrl, name }: Props) => {
     router.back();
   };
   return (
-    <HStack alignItems="center" gap={10} bg="transparent" py={15} px={10}>
+    <HStack alignItems="center" gap={10} bg="transparent" py={15} px={2}>
       <TouchableOpacity onPress={onPress} activeOpacity={0.6}>
         <ChevronLeft color={colors.black} size={40} style={{ marginRight: -10 }} />
       </TouchableOpacity>

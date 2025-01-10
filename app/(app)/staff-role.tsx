@@ -22,9 +22,10 @@ const StaffRoles = () => {
 
   const filteredData = useMemo(() => {
     if (value.trim() === '') return data;
-    return data?.filter((item) =>
+    const result = data?.filter((item) =>
       item.role?.toLocaleLowerCase().includes(value.toLocaleLowerCase())
     );
+    return [...new Set(result)];
   }, [value, data]);
   const router = useRouter();
 

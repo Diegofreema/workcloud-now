@@ -1,15 +1,22 @@
 import { useMutation } from 'convex/react';
-import { SendIcon } from 'lucide-react-native';
+import * as DocumentPicker from 'expo-document-picker';
+import * as ImagePicker from 'expo-image-picker';
 import React, { useState } from 'react';
 import { KeyboardAvoidingView, Platform, StyleSheet, Text, View } from 'react-native';
-import { Bubble, GiftedChat, Send, SystemMessage } from 'react-native-gifted-chat';
+import { GiftedChat, IMessage, SystemMessage } from 'react-native-gifted-chat';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { EmptyChat } from '~/components/EmptyChat';
+import { RenderActions } from '~/components/chat/RenderActions';
+import { RenderBubble } from '~/components/chat/RenderBubble';
+import { RenderComposer } from '~/components/chat/RenderComposer';
+import { RenderMessageImage } from '~/components/chat/RenderMessageImage';
+import { RenderSend } from '~/components/chat/RenderSend';
 import { colors } from '~/constants/Colors';
 import { DataType, StatusType } from '~/constants/types';
 import { api } from '~/convex/_generated/api';
 import { Id } from '~/convex/_generated/dataModel';
+import { uploadDoc, uploadProfilePicture } from '~/lib/helper';
 
 type Props = {
   loggedInUserId: Id<'users'>;
@@ -32,19 +39,24 @@ export const ChatComponent = ({
   otherUserName,
 }: Props) => {
   const createMessage = useMutation(api.conversation.createMessages);
+
   const [text, setText] = useState('');
+
   const insets = useSafeAreaInsets();
+  const generateUploadUrl = useMutation(api.users.generateUploadUrl);
+
   const hasItem = data?.length > 0;
-  const messages = hasItem
+  const messages: IMessage[] = hasItem
     ? [
         ...data?.map((message) => {
           return {
             _id: message?._id,
-            text: message?.content,
+            text: message.contentType === 'text' ? message?.content : '',
             createdAt: new Date(message?._creationTime),
+            image: message.contentType === 'image' ? message.content : undefined,
             user: {
               _id: message?.senderId,
-              name: message.senderId === loggedInUserId ? 'You' : otherUserName,
+              name: message.senderId === loggedInUserId ? 'You' : otherUserName.split(' ')[0],
             },
           };
         }),
@@ -60,14 +72,54 @@ export const ChatComponent = ({
         },
       ]
     : [];
-
+  const onPickDocument = async () => {
+    const result = await DocumentPicker.getDocumentAsync({
+      multiple: true,
+      type: ['application/*'],
+    });
+    if (!result.canceled) {
+      const { storageId, uploadUrl } = await uploadDoc(result, generateUploadUrl);
+      await createMessage({
+        content: storageId,
+        senderId: loggedInUserId,
+        recipient: otherUserId,
+        conversationId,
+        contentType: 'image',
+        uploadUrl,
+      });
+    }
+  };
   const onSend = async () => {
     await createMessage({
       content: text.trim(),
       senderId: loggedInUserId,
       recipient: otherUserId,
       conversationId,
+      contentType: 'text',
     });
+  };
+  const onPickImage = async () => {
+    const result = await ImagePicker.launchImageLibraryAsync({
+      allowsEditing: true,
+      quality: 0.5,
+    });
+
+    if (!result.canceled) {
+      const { storageId, uploadUrl } = await uploadProfilePicture(
+        result?.assets[0],
+        generateUploadUrl
+      );
+      console.log({ storageId, uploadUrl });
+      if (!storageId) return;
+      await createMessage({
+        content: storageId,
+        senderId: loggedInUserId,
+        recipient: otherUserId,
+        conversationId,
+        contentType: 'image',
+        uploadUrl,
+      });
+    }
   };
   const onLoadMore = () => {
     loadMore(5);
@@ -88,6 +140,9 @@ export const ChatComponent = ({
         renderSystemMessage={(props) => (
           <SystemMessage {...props} textStyle={{ color: colors.gray }} />
         )}
+        renderMessageImage={(props) => <RenderMessageImage {...props} />}
+        renderActions={(props) => <RenderActions onPickDocument={onPickDocument} {...props} />}
+        renderComposer={(props) => <RenderComposer onPickImage={onPickImage} {...props} />}
         bottomOffset={insets.bottom}
         renderAvatar={null}
         maxComposerHeight={100}
@@ -101,42 +156,10 @@ export const ChatComponent = ({
         renderUsername={(user) => (
           <Text style={{ fontSize: 10, color: colors.black, paddingLeft: 7 }}>{user.name}</Text>
         )}
-        renderBubble={(props) => {
-          return (
-            <Bubble
-              onLongPress={console.log}
-              onPress={() => console.warn('Press')}
-              {...props}
-              textStyle={{
-                right: {
-                  color: '#fff',
-                },
-                left: {
-                  color: '#000',
-                },
-              }}
-              wrapperStyle={{
-                left: {
-                  backgroundColor: colors.otherChatBubble,
-                  borderRadius: 10,
-                  borderBottomLeftRadius: 0,
-                },
-                right: {
-                  borderRadius: 10,
-                  backgroundColor: colors.dialPad,
-                  borderBottomRightRadius: 0,
-                },
-              }}
-            />
-          );
-        }}
-        renderSend={(props) => (
-          <Send {...props} containerStyle={[{ justifyContent: 'center' }, styles.send]}>
-            <SendIcon color={colors.white} size={25} />
-          </Send>
-        )}
+        renderBubble={RenderBubble}
+        renderSend={RenderSend}
       />
-      {Platform.OS === 'android' && <KeyboardAvoidingView behavior="padding" />}
+      {Platform.OS === 'android' && <KeyboardAvoidingView behavior="height" />}
     </View>
   );
 };
@@ -165,14 +188,12 @@ const styles = StyleSheet.create({
   },
   input: {
     flex: 1,
-    minHeight: 50,
+    minHeight: 45,
     maxHeight: 100,
-    borderWidth: 1,
-    borderColor: '#E0E0E0',
-    borderRadius: 5,
+    borderWidth: 0,
     paddingHorizontal: 15,
     marginRight: 10,
-    backgroundColor: '#E5E5E5',
+    backgroundColor: 'transparent',
     justifyContent: 'center',
     textAlignVertical: 'center',
     paddingTop: Platform.OS === 'ios' ? 10 : 0,
@@ -181,16 +202,5 @@ const styles = StyleSheet.create({
     backgroundColor: '#007AFF',
     borderRadius: 7777,
     padding: 15,
-  },
-
-  send: {
-    height: 50,
-    alignItems: 'center',
-    justifyContent: 'center',
-    backgroundColor: colors.dialPad,
-    paddingHorizontal: 14,
-    width: 50,
-    borderRadius: 50,
-    marginBottom: 7,
   },
 });

@@ -1,6 +1,8 @@
 import { useAuth } from '@clerk/clerk-expo';
+import { convexQuery } from '@convex-dev/react-query';
 import { Button } from '@rneui/themed';
-import { useQuery, useQueryClient } from '@tanstack/react-query';
+import { useQuery } from '@tanstack/react-query';
+import { useMutation } from 'convex/react';
 import { Image } from 'expo-image';
 import { router } from 'expo-router';
 import { useState } from 'react';
@@ -11,15 +13,14 @@ import { HStack } from '../HStack';
 import { MyText } from './MyText';
 import VStack from './VStack';
 
+import { CustomModal } from '~/components/Dialogs/CustomModal';
+import { Avatar } from '~/components/Ui/Avatar';
 import { colors } from '~/constants/Colors';
 import { PendingRequests } from '~/constants/types';
+import { api } from '~/convex/_generated/api';
+import { useDecline } from '~/hooks/useDecline';
 import { useInfos } from '~/hooks/useGetInfo';
 import { useOpen } from '~/hooks/useOpen';
-import { useMutation } from 'convex/react';
-import { api } from '~/convex/_generated/api';
-import { CustomModal } from '~/components/Dialogs/CustomModal';
-import { useDecline } from '~/hooks/useDecline';
-import { convexQuery } from '@convex-dev/react-query';
 
 type PreviewWorker = {
   name: any;
@@ -61,11 +62,7 @@ export const UserPreview = ({
       style={({ pressed }) => ({ opacity: pressed ? 0.5 : 1 })}>
       <HStack gap={10} alignItems="center">
         {imageUrl ? (
-          <Image
-            source={{ uri: imageUrl }}
-            style={{ width: 60, height: 60, borderRadius: 9999 }}
-            contentFit="cover"
-          />
+          <Avatar image={imageUrl} />
         ) : (
           <Image
             source={require('~/assets/images/boy.png')}

@@ -1,4 +1,5 @@
 import { useMutation, useQuery } from 'convex/react';
+import { format } from 'date-fns';
 import { Redirect, router, useLocalSearchParams } from 'expo-router';
 import React, { useCallback, useMemo, useState } from 'react';
 import { ScrollView, StyleSheet, Text, View } from 'react-native';
@@ -20,8 +21,9 @@ import { api } from '~/convex/_generated/api';
 import { Id } from '~/convex/_generated/dataModel';
 import { useGetUserId } from '~/hooks/useGetUserId';
 import { useToken } from '~/hooks/useToken';
-import { supabase } from '~/lib/supabase';
 
+const today = format(new Date(), 'dd-MM-yyyy');
+const time = format(new Date(), 'HH:mm:ss');
 const Work = () => {
   const { id } = useLocalSearchParams<{ id: Id<'workspaces'> }>();
   const [showMenu, setShowMenu] = useState(false);
@@ -35,6 +37,11 @@ const Work = () => {
 
   const data = useQuery(api.workspace.getWorkspaceWithWaitingList, { workspaceId: id });
   const leaveLobby = useMutation(api.workspace.existLobby);
+  const handleAttendance = useMutation(api.workspace.handleAttendance);
+  const checkIfSignedInToday = useQuery(api.workspace.checkIfWorkerSignedInToday, {
+    workerId: loggedInUser!,
+    today,
+  });
   const isLocked = useMemo(() => data?.workspace.locked || false, [data?.workspace.locked]);
   const isWorker = data?.worker?._id === loggedInUser;
   const isActive = useMemo(() => {
@@ -45,7 +52,7 @@ const Work = () => {
     if (!data || !data?.workspace?.leisure) return false;
     return data?.workspace?.leisure;
   }, [data?.workspace?.active]);
-  // ? useEffect to check if the user is in the wait list
+
   const isInWaitList = useMemo(() => {
     if (!data) return true;
     return !!data.waitlist.find((w) => w?.customerId === loggedInUser);
@@ -64,14 +71,18 @@ const Work = () => {
     setShowMenu(false);
   }, []);
   if (isLocked) {
-    toast.info('Workspace has been locked', {
-      description: 'Please wait for admin to unlock it',
-    });
-    return <Redirect href="/" />;
+    return <Redirect href="/?locked=locked" />;
   }
   if (!isWorker && !isInWaitList && !customerLeaving) {
     return <Redirect href="/?removed=removed" />;
   }
+  if (!data || checkIfSignedInToday === undefined) {
+    return <LoadingComponent />;
+  }
+  const modalText = customerLeaving ? 'Exist lobby' : 'Remove from lobby';
+  const hasSignedInToday = checkIfSignedInToday.signedInToday;
+  const hasSignedOutToday = checkIfSignedInToday.signedOutToday;
+  const attendanceText = hasSignedInToday ? 'Sign out' : 'Sign in';
   const onRemove = async () => {
     setLeaving(true);
     if (!customerToRemove) return;
@@ -109,77 +120,39 @@ const Work = () => {
     }
   };
 
-  if (!data) {
-    return <LoadingComponent />;
-  }
   const showModal = () => {
     setIsVisible(true);
   };
-  const onProcessors = () => {};
-
-  const onSignOff = async () => {
-    if (!id) return;
-    try {
-      const { error: err } = await supabase
-        .from('workspace')
-        .update({ active: false, signedIn: false })
-        .eq('id', +id);
-      if (err) {
-        toast.error('Failed to sign off', {
-          description: 'Something went wrong',
-        });
-      }
-
-      if (!err) {
-        toast.success('See you soon', {
-          description: 'Signed off successfully',
-        });
-      }
-    } catch (error) {
-      console.log(error);
-
-      toast.error('Something went wrong', {
-        description: 'Failed to sign off',
-      });
-    } finally {
-      setLoading(false);
-    }
+  const onProcessors = () => {
+    router.push(`/processors?orgId=${data?.organization?._id}`);
   };
-  const onSignIn = async () => {
-    if (!id) return;
-    try {
-      const { error: err } = await supabase
-        .from('workspace')
-        .update({ active: true, signedIn: true })
-        .eq('id', +id);
-      if (err) {
-        toast.error('Failed to sign in', {
-          description: 'Please again later',
-        });
-      }
 
-      if (!err) {
-        toast.success('Sign in successful', {
-          description: 'Welcome back',
-        });
-      }
-    } catch (error) {
-      console.log(error);
-
-      toast.error('Something went wrong', {
-        description: 'Failed to sign in',
-      });
-    } finally {
-      setLoading(false);
-    }
-  };
   const { workspace, waitlist, organization, worker } = data;
   const toggleSignIn = async () => {
     setLoading(true);
-    if (workspace?.signedIn) {
-      await onSignOff();
-    } else {
-      await onSignIn();
+    if (!loggedInUser) return;
+    try {
+      if (hasSignedInToday) {
+        await handleAttendance({
+          workerId: loggedInUser,
+          today,
+          signOutAt: format(new Date(), 'HH:mm:ss'),
+          workspaceId: data?.workspace?._id,
+        });
+      } else {
+        await handleAttendance({
+          workerId: loggedInUser,
+          today,
+          signInAt: format(new Date(), 'HH:mm:ss'),
+        });
+      }
+    } catch (e) {
+      console.log(e);
+      toast.error('Failed to update attendance', {
+        description: 'Please try again later',
+      });
+    } finally {
+      setLoading(false);
     }
   };
   const onClose = () => {
@@ -200,7 +173,6 @@ const Work = () => {
     setCustomerLeaving(true);
     setShowMenu(true);
   };
-  const modalText = customerLeaving ? 'Exist lobby' : 'Remove from lobby';
 
   return (
     <>
@@ -228,11 +200,13 @@ const Work = () => {
           />
           {isWorker && (
             <WorkspaceButtons
-              signedIn={workspace?.signedIn}
+              signedIn={hasSignedInToday}
+              attendanceText={attendanceText}
               onShowModal={showModal}
               onProcessors={onProcessors}
-              onSignOff={toggleSignIn}
+              onToggleAttendance={toggleSignIn}
               loading={loading}
+              disable={hasSignedOutToday}
             />
           )}
 

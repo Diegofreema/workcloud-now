@@ -1,5 +1,5 @@
 import { convexQuery } from '@convex-dev/react-query';
-import { FontAwesome } from '@expo/vector-icons';
+import { EvilIcons, FontAwesome } from '@expo/vector-icons';
 import { Avatar } from '@rneui/themed';
 import { useQuery } from '@tanstack/react-query';
 import { router } from 'expo-router';
@@ -24,7 +24,7 @@ import { useGetUserId } from '~/hooks/useGetUserId';
 
 const Organization = () => {
   const { id, worker } = useGetUserId();
-  const { data, isPending, isError, refetch } = useQuery(
+  const { data, isPending, isError, refetch, error } = useQuery(
     convexQuery(api.organisation.getOrganisationsOrNull, { ownerId: id! })
   );
   const { darkMode } = useDarkMode();
@@ -33,13 +33,15 @@ const Organization = () => {
     isPending: isPendingWorkspace,
     isError: isErrorWorkspace,
     refetch: refetchWorkspace,
+    error: errorWorkspace,
   } = useQuery(convexQuery(api.workspace.getUserWorkspaceOrNull, { workerId: worker! }));
 
-  const handleRefetch = () => {
-    refetch();
-    refetchWorkspace();
+  const handleRefetch = async () => {
+    await refetch();
+    await refetchWorkspace();
   };
 
+  console.log({ error, errorWorkspace });
   if (isError || isErrorWorkspace) {
     return <ErrorComponent refetch={handleRefetch} />;
   }
@@ -56,9 +58,9 @@ const Organization = () => {
         <Pressable
           onPress={() => router.push('/search')}
           style={({ pressed }) => pressed && { opacity: 0.5 }}>
-          <FontAwesome
+          <EvilIcons
             name="search"
-            size={20}
+            size={30}
             color={darkMode === 'dark' ? colors.white : colors.black}
           />
         </Pressable>

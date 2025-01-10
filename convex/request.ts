@@ -47,7 +47,7 @@ export const getPendingRequestsWithOrganization = query({
   handler: async (ctx, args) => {
     const res = await ctx.db
       .query('requests')
-      .filter((q) => q.and(q.eq(q.field('to'), args.id), q.eq(q.field('pending'), true)))
+      .filter((q) => q.eq(q.field('to'), args.id))
       .collect();
 
     return await Promise.all(

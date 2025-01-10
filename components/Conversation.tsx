@@ -1,12 +1,12 @@
-import { Avatar } from '@rneui/themed';
 import { useQuery } from 'convex/react';
 import { formatDistanceToNow } from 'date-fns';
 import { router } from 'expo-router';
-import { CheckCheck } from 'lucide-react-native';
+import { CheckCheck, File } from 'lucide-react-native';
 import { StyleSheet, TouchableOpacity } from 'react-native';
 
 import { ChatPreviewSkeleton } from '~/components/ChatPreviewSkeleton';
 import { HStack } from '~/components/HStack';
+import { Avatar } from '~/components/Ui/Avatar';
 import { MyText } from '~/components/Ui/MyText';
 import VStack from '~/components/Ui/VStack';
 import { UnreadCount } from '~/components/Unread';
@@ -35,20 +35,25 @@ export const Conversation = ({ conversation }: Props) => {
   if (unread === undefined) {
     return <ChatPreviewSkeleton />;
   }
+  const isImage = lastMessage?.startsWith('https');
   return (
     <TouchableOpacity onPress={onPress} style={styles.pressable}>
       <HStack justifyContent="space-between" alignItems="flex-start">
         <HStack gap={10} alignItems="center">
-          <Avatar rounded size={50} source={{ uri: otherUser?.imageUrl! }} />
+          <Avatar image={otherUser?.imageUrl!} />
           <VStack>
             <MyText poppins="Medium" fontSize={12}>
               {otherUser?.name}
             </MyText>
             <HStack alignItems="center" gap={3}>
               {isMine && <CheckCheck size={20} color={colors.buttonBlue} />}
-              <MyText poppins="Medium" fontSize={14}>
-                {trimText(lastMessage || '', 20)}
-              </MyText>
+              {isImage ? (
+                <File color={colors.grayText} size={25} />
+              ) : (
+                <MyText poppins="Medium" fontSize={14}>
+                  {trimText(lastMessage || '', 20)}
+                </MyText>
+              )}
             </HStack>
           </VStack>
         </HStack>

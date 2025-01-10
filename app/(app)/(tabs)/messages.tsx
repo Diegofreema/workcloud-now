@@ -14,6 +14,7 @@ const Messages = () => {
     api.conversation.getConversations,
     {
       userId: id!,
+      type: 'all',
     },
     { initialNumItems: 20 }
   );

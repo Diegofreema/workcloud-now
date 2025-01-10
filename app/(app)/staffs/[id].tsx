@@ -1,8 +1,6 @@
-import { convexQuery } from '@convex-dev/react-query';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { BottomSheet, Divider } from '@rneui/themed';
-import { useQuery } from '@tanstack/react-query';
-import { useMutation } from 'convex/react';
+import { useMutation, useQuery } from 'convex/react';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import React, { useMemo, useState } from 'react';
 import { FlatList, Pressable, StyleSheet, View } from 'react-native';
@@ -17,7 +15,6 @@ import { EmptyText } from '~/components/EmptyText';
 import { HStack } from '~/components/HStack';
 import { Container } from '~/components/Ui/Container';
 import { DottedButton } from '~/components/Ui/DottedButton';
-import { ErrorComponent } from '~/components/Ui/ErrorComponent';
 import { LoadingComponent } from '~/components/Ui/LoadingComponent';
 import { MyText } from '~/components/Ui/MyText';
 import { UserPreview } from '~/components/Ui/UserPreview';
@@ -28,14 +25,6 @@ import { Id } from '~/convex/_generated/dataModel';
 import { useDarkMode } from '~/hooks/useDarkMode';
 import { useHandleStaff } from '~/hooks/useHandleStaffs';
 
-const allRoles = [
-  'All',
-  'Customer service',
-  'Sales Representative',
-  'Account opening',
-  'Logistics',
-  'ICT',
-];
 const Staffs = () => {
   const { id } = useLocalSearchParams<{ id: Id<'users'> }>();
 
@@ -44,12 +33,6 @@ const Staffs = () => {
   const [loading, setLoading] = useState(false);
   const [workspaceId, setWorkspaceId] = useState<Id<'workspaces'> | null>(null);
 
-  // const {
-  //   data: workspaces,
-  //   isError: isErrorWorkspaces,
-  //   refetch: refetchWorkspaces,
-  //   isPending: isPendingWorkspace,
-  // } = useWorkSpaceWithoutWorker(userId!);
   const [isVisible, setIsVisible] = useState(false);
 
   const { getItem, item: staff } = useHandleStaff();
@@ -58,15 +41,9 @@ const Staffs = () => {
   };
   const [role, setRole] = useState('All');
   const router = useRouter();
-  const { data, isPaused, isPending, isError, refetch, isRefetching, isRefetchError } = useQuery(
-    convexQuery(api.organisation.getStaffsByBossId, { bossId: id! })
-  );
-  const {
-    data: workspaces,
-    isPending: isPendingWorkspace,
-    isError: isErrorWorkspaces,
-    refetch: refetchWorkspaces,
-  } = useQuery(convexQuery(api.workspace.freeWorkspaces, { ownerId: id }));
+  const roles = useQuery(api.staff.getStaffRoles, { bossId: id });
+  const data = useQuery(api.organisation.getStaffsByBossId, { bossId: id! });
+  const workspaces = useQuery(api.workspace.freeWorkspaces, { ownerId: id });
   const { darkMode } = useDarkMode();
   const addToWorkspace = useMutation(api.workspace.addStaffToWorkspace);
   const workers = useMemo(() => {
@@ -78,15 +55,7 @@ const Staffs = () => {
     return data?.filter((worker) => worker.role === role);
   }, [data, role]);
 
-  const handleRefetch = async () => {
-    await refetch();
-    await refetchWorkspaces();
-  };
-  if (isError || isRefetchError || isPaused || isErrorWorkspaces) {
-    return <ErrorComponent refetch={handleRefetch} />;
-  }
-
-  if (isPending || isPendingWorkspace) {
+  if (!data || !roles || !workspaces) {
     return <LoadingComponent />;
   }
 
@@ -102,7 +71,6 @@ const Staffs = () => {
     getItem(item);
   };
 
-  console.log({ workspaces });
   const array = [
     {
       icon: 'user-o',
@@ -177,7 +145,7 @@ const Staffs = () => {
           horizontal
           style={{ marginBottom: 10 }}
           showsHorizontalScrollIndicator={false}
-          data={allRoles}
+          data={['All', ...roles]}
           contentContainerStyle={{ gap: 20 }}
           renderItem={({ item }) => (
             <Pressable
@@ -195,7 +163,7 @@ const Staffs = () => {
               </MyText>
             </Pressable>
           )}
-          keyExtractor={(item) => item}
+          keyExtractor={(item) => item?.toString()}
         />
         <HStack gap={10} justifyContent="center">
           <DottedButton text="Add New Staff" onPress={onNavRole} />
@@ -205,8 +173,6 @@ const Staffs = () => {
       <FlatList
         showsVerticalScrollIndicator={false}
         ItemSeparatorComponent={() => <View style={{ height: 10 }} />}
-        onRefresh={refetch}
-        refreshing={isRefetching}
         data={workers}
         renderItem={({ item }) => (
           <HStack justifyContent="space-between" alignItems="center">

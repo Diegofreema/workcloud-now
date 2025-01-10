@@ -1,6 +1,6 @@
 /* eslint-disable prettier/prettier */
 
-import { useQueryClient } from '@tanstack/react-query';
+import { useMutation } from 'convex/react';
 import { useState } from 'react';
 import { TextInput, View } from 'react-native';
 import { toast } from 'sonner-native';
@@ -8,39 +8,24 @@ import { toast } from 'sonner-native';
 import { MyButton } from './Ui/MyButton';
 import { MyText } from './Ui/MyText';
 
+import { api } from '~/convex/_generated/api';
 import { useDarkMode } from '~/hooks/useDarkMode';
-import { supabase } from '~/lib/supabase';
 
-export const AddRole = ({ onNavigate }: { onNavigate: (item: string) => void }): JSX.Element => {
+export const AddRole = ({ onNavigate }: { onNavigate: (item: string) => void }) => {
   const { darkMode } = useDarkMode();
   const [value, setValue] = useState('');
   const [loading, setLoading] = useState(false);
-  const queryClient = useQueryClient();
+  const addRole = useMutation(api.staff.createStaffRole);
+
   const onAddRole = async () => {
     if (value === '') return;
 
     setLoading(true);
     try {
-      const { data, error } = await supabase.from('roles').select().eq('role', value);
-      if (error) {
-        toast.error('Failed to add role');
-        return;
-      }
-      if (data.length) {
-        toast('Could not add role', {
-          description: 'Role already exists',
-        });
-        return;
-      }
+      await addRole({ role: value.charAt(0).toUpperCase() + value.slice(1) });
 
-      const { error: error2 } = await supabase.from('roles').insert({ role: value });
-      if (error2) {
-        toast.error('Failed to add role');
-        return;
-      }
       onNavigate(value);
-      queryClient.invalidateQueries({ queryKey: ['roles'] });
-      toast('Role added successfully');
+      toast.success('Role added successfully');
       setValue('');
     } catch (error) {
       console.log(error);
@@ -62,6 +47,7 @@ export const AddRole = ({ onNavigate }: { onNavigate: (item: string) => void }):
           borderRadius: 5,
           marginTop: 10,
           padding: 10,
+          height: 55,
           borderColor: 'gray',
           color: darkMode === 'dark' ? 'white' : 'black',
         }}
@@ -69,8 +55,12 @@ export const AddRole = ({ onNavigate }: { onNavigate: (item: string) => void }):
         value={value}
         onChangeText={setValue}
       />
-      <MyButton onPress={onAddRole} disabled={value === '' || loading} loading={loading}>
-        <MyText poppins="Medium" fontSize={15}>
+      <MyButton
+        onPress={onAddRole}
+        disabled={value === '' || loading}
+        loading={loading}
+        buttonStyle={{ width: '100%' }}>
+        <MyText poppins="Medium" fontSize={15} style={{ color: 'white' }}>
           Add
         </MyText>
       </MyButton>

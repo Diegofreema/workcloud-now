@@ -6,8 +6,9 @@ import { getOrganizationByOrganizationId } from '~/convex/organisation';
 import { getUserByUserId, getUserByWorkerId } from '~/convex/users';
 
 export const getUserWorkspaceOrNull = query({
-  args: { workerId: v.id('workers') },
+  args: { workerId: v.optional(v.id('workers')) },
   handler: async (ctx, args) => {
+    if (!args.workerId) return null;
     const res = await ctx.db
       .query('workspaces')
       .filter((q) => q.eq(q.field('workerId'), args.workerId))
@@ -101,6 +102,7 @@ export const handleWaitlist = mutation({
         customerId,
         workspaceId,
         joinedAt,
+        type: 'waiting',
       });
       console.log('Created new waitlist', id, joinedAt);
     }
@@ -130,19 +132,18 @@ export const createWorkspace = mutation({
     ownerId: v.id('users'),
     organizationId: v.id('organizations'),
     role: v.string(),
-    personal: v.boolean(),
+    type: v.union(v.literal('personal'), v.literal('processor'), v.literal('normal')),
     workerId: v.optional(v.id('workers')),
   },
   handler: async (ctx, args) => {
     return await ctx.db.insert('workspaces', {
-      personal: args.personal,
+      type: args.type,
       role: args.role,
       ownerId: args.ownerId,
       organizationId: args.organizationId,
-      locked: !args.personal,
+      locked: args.type !== 'personal',
       active: false,
       leisure: false,
-      signedIn: false,
       waitlistCount: 0,
       workerId: args.workerId,
     });
@@ -165,6 +166,56 @@ export const existLobby = mutation({
     if (waitlist) {
       await ctx.db.delete(waitlist._id);
     }
+  },
+});
+export const handleAttendance = mutation({
+  args: {
+    signOutAt: v.optional(v.string()),
+    signInAt: v.optional(v.string()),
+    workerId: v.id('users'),
+    today: v.string(),
+    workspaceId: v.optional(v.id('workspaces')),
+  },
+  handler: async (ctx, { workerId, signOutAt, signInAt, today, workspaceId }) => {
+    const findTodayAttendance = await ctx.db
+      .query('attendance')
+      .withIndex('worker_id_date', (q) => q.eq('workerId', workerId).eq('date', today))
+      .first();
+
+    if (!findTodayAttendance && signInAt) {
+      await ctx.db.insert('attendance', {
+        signInAt,
+        workerId,
+        date: today,
+      });
+    }
+    if (findTodayAttendance) {
+      await ctx.db.patch(findTodayAttendance._id, {
+        signOutAt,
+      });
+    }
+    if (!workspaceId) return;
+    await ctx.db.patch(workspaceId, {
+      active: false,
+    });
+  },
+});
+export const checkIfWorkerSignedInToday = query({
+  args: {
+    workerId: v.id('users'),
+    today: v.string(),
+  },
+  handler: async (ctx, { workerId, today }) => {
+    const todayAttendance = await ctx.db
+      .query('attendance')
+      .withIndex('worker_id_date', (q) => q.eq('workerId', workerId))
+      .filter((q) => q.eq(q.field('date'), today))
+      .first();
+
+    return {
+      signedInToday: !!todayAttendance,
+      signedOutToday: !!todayAttendance?.signOutAt,
+    };
   },
 });
 export const deleteWorkspace = mutation({
@@ -199,7 +250,6 @@ export const removeFromWorkspace = mutation({
     await ctx.db.patch(args.workspaceId, {
       workerId: undefined,
       locked: true,
-      signedIn: false,
     });
     await ctx.db.patch(args.workerId, {
       workspaceId: undefined,

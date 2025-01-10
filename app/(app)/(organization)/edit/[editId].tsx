@@ -125,13 +125,12 @@ const Edit = () => {
     },
     validationSchema,
     onSubmit: async (values) => {
-      let storageId = '';
       if (!data) {
         return;
       }
       try {
         if (selectedImage) {
-          storageId = await uploadProfilePicture(selectedImage, generateUploadUrl);
+          const { storageId } = await uploadProfilePicture(selectedImage, generateUploadUrl);
           await updateOrganization({
             avatar: storageId,
             end: values.endTime,

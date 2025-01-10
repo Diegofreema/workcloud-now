@@ -109,7 +109,7 @@ export const SelectNewRow = ({ id }: { id: string }) => {
 
     if (!error) {
       onClose();
-      getData(item, data.id, profile.organizationId?.id);
+      // getData({ role:item, workspaceId: data?.id, profile?.organizationId?.id });
       router.push(`/allStaffs`);
     }
     if (error) {

@@ -1,20 +1,20 @@
 /* eslint-disable prettier/prettier */
 
-import { Plus } from 'lucide-react-native';
-import { Pressable } from 'react-native';
+import { Plus } from "lucide-react-native";
+import { Pressable } from "react-native";
 
-import { colors } from '~/constants/Colors';
-import { useGroupName } from '~/hooks/useGroupName';
+import { colors } from "~/constants/Colors";
 
-export const NewGroup = (): JSX.Element => {
-  const open = useGroupName((state) => state.onOpen);
-
+type Props = {
+  onPress: () => void;
+};
+export const NewBtn = ({ onPress }: Props) => {
   return (
     <Pressable
-      onPress={open}
+      onPress={onPress}
       style={({ pressed }) => ({
         position: 'absolute',
-        bottom: 20,
+        bottom: 50,
         right: 10,
         backgroundColor: colors.buttonBlue,
         borderRadius: 100,

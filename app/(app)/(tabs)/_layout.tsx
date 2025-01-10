@@ -33,7 +33,9 @@ export default function TabLayout() {
   const { userId: id } = useAuth();
   const data = useQuery(api.conversation.getUnreadAllMessages, {
     clerkId: id!,
+    type: 'single',
   });
+
   const showUnreadCount = data && data > 0;
 
   return (

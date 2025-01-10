@@ -2,7 +2,12 @@ import { v } from 'convex/values';
 
 import { Id } from '~/convex/_generated/dataModel';
 import { mutation, query } from '~/convex/_generated/server';
-import { getOrganisationWithoutImageByWorker, getUserByUserId } from '~/convex/users';
+import {
+  getOrganisationWithoutImageByWorker,
+  getUserByUserId,
+  getUserByWorkerId,
+} from '~/convex/users';
+import { User } from '~/constants/types';
 
 export const getAllOtherWorkers = query({
   args: {
@@ -53,7 +58,28 @@ export const getSingleWorkerProfile = query({
     };
   },
 });
+export const getProcessors = query({
+  args: {
+    organizationId: v.id('organizations'),
+  },
+  handler: async (ctx, { organizationId }) => {
+    const workers = await ctx.db
+      .query('workers')
+      .withIndex('by_org_id', (q) => q.eq('organizationId', organizationId))
+      .filter((q) => q.eq(q.field('type'), 'processor'))
+      .collect();
+    if (!workers) return [];
+    const workersWithUserProfile = workers.map(async (worker) => {
+      const user = await getUserByWorkerId(ctx, worker._id);
+      return {
+        worker,
+        user: user as User,
+      };
+    });
 
+    return await Promise.all(workersWithUserProfile);
+  },
+});
 export const checkIfWorkerIsEmployed = query({
   args: {
     id: v.id('users'),
@@ -95,6 +121,7 @@ export const acceptOffer = mutation({
         bossId: args.from,
         organizationId: args.organizationId,
         workspaceId: undefined,
+        type: args.role === 'Processor' ? 'processor' : 'normal',
       }),
       ctx.db.patch(args._id, {
         pending: false,

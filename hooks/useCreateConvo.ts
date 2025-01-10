@@ -9,8 +9,9 @@ type Props = {
   conversationData: ConversationAndUserType;
   id: Id<'users'>;
   loggedInUserId: Id<'users'>;
+  type: 'single' | 'group' | 'processor';
 };
-export const useCreateConvo = ({ conversationData, loggedInUserId, id }: Props) => {
+export const useCreateConvo = ({ conversationData, loggedInUserId, id, type }: Props) => {
   const createSingleConversation = useMutation(api.conversation.createSingleConversation);
 
   const [loading, setLoading] = useState(false);
@@ -20,7 +21,7 @@ export const useCreateConvo = ({ conversationData, loggedInUserId, id }: Props) 
       const createConvo = async () => {
         setLoading(true);
         try {
-          await createSingleConversation({ loggedInUserId, otherUserId: id });
+          await createSingleConversation({ loggedInUserId, otherUserId: id, type });
         } catch (e) {
           console.log(e);
           throw Error('Something went wrong');

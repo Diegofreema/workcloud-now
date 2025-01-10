@@ -48,6 +48,7 @@ export const Worker = {
   bossId: v.optional(v.id('users')),
   gender: v.string(),
   email: v.string(),
+  type: v.optional(v.union(v.literal('processor'), v.literal('normal'))),
 };
 export const Post = {
   image: v.union(v.id('_storage'), v.string()),
@@ -79,8 +80,7 @@ export const Workspace = {
   workerId: v.optional(v.id('workers')),
   servicePointId: v.optional(v.id('servicePoints')),
   locked: v.boolean(),
-  signedIn: v.boolean(),
-  personal: v.boolean(),
+  type: v.union(v.literal('personal'), v.literal('processor'), v.literal('normal')),
 };
 export const Connection = {
   ownerId: v.id('users'),
@@ -92,15 +92,23 @@ export const WaitList = {
   customerId: v.id('users'),
   workspaceId: v.id('workspaces'),
   joinedAt: v.string(),
+  type: v.union(v.literal('waiting'), v.literal('next'), v.literal('attending')),
+};
+
+export const Attendance = {
+  signInAt: v.string(),
+  workerId: v.id('users'),
+  date: v.string(),
+  signOutAt: v.optional(v.string()),
 };
 
 export const Conversation = {
   name: v.optional(v.string()),
-  type: v.string(),
   lastMessage: v.optional(v.string()),
   participants: v.array(v.id('users')),
   lastMessageTime: v.optional(v.number()),
   lastMessageSenderId: v.optional(v.id('users')),
+  type: v.optional(v.union(v.literal('single'), v.literal('processor'), v.literal('group'))),
 };
 
 export const Message = {
@@ -108,8 +116,8 @@ export const Message = {
   recipient: v.id('users'),
   conversationId: v.id('conversations'),
   isEdited: v.optional(v.boolean()),
-  content: v.string(),
-  contentType: v.string(),
+  content: v.union(v.id('_storage'), v.string()),
+  contentType: v.union(v.literal('image'), v.literal('text')),
   seenId: v.array(v.id('users')),
   parentMessageId: v.optional(v.id('messages')),
 };
@@ -134,10 +142,13 @@ export default defineSchema({
   organizations: defineTable(Organization)
     .index('ownerId', ['ownerId'])
     .index('by_search_count', ['searchCount']),
-  workers: defineTable(Worker).index('by_org_id', ['organizationId']),
+  workers: defineTable(Worker)
+    .index('by_org_id', ['organizationId'])
+    .index('boss_Id', ['bossId'])
+    .index('userId', ['userId']),
   workspaces: defineTable(Workspace)
     .index('workspace', ['organizationId', 'ownerId'])
-    .index('personal', ['organizationId', 'personal']),
+    .index('personal', ['organizationId', 'type']),
   connections: defineTable(Connection)
     .index('by_ownerId_orgId', ['ownerId', 'connectedTo'])
     .index('by_createdAt', ['connectedAt']),
@@ -157,4 +168,7 @@ export default defineSchema({
   messages: defineTable(Message)
     .index('by_conversationId', ['conversationId'])
     .index('by_conversationId_recipient', ['conversationId', 'recipient']),
+  attendance: defineTable(Attendance)
+    .index('worker_id_date', ['workerId', 'date'])
+    .index('worker_id', ['workerId']),
 });

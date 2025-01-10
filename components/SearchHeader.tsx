@@ -27,7 +27,7 @@ export const SearchHeader = ({ placeholder, search, query, handleChange }: Props
         editable={false}
         placeholder={placeholder}
       />
-      <SearchIcon size={30} color={color} />
+      <SearchIcon size={30} color={color} strokeWidth={1.5} />
     </TouchableOpacity>
   );
 };

@@ -58,7 +58,7 @@ export const ProfileUpdateForm = ({ person }: { person: User }) => {
       const name = `${firstName} ${lastName}`;
       try {
         if (selectedImage) {
-          const storageId = await uploadProfilePicture(selectedImage, generateUploadUrl);
+          const { storageId } = await uploadProfilePicture(selectedImage, generateUploadUrl);
           await updateUser({
             name,
             phoneNumber,

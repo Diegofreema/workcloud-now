@@ -14,10 +14,10 @@ import { useCreateConvo } from '~/hooks/useCreateConvo';
 import { useGetUserId } from '~/hooks/useGetUserId';
 import { useMarkRead } from '~/hooks/useMarkRead';
 
-const SingleChat = () => {
+const ProcessorSingleChat = () => {
   const { chatId: userToChat } = useLocalSearchParams<{ chatId: Id<'users'> }>();
   const { id: loggedInUserId } = useGetUserId();
-
+  console.log({ userToChat, loggedInUserId });
   const { data: conversationData, isPending } = useTanstackQuery(
     convexQuery(api.conversation.getSingleConversationWithMessages, {
       loggedInUserId: loggedInUserId!,
@@ -39,7 +39,7 @@ const SingleChat = () => {
     loggedInUserId: loggedInUserId!,
     conversationData: conversationData!,
     id: userToChat!,
-    type: 'single',
+    type: 'processor',
   });
   useMarkRead({
     conversationData: conversationData!,
@@ -65,4 +65,4 @@ const SingleChat = () => {
   );
 };
 
-export default SingleChat;
+export default ProcessorSingleChat;

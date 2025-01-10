@@ -1,6 +1,7 @@
 import { FlatList } from 'react-native';
 
 import { Conversation } from '~/components/Conversation';
+import { EmptyText } from '~/components/EmptyText';
 import { Container } from '~/components/Ui/Container';
 import { ResultType } from '~/constants/types';
 
@@ -25,6 +26,7 @@ export const Conversations = ({ conversations, loadMore, status }: Props) => {
         onEndReachedThreshold={0.5}
         keyExtractor={(item) => item.id.toString()}
         onEndReached={onLoadMore}
+        ListEmptyComponent={() => <EmptyText text="No conversation yet" />}
       />
     </Container>
   );

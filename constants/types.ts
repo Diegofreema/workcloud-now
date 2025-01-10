@@ -32,6 +32,10 @@ export type User = {
   phoneNumber?: string;
   date_of_birth?: string;
 };
+export type ProcessorType = {
+  worker: Worker;
+  user: User;
+};
 export type Organization = {
   _id: Id<'organizations'> | undefined;
   avatar: string | null;
@@ -202,14 +206,13 @@ export type Wks = {
   workerId?: Id<'workers'>;
   servicePointId?: Id<'servicePoints'>;
   locked: boolean;
-  signedIn: boolean;
-  personal: boolean;
+  type: 'personal' | 'processor' | 'normal';
 };
 
 export type Workers = {
   created_at: string;
   experience?: string;
-  id?: number;
+  id: Id<'workers'>;
   location?: string;
   organizationId?: Organization;
   qualifications?: string;
@@ -220,6 +223,23 @@ export type Workers = {
   role: string;
   bossId: string;
   gender: string;
+  type?: 'processor' | 'normal' | undefined;
+};
+export type Worker = {
+  _creationTime: number;
+  experience?: string;
+  _id: Id<'workers'>;
+  location?: string;
+  organizationId?: Id<'organizations'>;
+  qualifications?: string;
+  servicePointId?: Id<'servicePoints'>;
+  skills: string;
+  userId: Id<'users'>;
+  workspaceId?: Id<'workspaces'>;
+  role?: string;
+  bossId?: Id<'users'>;
+  gender: string;
+  type?: 'processor' | 'normal' | undefined;
 };
 // type UserWthWorkerProfile = {
 //   avatar: string;
@@ -348,9 +368,11 @@ export type Workspace = {
 export type WorkspaceButtonProps = {
   onShowModal: () => void;
   onProcessors: () => void;
-  onSignOff: () => void;
+  onToggleAttendance: () => void;
   loading: boolean;
   signedIn: boolean;
+  attendanceText: string;
+  disable: boolean;
 };
 export type WaitList = {
   customer: User | null;
@@ -412,7 +434,7 @@ export type Conversation = {
   lastMessage?: string | undefined;
   lastMessageTime?: number | undefined;
   lastMessageSenderId?: Id<'users'> | undefined;
-  type: string;
+  type?: 'processor' | 'single' | 'group' | undefined;
   participants: Id<'users'>[];
 };
 
@@ -439,7 +461,7 @@ export type DataType = {
   recipient: Id<'users'>;
   conversationId: Id<'conversations'>;
   content: string;
-  contentType: string;
+  contentType: 'image' | 'text';
   seenId: Id<'users'>[];
 };
 

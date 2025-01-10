@@ -48,7 +48,7 @@ const Role = () => {
       const workspaceId = await createWorkspace({
         organizationId,
         ownerId: id,
-        personal,
+        type: 'personal',
         role: item,
         workerId: personal ? worker : undefined,
       });

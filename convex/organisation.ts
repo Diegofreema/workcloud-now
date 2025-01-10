@@ -66,7 +66,22 @@ export const getOrganisationsWithPostAndWorkers = query({
     };
   },
 });
-
+export const getOrganisationWithServicePoints = query({
+  args: {
+    organizationId: v.id('organizations'),
+  },
+  handler: async (ctx, { organizationId }) => {
+    const organization = await getOrganizationByOrganizationId(ctx, organizationId);
+    const servicePoints = await ctx.db
+      .query('servicePoints')
+      .withIndex('by_organisation_id', (q) => q.eq('organizationId', organizationId))
+      .collect();
+    return {
+      organization,
+      servicePoints,
+    };
+  },
+});
 export const getOrganisationById = query({
   args: {
     organisationId: v.id('organizations'),
@@ -366,7 +381,27 @@ export const deletePosts = mutation({
     await ctx.db.delete(args.postId);
   },
 });
-
+export const handleFollow = mutation({
+  args: {
+    organizationId: v.id('organizations'),
+    userId: v.id('users'),
+  },
+  handler: async (ctx, { organizationId, userId }) => {
+    const organization = await ctx.db.get(organizationId);
+    if (!organization) return;
+    const isFollowing = organization?.followers?.includes(userId);
+    const prevFollowers = organization?.followers || [];
+    if (!isFollowing) {
+      await ctx.db.patch(organizationId, {
+        followers: [...prevFollowers, userId],
+      });
+    } else {
+      await ctx.db.patch(organizationId, {
+        followers: prevFollowers.filter((f) => f !== userId),
+      });
+    }
+  },
+});
 // helpers
 
 export const getUserByOwnerId = async (ctx: QueryCtx, ownerId: Id<'users'>) => {
@@ -387,7 +422,7 @@ export const getWorkspacesByOrganizationId = async (
 ) => {
   return await ctx.db
     .query('workspaces')
-    .withIndex('personal', (q) => q.eq('organizationId', organizationId).eq('personal', true))
+    .withIndex('personal', (q) => q.eq('organizationId', organizationId).eq('type', 'personal'))
     .first();
 };
 

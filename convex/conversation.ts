@@ -11,15 +11,28 @@ export const getConversations = query({
   args: {
     userId: v.id('users'),
     paginationOpts: paginationOptsValidator,
+    type: v.union(v.literal('all'), v.literal('processor')),
   },
   handler: async (ctx, args) => {
-    const conversations = await ctx.db
-      .query('conversations')
-      .filter((q) =>
-        q.and(q.neq(q.field('lastMessage'), undefined), q.eq(q.field('type'), 'single'))
-      )
-      .order('desc')
-      .paginate(args.paginationOpts);
+    let conversations;
+    if (args.type === 'all') {
+      conversations = await ctx.db
+        .query('conversations')
+        .withIndex('by_id')
+        .filter((q) => q.neq(q.field('lastMessage'), undefined))
+        .order('desc')
+        .paginate(args.paginationOpts);
+    } else {
+      conversations = await ctx.db
+        .query('conversations')
+        .withIndex('by_id')
+        .filter((q) =>
+          q.and(q.neq(q.field('lastMessage'), undefined), q.eq(q.field('type'), args.type))
+        )
+        .order('desc')
+        .paginate(args.paginationOpts);
+    }
+
     const page = await Promise.all(
       conversations.page
         .filter((m) => m.participants.includes(args.userId))
@@ -62,6 +75,7 @@ export const getUnreadMessages = query({
 export const getUnreadAllMessages = query({
   args: {
     clerkId: v.string(),
+    type: v.union(v.literal('single'), v.literal('processor'), v.literal('group')),
   },
   handler: async (ctx, args) => {
     const user = await ctx.db
@@ -69,7 +83,21 @@ export const getUnreadAllMessages = query({
       .filter((q) => q.eq(q.field('clerkId'), args.clerkId))
       .first();
     if (!user) return 0;
-    const conversations = await ctx.db.query('conversations').collect();
+    const workerRole = await ctx.db
+      .query('workers')
+      .filter((q) => q.eq(q.field('userId'), user._id))
+      .first();
+    let conversations;
+    if (workerRole && workerRole?.role?.toLowerCase() === 'processor') {
+      conversations = await ctx.db.query('conversations').withIndex('by_id').collect();
+    } else {
+      conversations = await ctx.db
+        .query('conversations')
+        .withIndex('by_id')
+        .filter((q) => q.eq(q.field('type'), args.type))
+        .collect();
+    }
+
     if (!conversations) return 0;
     const conversationThatLoggedInUserIsIn = conversations.filter((c) =>
       c.participants.includes(user?._id)
@@ -115,10 +143,8 @@ export const getMessages = query({
       .withIndex('by_conversationId', (q) => q.eq('conversationId', args.conversationId!))
       .order('desc')
       .paginate(args.paginationOpts);
-
-    return {
-      ...messages,
-      page: messages.page.map((m) => ({
+    const pagesWithImages = messages.page.map(async (m) => {
+      const data = {
         _id: m._id,
         _creationTime: m._creationTime,
         content: m.content,
@@ -129,7 +155,19 @@ export const getMessages = query({
         senderId: m.senderId,
         seenId: m.seenId,
         recipient: m.recipient,
-      })),
+      };
+      if (m.contentType === 'image') {
+        const imageUrl = (await getImageUrl(ctx, m.content as Id<'_storage'>)) as string;
+        return {
+          ...data,
+          content: imageUrl,
+        };
+      }
+      return data;
+    });
+    return {
+      ...messages,
+      page: await Promise.all(pagesWithImages),
     };
   },
 });
@@ -183,11 +221,12 @@ export const createSingleConversation = mutation({
   args: {
     loggedInUserId: v.id('users'),
     otherUserId: v.id('users'),
+    type: v.union(v.literal('processor'), v.literal('single'), v.literal('group')),
   },
   handler: async (ctx, args) => {
     await ctx.db.insert('conversations', {
       participants: [args.loggedInUserId, args.otherUserId],
-      type: 'single',
+      type: args.type,
     });
   },
 });
@@ -219,15 +258,22 @@ export const createMessages = mutation({
     conversationId: v.id('conversations'),
     content: v.string(),
     parentMessageId: v.optional(v.id('messages')),
+    contentType: v.union(v.literal('image'), v.literal('text')),
+    uploadUrl: v.optional(v.string()),
   },
   handler: async (ctx, args) => {
     await ctx.db.insert('messages', {
-      ...args,
-      contentType: 'text',
+      recipient: args.recipient,
+      conversationId: args.conversationId,
+      content: args.content,
+      parentMessageId: args.parentMessageId,
+      contentType: args.contentType,
+      senderId: args.senderId,
       seenId: [args.senderId],
     });
+    const lastMessage = args.contentType === 'image' ? args.uploadUrl : args.content;
     await ctx.db.patch(args.conversationId, {
-      lastMessage: args.content,
+      lastMessage,
       lastMessageTime: Date.now(),
       lastMessageSenderId: args.senderId,
     });

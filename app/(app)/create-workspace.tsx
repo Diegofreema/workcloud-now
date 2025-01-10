@@ -88,10 +88,7 @@ const CreateWorkSpace = () => {
       if (!id) return;
 
       try {
-        const storageId: Id<'_storage'> = await uploadProfilePicture(
-          selectedImage,
-          generateUploadUrl
-        );
+        const { storageId } = await uploadProfilePicture(selectedImage, generateUploadUrl);
         const organizationId = await createOrganization({
           ownerId: id,
           avatar: storageId,

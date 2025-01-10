@@ -1,24 +1,23 @@
-import { useAuth } from '@clerk/clerk-expo';
 import { EvilIcons } from '@expo/vector-icons';
+import { useMutation, useQuery } from 'convex/react';
 import { Image } from 'expo-image';
 import * as Linking from 'expo-linking';
 import { useLocalSearchParams } from 'expo-router';
-import React, { useMemo, useState } from 'react';
-import { Pressable, ScrollView, Text, View, useWindowDimensions } from 'react-native';
+import React, { useState } from 'react';
+import { Pressable, ScrollView, Text, useWindowDimensions, View } from 'react-native';
 import { toast } from 'sonner-native';
-
-import { ErrorComponent } from '../../../components/Ui/ErrorComponent';
-import { LoadingComponent } from '../../../components/Ui/LoadingComponent';
-import { colors } from '../../../constants/Colors';
-import { useDarkMode } from '../../../hooks/useDarkMode';
-import { useGetFollowers, useOrg, useServicePoints } from '../../../lib/queries';
 
 import { HeaderNav } from '~/components/HeaderNav';
 import { ServicePointLists } from '~/components/ServicePointLists';
 import { Container } from '~/components/Ui/Container';
+import { LoadingComponent } from '~/components/Ui/LoadingComponent';
 import { MyButton } from '~/components/Ui/MyButton';
 import { MyText } from '~/components/Ui/MyText';
-import { onFollow, onUnFollow } from '~/lib/helper';
+import { colors } from '~/constants/Colors';
+import { api } from '~/convex/_generated/api';
+import { Id } from '~/convex/_generated/dataModel';
+import { useDarkMode } from '~/hooks/useDarkMode';
+import { useGetUserId } from '~/hooks/useGetUserId';
 
 type SubProps = {
   name: any;
@@ -70,91 +69,43 @@ export const OrganizationItems = ({ name, text, website }: SubProps) => {
   );
 };
 const Overview = () => {
-  const { id } = useLocalSearchParams<{ id: string }>();
+  const { id } = useLocalSearchParams<{ id: Id<'organizations'> }>();
   const [following, setFollowing] = useState(false);
 
-  const { userId } = useAuth();
+  const { id: loggedInUser } = useGetUserId();
   const { darkMode } = useDarkMode();
-  const [loading, setLoading] = useState(false);
 
   const { width } = useWindowDimensions();
-  const { data, isPending, error, refetch, isPaused } = useOrg(id);
-  const {
-    data: servicePoints,
-    isPending: isPendingServicePoints,
-    refetch: refetchServicePoints,
-    isPaused: isPausedServicePoints,
-    isError: isErrorServicePoints,
-  } = useServicePoints(data?.organization?.id!);
-  const {
-    data: followersData,
-    isPending: isPendingFollowers,
-    refetch: refetchFollowers,
-    isPaused: isPausedFollowers,
-    isError,
-  } = useGetFollowers(id);
-  const isFollowingMemo = useMemo(() => {
-    if (!followersData) return false;
-
-    const isFollowing = followersData?.followers.find((f) => f?.followerId === userId);
-    if (isFollowing) {
-      return true;
-    } else {
-      return false;
-    }
-  }, [followersData]);
-
-  const handleRefetch = () => {
-    refetch();
-    refetchFollowers();
-    refetchServicePoints();
-  };
-
-  if (
-    error ||
-    isPaused ||
-    isError ||
-    isPausedFollowers ||
-    isErrorServicePoints ||
-    isPausedServicePoints
-  ) {
-    return <ErrorComponent refetch={handleRefetch} />;
-  }
-  if (isPending || isPendingFollowers || isPendingServicePoints) {
+  const data = useQuery(api.organisation.getOrganisationWithServicePoints, { organizationId: id });
+  const handleFollow = useMutation(api.organisation.handleFollow);
+  if (!data) {
     return <LoadingComponent />;
   }
-
-  const { followers } = followersData;
+  const isFollowing = data?.organization?.followers?.includes(loggedInUser!) ?? false;
 
   const onHandleFollow = async () => {
-    setLoading(true);
+    setFollowing(true);
     try {
-      if (isFollowingMemo) {
-        await onUnFollow(organization?.id, organization?.name, userId!);
-        setFollowing(false);
-      } else {
-        onFollow(organization?.id, organization?.name, userId!);
-        setFollowing(true);
-      }
+      await handleFollow({ organizationId: id, userId: loggedInUser! });
     } catch (error) {
       console.log(error);
-      toast.error(`Failed to ${isFollowingMemo ? 'Leave' : 'Join'}`, {
+      toast.error(`Failed to ${isFollowing ? 'Leave' : 'Join'}`, {
         description: 'Please try again later',
       });
     } finally {
-      setLoading(false);
+      setFollowing(false);
     }
   };
 
-  const { organization } = data;
+  const { organization, servicePoints } = data;
 
   const startDay = organization?.workDays?.split('-')[0];
   const endDay = organization?.workDays?.split('-')[1];
-  const unfollowingText = loading ? 'Leaving...' : 'Leave';
-  const followingText = loading ? 'Joining...' : 'Join';
+  const unfollowingText = following ? 'Leaving...' : 'Leave';
+  const followingText = following ? 'Joining...' : 'Join';
   return (
     <Container>
-      <HeaderNav title={organization?.name} subTitle={organization?.category} />
+      <HeaderNav title={organization?.name!} subTitle={organization?.category} />
 
       <ScrollView showsVerticalScrollIndicator={false} style={{ flex: 1 }}>
         <View
@@ -167,7 +118,7 @@ const Overview = () => {
             <Image
               style={{ width: 70, height: 70, borderRadius: 50 }}
               contentFit="cover"
-              source={{ uri: organization?.avatar }}
+              source={{ uri: organization?.avatar! }}
             />
             <View>
               <Text
@@ -229,7 +180,7 @@ const Overview = () => {
                   {organization?.start}
                 </Text>
               </View>
-              <Text style={{ marginBottom: 8 }}> — </Text>
+              <Text style={{ marginBottom: 4 }}> — </Text>
               <View
                 style={{
                   backgroundColor: '#FFD9D9',
@@ -263,12 +214,16 @@ const Overview = () => {
               fontSize: 12,
               color: darkMode === 'dark' ? colors.white : colors.black,
             }}>
-            Members {followers?.length}
+            Members {organization?.followers?.length || 0}
           </Text>
         </View>
-        <View style={{ marginTop: 10, marginBottom: 20 }}>
-          <MyButton onPress={onHandleFollow} disabled={loading} contentStyle={{ height: 50 }}>
-            {isFollowingMemo ? unfollowingText : followingText}
+        <View style={{ marginTop: 10, marginBottom: 20, width: '100%' }}>
+          <MyButton
+            onPress={onHandleFollow}
+            disabled={following}
+            contentStyle={{ height: 50 }}
+            buttonStyle={{ width: '100%' }}>
+            {isFollowing ? unfollowingText : followingText}
           </MyButton>
         </View>
         <ServicePointLists data={servicePoints} />

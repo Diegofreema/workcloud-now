@@ -1,4 +1,3 @@
-import { Avatar } from '@rneui/themed';
 import { parse } from 'date-fns';
 import { useRouter } from 'expo-router';
 import { Pressable, StyleSheet, View } from 'react-native';
@@ -7,6 +6,7 @@ import { HStack } from './HStack';
 import { MyText } from './Ui/MyText';
 import VStack from './Ui/VStack';
 
+import { Avatar } from '~/components/Ui/Avatar';
 import { colors } from '~/constants/Colors';
 import { Connection } from '~/constants/types';
 import { checkIfOpen, formatDateToNowHelper } from '~/lib/helper';
@@ -28,7 +28,7 @@ export const Item = (item: Connection & { isLastItemOnList?: boolean }) => {
       style={({ pressed }) => [styles.item, pressed && { opacity: 0.3 }]}>
       <HStack justifyContent="space-between" alignItems="center">
         <HStack gap={7} alignItems="center">
-          <Avatar size={40} rounded source={{ uri: item?.organisation?.avatar! }} />
+          <Avatar image={item?.organisation?.avatar!} width={50} height={50} />
 
           <VStack>
             <MyText poppins="Bold" fontSize={10}>
