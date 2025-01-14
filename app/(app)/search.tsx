@@ -1,8 +1,8 @@
 import { Avatar } from '@rneui/themed';
 import { useMutation, useQuery } from 'convex/react';
-import { ErrorBoundaryProps, useRouter } from 'expo-router';
-import React, { useState } from 'react';
-import { ActivityIndicator, FlatList, Pressable, Text } from 'react-native';
+import { ErrorBoundaryProps, useGlobalSearchParams, useRouter } from 'expo-router';
+import React, { useEffect, useState } from 'react';
+import { ActivityIndicator, FlatList, Pressable } from 'react-native';
 import { useDebounce } from 'use-debounce';
 
 import { HStack } from '~/components/HStack';
@@ -13,6 +13,7 @@ import { Container } from '~/components/Ui/Container';
 import { ErrorComponent } from '~/components/Ui/ErrorComponent';
 import { LoadingComponent } from '~/components/Ui/LoadingComponent';
 import { MyText } from '~/components/Ui/MyText';
+import { Suggestions } from '~/components/Ui/Suggestions';
 import VStack from '~/components/Ui/VStack';
 import { SearchServicePoints } from '~/constants/types';
 import { api } from '~/convex/_generated/api';
@@ -25,14 +26,24 @@ export function ErrorBoundary({ retry }: ErrorBoundaryProps) {
 const Search = () => {
   const [value, setValue] = useState('');
   const [val] = useDebounce(value, 500);
-
+  const { query } = useGlobalSearchParams<{ query: string }>();
   const { id } = useGetUserId();
+  useEffect(() => {
+    setValue(query);
+  }, [query]);
+
+  console.log({ query, value });
   const topSearch = useQuery(api.organisation.getTopSearches, { userId: id! });
   const searches = useQuery(api.organisation.getOrganisationsByServicePointsSearchQuery, {
     query: val,
     ownerId: id!,
   });
-
+  const data = useQuery(api.organisation.getOrganisationsBySearchQuery, {
+    query: val,
+    ownerId: id!,
+  });
+  const addSuggestionToDb = useMutation(api.suggestions.addToSuggestions);
+  const suggestions = useQuery(api.suggestions.getSuggestions, { query: value });
   if (!topSearch) {
     return (
       <Container>
@@ -41,12 +52,19 @@ const Search = () => {
       </Container>
     );
   }
-
-  const showResultText = val !== '' && searches;
-  const loading = val.length > 0 && !searches;
+  const dataToArray = data || [];
+  const searchToArray = searches || [];
+  const dataToRender = [...new Set([...searchToArray, ...dataToArray])];
+  console.log(dataToRender);
+  const addSuggestion = async () => {
+    await addSuggestionToDb({ suggestion: val });
+  };
+  const showResultText = val !== '' && searchToArray?.length > 0;
+  const loading = val?.length > 0 && !searches;
   return (
     <Container>
       <SearchComponent value={value} setValue={setValue} />
+      {value && <Suggestions suggestions={suggestions} />}
       <TSearch data={topSearch} />
       <RecentSearch />
       {loading ? (
@@ -67,14 +85,18 @@ const Search = () => {
           }
           style={{ marginTop: 20 }}
           showsVerticalScrollIndicator={false}
-          data={searches}
+          data={dataToRender}
           keyExtractor={(_, index) => index.toString()}
           renderItem={({ item }) => {
-            return <OrganizationItem item={item!} />;
+            return <OrganizationItem item={item!} addToDb={addSuggestion} />;
           }}
-          ListEmptyComponent={() => (
-            <Text style={{ color: 'white', fontFamily: 'PoppinsBold' }}>No results found</Text>
-          )}
+          ListEmptyComponent={() =>
+            val ? (
+              <MyText poppins="Bold" fontSize={15}>
+                No results found
+              </MyText>
+            ) : null
+          }
         />
       )}
     </Container>
@@ -83,13 +105,20 @@ const Search = () => {
 
 export default Search;
 
-const OrganizationItem = ({ item }: { item: SearchServicePoints }) => {
+const OrganizationItem = ({
+  item,
+  addToDb,
+}: {
+  item: SearchServicePoints;
+  addToDb: () => void;
+}) => {
   const increaseCount = useMutation(api.organisation.increaseSearchCount);
 
   const router = useRouter();
   const onPress = async () => {
     // @ts-ignore
     router.push(`reception/${item.id}`);
+    addToDb();
     try {
       await increaseCount({ id: item.id });
     } catch (e) {

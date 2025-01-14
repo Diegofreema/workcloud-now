@@ -1,12 +1,13 @@
 /* eslint-disable prettier/prettier */
 
-import { Avatar } from '@rneui/themed';
+
 import { useMutation } from 'convex/react';
 import { router } from 'expo-router';
 import { FlatList, Pressable, View } from 'react-native';
 
 import { MyText } from './Ui/MyText';
 
+import { Avatar } from "~/components/Ui/Avatar";
 import { SearchType } from '~/constants/types';
 import { api } from '~/convex/_generated/api';
 
@@ -51,7 +52,7 @@ const Item = ({ item }: { item: SearchType }) => {
 
         alignItems: 'center',
       })}>
-      <Avatar source={{ uri: item.avatar! }} size={60} rounded />
+      <Avatar image={item.avatar!}  />
       <MyText poppins="Light" fontSize={14} style={{ textAlign: 'center', maxWidth: 80 }}>
         {item.name}
       </MyText>

@@ -9,7 +9,7 @@ import { useDarkMode } from '~/hooks/useDarkMode';
 export const SearchComponent = ({
   value,
   setValue,
-  placeholder = 'Search by description',
+  placeholder = 'Search..',
   customStyles,
 }: {
   value?: string;
@@ -20,10 +20,10 @@ export const SearchComponent = ({
   const { darkMode } = useDarkMode();
   const router = useRouter();
   const onPress = () => {
-    if (value === '') {
-      router.back();
-    }
+    setValue && setValue('');
+    router.back();
   };
+
   return (
     <View style={customStyles}>
       <SearchBar
@@ -36,7 +36,7 @@ export const SearchComponent = ({
         value={value}
         searchIcon={
           <AntDesign
-            name={value === '' ? 'arrowleft' : 'search1'}
+            name="arrowleft"
             size={25}
             color={darkMode === 'dark' ? 'white' : 'black'}
             onPress={onPress}

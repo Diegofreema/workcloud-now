@@ -4,7 +4,7 @@ import { DocumentPickerResult } from 'expo-document-picker';
 import * as FileSystem from 'expo-file-system';
 import { ImagePickerAsset } from 'expo-image-picker';
 import * as MediaLibrary from 'expo-media-library';
-import { Platform } from 'react-native';
+import { toast } from 'sonner-native';
 
 import { supabase } from './supabase';
 
@@ -20,117 +20,107 @@ type User = {
   avatar: string;
 };
 
-export const uriToBase64 = async (uri: string): Promise<string> => {
+export const downloadAndSaveImage = async (imageUrl: string) => {
+  const fileUri = FileSystem.documentDirectory + `${new Date().getTime()}.jpg`;
+
   try {
-    const downloadResult = await FileSystem.downloadAsync(
-      uri,
-      FileSystem.cacheDirectory + 'temp_image.jpg'
-    );
-    const localUri = downloadResult.uri;
-
-    // Read the file and convert to base64
-    const base64 = await FileSystem.readAsStringAsync(localUri, {
-      encoding: FileSystem.EncodingType.Base64,
-    });
-
-    // Clean up temporary file if we downloaded it
-
-    await FileSystem.deleteAsync(localUri);
-
-    return base64;
-  } catch (error) {
-    console.error('Error converting image to base64:', error);
-    throw error;
+    const res = await FileSystem.downloadAsync(imageUrl, fileUri);
+    return saveFile(res.uri);
+  } catch (err) {
+    console.log('FS Err: ', err);
   }
 };
 
-async function saveFile(uri: string, filename: string, mimeType: string) {
-  if (Platform.OS === 'android') {
-    const permissions = await FileSystem.StorageAccessFramework.requestDirectoryPermissionsAsync();
-
-    if (permissions.granted) {
-      const base64 = await FileSystem.readAsStringAsync(uri, {
-        encoding: FileSystem.EncodingType.Base64,
-      });
-
-      await FileSystem.StorageAccessFramework.createFileAsync(
-        permissions.directoryUri,
-        filename,
-        mimeType
-      )
-        .then(async (uri) => {
-          await FileSystem.writeAsStringAsync(uri, base64, {
-            encoding: FileSystem.EncodingType.Base64,
-          });
-        })
-        .catch((e) => console.log(e));
+const saveFile = async (fileUri: string) => {
+  const { status } = await MediaLibrary.requestPermissionsAsync();
+  if (status === 'granted') {
+    try {
+      const asset = await MediaLibrary.createAssetAsync(fileUri);
+      const album = await MediaLibrary.getAlbumAsync('Download');
+      if (album == null) {
+        const result = await MediaLibrary.createAlbumAsync('Download', asset, false);
+        if (result) {
+          toast.success('Image saved to Photos');
+        }
+      } else {
+        const result = await MediaLibrary.addAssetsToAlbumAsync([asset], album, false);
+        if (result) {
+          toast.success('Image saved to Photos');
+        }
+      }
+    } catch (err) {
+      console.log('Save err: ', err);
+      toast.error('Failed to save image');
     }
-  }
-}
-export async function download(imgUrl: string) {
-  const filename = 'image.png';
-  const result = await FileSystem.downloadAsync(imgUrl, FileSystem.documentDirectory + filename);
-
-  // Log the download result
-  console.log({ result });
-
-  // Save the downloaded file
-  await saveFile(result.uri, filename, result.headers['Content-Type']);
-}
-export const saveImageToGallery = async (imageUri: string): Promise<boolean> => {
-  let isDownloaded = false;
-  try {
-    // Request permissions
-    const { status } = await MediaLibrary.requestPermissionsAsync();
-    if (status !== 'granted') {
-      throw new Error('Permission not granted');
-    }
-    const downloadResult = await FileSystem.downloadAsync(
-      imageUri,
-      FileSystem.cacheDirectory + 'temp_image.jpg'
-    );
-    const localUri = downloadResult.uri;
-
-    // Read the file and convert to base64
-    const base64 = await FileSystem.readAsStringAsync(localUri, {
-      encoding: FileSystem.EncodingType.Base64,
-    });
-    // Clean up temporary file if we downloaded it
-
-    await FileSystem.deleteAsync(localUri);
-
-    // Generate unique filename
-    const filename = `${Date.now()}.jpg`;
-
-    // Define save path based on platform
-    const destinationUri = Platform.select({
-      ios: `${FileSystem.documentDirectory}${filename}`,
-      android: `${FileSystem.cacheDirectory}${filename}`,
-    });
-
-    if (!destinationUri) {
-      throw new Error('Could not determine file path');
-    }
-
-    // Download or copy the image
-    await FileSystem.copyAsync({
-      from: base64,
-      to: destinationUri,
-    });
-
-    // Save to device gallery
-    const asset = await MediaLibrary.createAssetAsync(destinationUri);
-    await MediaLibrary.createAlbumAsync('workcloud', asset, false);
-
-    // Clean up temporary file
-    await FileSystem.deleteAsync(destinationUri);
-    isDownloaded = true;
-    return isDownloaded;
-  } catch (error) {
-    console.error('Error saving image:', error);
-    throw error;
+  } else if (status === 'denied') {
+    toast.error('please allow permissions to download');
   }
 };
+
+// export async function download(imgUrl: string) {
+//   const filename = 'image.png';
+//   const result = await FileSystem.downloadAsync(imgUrl, FileSystem.documentDirectory + filename);
+
+//   // Log the download result
+//   console.log({ result });
+
+//   // Save the downloaded file
+//   await saveFile(result.uri, filename, result.headers['Content-Type']);
+// }
+// export const saveImageToGallery = async (imageUri: string): Promise<boolean> => {
+//   let isDownloaded = false;
+//   try {
+//     // Request permissions
+//     const { status } = await MediaLibrary.requestPermissionsAsync();
+//     if (status !== 'granted') {
+//       throw new Error('Permission not granted');
+//     }
+//     const downloadResult = await FileSystem.downloadAsync(
+//       imageUri,
+//       FileSystem.cacheDirectory + 'temp_image.jpg'
+//     );
+//     const localUri = downloadResult.uri;
+
+//     // Read the file and convert to base64
+//     const base64 = await FileSystem.readAsStringAsync(localUri, {
+//       encoding: FileSystem.EncodingType.Base64,
+//     });
+//     // Clean up temporary file if we downloaded it
+
+//     await FileSystem.deleteAsync(localUri);
+
+//     // Generate unique filename
+//     const filename = `${Date.now()}.jpg`;
+
+//     // Define save path based on platform
+//     const destinationUri = Platform.select({
+//       ios: `${FileSystem.documentDirectory}${filename}`,
+//       android: `${FileSystem.cacheDirectory}${filename}`,
+//     });
+
+//     if (!destinationUri) {
+//       throw new Error('Could not determine file path');
+//     }
+
+//     // Download or copy the image
+//     await FileSystem.copyAsync({
+//       from: base64,
+//       to: destinationUri,
+//     });
+
+//     // Save to device gallery
+//     const asset = await MediaLibrary.createAssetAsync(destinationUri);
+//     await MediaLibrary.createAlbumAsync('workcloud', asset, false);
+
+//     // Clean up temporary file
+//     await FileSystem.deleteAsync(destinationUri);
+//     isDownloaded = true;
+//     return isDownloaded;
+//   } catch (error) {
+//     console.error('Error saving image:', error);
+//     throw error;
+//   }
+// };
 
 export const createToken = async (userId: string) => {
   try {
@@ -329,4 +319,27 @@ export const checkIfOpen = (open: string, end: string): boolean => {
     start: openTime,
     end: closeTime,
   });
+};
+
+export const calculateRatingStats = (reviews: { stars: number; count: number }[]) => {
+  // Calculate total ratings
+  const totalRatings = reviews.reduce((acc, curr) => acc + curr.count, 0);
+
+  // Calculate average rating
+  const averageRating =
+    reviews.reduce((acc, curr) => {
+      return acc + curr.stars * curr.count;
+    }, 0) / totalRatings;
+
+  // Calculate percentages for each star rating
+  const ratingPercentages = reviews.map((review) => ({
+    ...review,
+    percentage: Math.round((review.count / totalRatings) * 100),
+  }));
+
+  return {
+    averageRating: Number(averageRating.toFixed(1)),
+    totalRatings,
+    ratingPercentages,
+  };
 };

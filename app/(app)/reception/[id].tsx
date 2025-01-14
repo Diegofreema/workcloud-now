@@ -21,6 +21,7 @@ import { toast } from 'sonner-native';
 import { EmptyText } from '~/components/EmptyText';
 import { HStack } from '~/components/HStack';
 import { HeaderNav } from '~/components/HeaderNav';
+import { Review } from '~/components/Review';
 import { Container } from '~/components/Ui/Container';
 import { ErrorComponent } from '~/components/Ui/ErrorComponent';
 import { LoadingComponent } from '~/components/Ui/LoadingComponent';
@@ -168,6 +169,7 @@ const Reception = () => {
           Representatives
         </MyText>
         <Representatives data={data?.workers} />
+        <Review userId={from!} organizationId={id} show showComments />
       </ScrollView>
     </Container>
   );

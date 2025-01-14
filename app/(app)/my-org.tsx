@@ -1,6 +1,6 @@
-import { convexQuery } from '@convex-dev/react-query';
+import { useQuery } from 'convex/react';
 import { EvilIcons } from '@expo/vector-icons';
-import { useQuery } from '@tanstack/react-query';
+
 import { Image } from 'expo-image';
 import * as Linking from 'expo-linking';
 import { router } from 'expo-router';
@@ -11,8 +11,8 @@ import { AuthHeader } from '~/components/AuthHeader';
 import { CreateWorkspaceModal } from '~/components/Dialogs/CreateWorkspace';
 import { DeleteWksSpaceModal } from '~/components/Dialogs/DeleteWks';
 import { SelectRow } from '~/components/Dialogs/SelectRow';
+import { Review } from '~/components/Review';
 import { Container } from '~/components/Ui/Container';
-import { ErrorComponent } from '~/components/Ui/ErrorComponent';
 import { LoadingComponent } from '~/components/Ui/LoadingComponent';
 import { MyText } from '~/components/Ui/MyText';
 import { WorkspaceDetails } from '~/components/WorkspaceDetails';
@@ -25,19 +25,14 @@ import { useGetUserId } from '~/hooks/useGetUserId';
 
 const MyOrg = () => {
   const { id } = useGetUserId();
-  const { data, isPending, isError, refetch, error } = useQuery(
-    convexQuery(api.organisation.getOrganizationWithOwnerAndWorkspaces, {
-      ownerId: id as Id<'users'>,
-    })
-  );
-  console.log(error);
+  const data = useQuery(api.organisation.getOrganizationWithOwnerAndWorkspaces, {
+    ownerId: id as Id<'users'>,
+  });
+  console.log(data?.owner?.organizationId);
   const { onOpen } = useCreate();
   const { darkMode } = useDarkMode();
 
-  if (isError) {
-    return <ErrorComponent refetch={refetch()} />;
-  }
-  if (isPending) {
+  if (!data) {
     return <LoadingComponent />;
   }
 
@@ -248,6 +243,7 @@ const MyOrg = () => {
             name="Service point"
           />
         </View>
+        <Review userId={id!} organizationId={data?.owner?.organizationId!} showComments />
       </ScrollView>
     </Container>
   );

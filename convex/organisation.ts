@@ -197,13 +197,14 @@ export const getTopSearches = query({
 });
 export const getOrganisationsByServicePointsSearchQuery = query({
   args: {
-    query: v.string(),
+    query: v.optional(v.string()),
     ownerId: v.id('users'),
   },
-  handler: async (ctx, args) => {
+  handler: async (ctx, { query, ownerId }) => {
+    if (!query) return [];
     const servicePoints = await ctx.db
       .query('servicePoints')
-      .withSearchIndex('description', (q) => q.search('description', args.query))
+      .withSearchIndex('description', (q) => q.search('description', query))
       .collect();
     if (!servicePoints) return [];
     const organisation = await Promise.all(
@@ -212,7 +213,36 @@ export const getOrganisationsByServicePointsSearchQuery = query({
       })
     );
 
-    return organisation.filter((org) => org?.ownerId !== args.ownerId);
+    return organisation.filter((org) => org?.ownerId !== ownerId) || [];
+  },
+});
+export const getOrganisationsBySearchQuery = query({
+  args: {
+    query: v.optional(v.string()),
+    ownerId: v.id('users'),
+  },
+  handler: async (ctx, { query, ownerId }) => {
+    if (!query) return [];
+    const organisations = await ctx.db
+      .query('organizations')
+      .withSearchIndex('name', (q) => q.search('name', query))
+      .filter((q) => q.neq(q.field('ownerId'), ownerId))
+      .collect();
+    if (!organisations) return [];
+    const organisationsWithImages = await Promise.all(
+      organisations.map(async (org) => {
+        const avatar = await getImageUrl(ctx, org.avatar as Id<'_storage'>);
+        return {
+          name: org.name,
+          avatar,
+          id: org._id,
+          ownerId: org.ownerId,
+          description: org.description,
+        };
+      })
+    );
+
+    return organisationsWithImages || [];
   },
 });
 export const getStaffsByBossId = query({

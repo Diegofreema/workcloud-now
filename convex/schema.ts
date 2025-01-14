@@ -122,6 +122,10 @@ export const Message = {
   parentMessageId: v.optional(v.id('messages')),
 };
 
+export const Suggestion = {
+  text: v.string(),
+};
+
 export const ServicePoints = {
   description: v.string(),
   externalLink: v.optional(v.boolean()),
@@ -131,7 +135,12 @@ export const ServicePoints = {
   service: v.boolean(),
   staff: v.id('workers'),
 };
-
+export const Reviews = {
+  organizationId: v.id('organizations'),
+  text: v.optional(v.string()),
+  rating: v.number(),
+  userId: v.id('users'),
+};
 export default defineSchema({
   users: defineTable(User)
     .index('by_workerId', ['workerId'])
@@ -141,7 +150,10 @@ export default defineSchema({
     }),
   organizations: defineTable(Organization)
     .index('ownerId', ['ownerId'])
-    .index('by_search_count', ['searchCount']),
+    .index('by_search_count', ['searchCount'])
+    .searchIndex('name', {
+      searchField: 'name',
+    }),
   workers: defineTable(Worker)
     .index('by_org_id', ['organizationId'])
     .index('boss_Id', ['bossId'])
@@ -171,4 +183,10 @@ export default defineSchema({
   attendance: defineTable(Attendance)
     .index('worker_id_date', ['workerId', 'date'])
     .index('worker_id', ['workerId']),
+  suggestions: defineTable(Suggestion)
+    .searchIndex('text', {
+      searchField: 'text',
+    })
+    .index('by_text', ['text']),
+  reviews: defineTable(Reviews).index('by_organization_id', ['organizationId']),
 });

@@ -1,6 +1,9 @@
-import { Id } from '~/convex/_generated/dataModel';
+import { Doc, Id } from '~/convex/_generated/dataModel';
 import { Database } from '~/supabase';
 
+export type ReviewType = Doc<'reviews'> & {
+  user: Doc<'users'> | null;
+};
 export type connections =
   | {
       name: string;
@@ -413,7 +416,11 @@ export type MessageSection = {
   title: string;
   data: Message[];
 };
-
+export type SuggestionTypes = {
+  _id: Id<'suggestions'>;
+  _creationTime: number;
+  text: string;
+};
 export type MessageData = {
   _id: Id<'messages'>;
   _creationTime: number;
@@ -488,4 +495,10 @@ export type GiftChatType = {
     _id: number | Id<'users'>;
     name?: string;
   };
+};
+
+export type RatingPercentageType = {
+  count: number;
+  percentage: number;
+  stars: number;
 };

@@ -1,13 +1,14 @@
 import { PropsWithChildren } from 'react';
-import { TouchableOpacity } from 'react-native';
+import { StyleProp, TouchableOpacity, ViewStyle } from 'react-native';
 
 type Props = {
   onPress: () => void;
+  style?: StyleProp<ViewStyle>;
 };
 
-export const CustomPressable = ({ children, onPress }: PropsWithChildren<Props>) => {
+export const CustomPressable = ({ children, onPress, style }: PropsWithChildren<Props>) => {
   return (
-    <TouchableOpacity onPress={onPress} style={{ padding: 5 }} activeOpacity={0.5}>
+    <TouchableOpacity onPress={onPress} style={[{ padding: 5 }, style]} activeOpacity={0.5}>
       {children}
     </TouchableOpacity>
   );

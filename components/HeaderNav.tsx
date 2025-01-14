@@ -1,6 +1,6 @@
 import { FontAwesome } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
-import { Pressable, View } from 'react-native';
+import { Pressable, StyleProp, View, ViewStyle } from 'react-native';
 
 import { colors } from '../constants/Colors';
 import { useDarkMode } from '../hooks/useDarkMode';
@@ -11,9 +11,10 @@ type Props = {
   title: string;
   RightComponent?: () => JSX.Element;
   subTitle?: string;
+  style?: StyleProp<ViewStyle>;
 };
 
-export const HeaderNav = ({ title, RightComponent, subTitle }: Props): JSX.Element => {
+export const HeaderNav = ({ title, RightComponent, subTitle, style }: Props): JSX.Element => {
   const router = useRouter();
   const { darkMode } = useDarkMode();
 
@@ -22,12 +23,15 @@ export const HeaderNav = ({ title, RightComponent, subTitle }: Props): JSX.Eleme
   };
   return (
     <View
-      style={{
-        flexDirection: 'row',
-        justifyContent: 'space-between',
-        backgroundColor: darkMode === 'dark' ? 'black' : 'white',
-        alignItems: 'center',
-      }}>
+      style={[
+        {
+          flexDirection: 'row',
+          justifyContent: 'space-between',
+          backgroundColor: darkMode === 'dark' ? 'black' : 'white',
+          alignItems: 'center',
+        },
+        style,
+      ]}>
       <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
         <Pressable
           onPress={onGoBack}

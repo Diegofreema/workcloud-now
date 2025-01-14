@@ -140,7 +140,7 @@ export const ChatComponent = ({
         renderSystemMessage={(props) => (
           <SystemMessage {...props} textStyle={{ color: colors.gray }} />
         )}
-        renderMessageImage={(props) => <RenderMessageImage {...props} />}
+        renderMessageImage={RenderMessageImage}
         renderActions={(props) => <RenderActions onPickDocument={onPickDocument} {...props} />}
         renderComposer={(props) => <RenderComposer onPickImage={onPickImage} {...props} />}
         bottomOffset={insets.bottom}
@@ -151,11 +151,9 @@ export const ChatComponent = ({
         renderUsernameOnMessage
         infiniteScroll
         loadEarlier={loadEarlier}
-        renderChatEmpty={() => <EmptyChat />}
+        renderChatEmpty={EmptyChat}
         onLoadEarlier={onLoadMore}
-        renderUsername={(user) => (
-          <Text style={{ fontSize: 10, color: colors.black, paddingLeft: 7 }}>{user.name}</Text>
-        )}
+        renderUsername={(user) => <Text style={styles.username}>{user.name}</Text>}
         renderBubble={RenderBubble}
         renderSend={RenderSend}
       />
@@ -203,4 +201,5 @@ const styles = StyleSheet.create({
     borderRadius: 7777,
     padding: 15,
   },
+  username: { fontSize: 10, color: colors.black, paddingLeft: 7 },
 });

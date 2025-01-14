@@ -8,14 +8,13 @@ import { FlatList, Pressable, StyleSheet, View } from 'react-native';
 import Modal from 'react-native-modal';
 import { toast } from 'sonner-native';
 
-import { colors } from '../../constants/Colors';
-import { useSelectNewRow } from '../../hooks/useSelectNewRow';
 import { HStack } from '../HStack';
 import { MyText } from '../Ui/MyText';
 
+import { colors } from '~/constants/Colors';
 import { Profile } from '~/constants/types';
 import { useDarkMode } from '~/hooks/useDarkMode';
-import { useDetailsToAdd } from '~/hooks/useDetailsToAdd';
+import { useSelectNewRow } from '~/hooks/useSelectNewRow';
 import { supabase } from '~/lib/supabase';
 
 const roles = [
@@ -58,7 +57,7 @@ const roles = [
 ];
 export const SelectNewRow = ({ id }: { id: string }) => {
   const { isOpen, onClose } = useSelectNewRow();
-  const { getData } = useDetailsToAdd();
+
   const { userId } = useAuth();
   const { darkMode } = useDarkMode();
   const [profile, setProfile] = useState<Profile | null>(null);
