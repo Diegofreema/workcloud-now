@@ -2,7 +2,6 @@ import { useOAuth, useSignIn, useSignUp } from '@clerk/clerk-expo';
 import { FontAwesome } from '@expo/vector-icons';
 import { Divider, Text } from '@rneui/themed';
 import { LinearGradient } from 'expo-linear-gradient';
-import React from 'react';
 import { Image, ScrollView, StyleSheet, useWindowDimensions, View } from 'react-native';
 
 import { AuthTitle } from '~/components/AuthTitle';
@@ -115,11 +114,10 @@ export default function SignInScreen() {
           <View style={{ marginTop: 'auto', marginBottom: 20 }}>
             <MyButton
               disabled={!isLoaded}
+              buttonStyle={{ borderRadius: 6 }}
               disabledStyle={{ backgroundColor: 'rgba(255, 255, 255, 0.3)' }}
-              containerStyle={{ marginTop: 'auto' }}
               contentStyle={{
                 height: 60,
-                borderRadius: 10,
                 marginTop: 'auto',
                 marginBottom: 50,
                 marginHorizontal: 40,

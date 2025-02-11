@@ -1,5 +1,3 @@
-import React from 'react';
-
 import { ActionBtn } from '~/components/Buttons/ActionBtn';
 import { HStack } from '~/components/HStack';
 import { colors } from '~/constants/Colors';
@@ -25,6 +23,7 @@ export const WorkspaceButtons = ({
           borderColor: signedIn ? 'red' : colors.dialPad,
           opacity: disable ? 0.4 : 1,
         }}
+        textStyle={{ color: signedIn ? 'red' : colors.dialPad }}
         disabled={disable}
       />
     </HStack>

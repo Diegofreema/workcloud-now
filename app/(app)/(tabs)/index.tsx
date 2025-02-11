@@ -2,7 +2,7 @@ import { useAuth } from '@clerk/clerk-expo';
 import { useQuery } from 'convex/react';
 import { ErrorBoundaryProps, useLocalSearchParams, useRouter } from 'expo-router';
 import * as SecureStore from 'expo-secure-store';
-import React, { useEffect } from 'react';
+import { useEffect } from 'react';
 import { FlatList, View } from 'react-native';
 import { toast } from 'sonner-native';
 

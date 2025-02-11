@@ -64,6 +64,8 @@ const InitialRouteLayout = () => {
   const segments = useSegments();
   const router = useRouter();
   const { isLoaded, isSignedIn } = useAuth();
+  console.log({ isSignedIn });
+
   useEffect(() => {
     if (!isLoaded) return;
 

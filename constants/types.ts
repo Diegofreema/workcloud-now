@@ -384,6 +384,7 @@ export type WaitList = {
   workspaceId: Id<'workspaces'>;
   customerId: Id<'users'>;
   joinedAt: string;
+  type: 'attending' | 'waiting' | 'next';
 };
 export type ServicePointType = {
   _id: Id<'servicePoints'>;

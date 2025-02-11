@@ -26,7 +26,7 @@ type ReviewModalProps = {
 export const ReviewModal = ({ visible, onClose, userId, organizationId }: ReviewModalProps) => {
   const { darkMode } = useDarkMode();
   const [value, setValue] = useState('');
-  const [rating, setRating] = useState(2.5);
+  const [rating, setRating] = useState(3);
   const [sending, setSending] = useState(false);
   const addReview = useMutation(api.reviews.addReview);
   const iconColor = darkMode === 'dark' ? 'white' : 'black';
@@ -79,9 +79,9 @@ export const ReviewModal = ({ visible, onClose, userId, organizationId }: Review
           <AirbnbRating
             count={5}
             reviews={[]}
+            defaultRating={rating}
             size={20}
             onFinishRating={setRating}
-
           />
           <VStack gap={4}>
             <MyText poppins="Medium" fontSize={RFPercentage(1.5)}>

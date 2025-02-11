@@ -81,7 +81,7 @@ export const Review = ({ organizationId, userId, show, showComments }: ReviewPro
         poppins="Light"
         fontSize={RFPercentage(1.6)}
         style={{ textAlign: 'center', marginVertical: 10 }}>
-        ({totalRatings} Reviews)
+        ({reviews?.length} Reviews)
       </MyText>
       <RatingPercentage data={ratingPercentages} />
       {showComments && <ReviewComments organizationId={organizationId} />}

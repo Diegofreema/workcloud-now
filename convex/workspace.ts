@@ -226,7 +226,23 @@ export const deleteWorkspace = mutation({
     await ctx.db.delete(args.id);
   },
 });
-
+export const attendToCustomer = mutation({
+  args: {
+    waitlistId: v.id('waitlists'),
+    nextWaitListId: v.optional(v.id('waitlists')),
+  },
+  handler: async (ctx, { waitlistId, nextWaitListId }) => {
+    const waitlist = await ctx.db.get(waitlistId);
+    if (!waitlist) return;
+    await ctx.db.patch(waitlist._id, {
+      type: 'attending',
+    });
+    if (!nextWaitListId) return;
+    await ctx.db.patch(nextWaitListId, {
+      type: 'next',
+    });
+  },
+});
 export const addStaffToWorkspace = mutation({
   args: {
     workerId: v.id('workers'),

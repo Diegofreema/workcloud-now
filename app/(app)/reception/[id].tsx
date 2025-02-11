@@ -201,7 +201,11 @@ const Representatives = ({ data }: { data: WorkerWithWorkspace[] }) => {
         flexGrow: 1,
       }}
       renderItem={({ item }) => <RepresentativeItem item={item} />}
-      ListEmptyComponent={() => <EmptyText text="No representatives yet" />}
+      ListEmptyComponent={() => (
+        <VStack style={{ minHeight: 200, justifyContent: 'center' }}>
+          <EmptyText text="No representatives yet" />
+        </VStack>
+      )}
       columnWrapperStyle={{ gap: 5 }}
       numColumns={3}
     />

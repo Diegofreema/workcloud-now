@@ -1,7 +1,7 @@
 import { useMutation, useQuery } from 'convex/react';
 import { format } from 'date-fns';
 import { Redirect, router, useLocalSearchParams } from 'expo-router';
-import React, { useCallback, useMemo, useState } from 'react';
+import { useCallback, useMemo, useState } from 'react';
 import { ScrollView, StyleSheet, Text, View } from 'react-native';
 import { toast } from 'sonner-native';
 
@@ -20,10 +20,9 @@ import { WaitList } from '~/constants/types';
 import { api } from '~/convex/_generated/api';
 import { Id } from '~/convex/_generated/dataModel';
 import { useGetUserId } from '~/hooks/useGetUserId';
-import { useToken } from '~/hooks/useToken';
 
 const today = format(new Date(), 'dd-MM-yyyy');
-const time = format(new Date(), 'HH:mm:ss');
+
 const Work = () => {
   const { id } = useLocalSearchParams<{ id: Id<'workspaces'> }>();
   const [showMenu, setShowMenu] = useState(false);
@@ -33,7 +32,8 @@ const Work = () => {
   const [customerToRemove, setCustomerToRemove] = useState<Id<'users'> | null>(null);
   const [isVisible, setIsVisible] = useState(false);
   const [loading, setLoading] = useState(false);
-  const { getWorkspaceId } = useToken();
+  const [isLoading, setIsLoading] = useState(false);
+  const updateWaitlistType = useMutation(api.workspace.attendToCustomer);
 
   const data = useQuery(api.workspace.getWorkspaceWithWaitingList, { workspaceId: id });
   const leaveLobby = useMutation(api.workspace.existLobby);
@@ -159,8 +159,18 @@ const Work = () => {
     setIsVisible(false);
   };
 
-  const onAddToCall = async (item: WaitList) => {
-    getWorkspaceId(item?.customerId);
+  const onAddToCall = async (currentUser: Id<'waitlists'>, nextUser: Id<'waitlists'>) => {
+    setLoading(true);
+    try {
+      await updateWaitlistType({ waitlistId: currentUser, nextWaitListId: nextUser });
+    } catch (error) {
+      console.log(error);
+      toast.error('Something went wrong', {
+        description: 'Please try again later',
+      });
+    } finally {
+      setLoading(false);
+    }
   };
   const handleExit = async () => {
     if (customerLeaving) {
@@ -215,6 +225,7 @@ const Work = () => {
             isWorker={isWorker}
             onLongPress={onLongPress}
             onAddToCall={onAddToCall}
+            isLoading={isLoading}
           />
           {!isWorker && (
             <View
