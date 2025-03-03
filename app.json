@@ -21,9 +21,8 @@
         "expo-build-properties",
         {
           "android": {
-            "extraMavenRepos": ["../../node_modules/@notifee/react-native/android/libs"],
             "enableProguardInReleaseBuilds": true,
-            "extraProguardRules": "-keep public class com.horcrux.svg.** {*;}",
+            "extraProguardRules": "-keep class **.zego.**  { *; }",
             "allowBackup": false,
             "enableShrinkResourcesInReleaseBuilds": true,
             "versionCode": 5,
@@ -80,7 +79,11 @@
       "supportsTablet": true,
       "bundleIdentifier": "com.diegodark.workcloud",
       "bitcode": false,
-      "runtimeVersion": "1.0.1"
+      "runtimeVersion": "1.0.1",
+      "infoPlist": {
+        "NSCameraUsageDescription": "Allow $(PRODUCT_NAME) to access your camera",
+        "NSMicrophoneUsageDescription": "Allow $(PRODUCT_NAME) to access your microphone"
+      }
     },
     "android": {
       "adaptiveIcon": {
@@ -101,7 +104,9 @@
         "android.permission.SYSTEM_ALERT_WINDOW",
         "android.permission.WAKE_LOCK",
         "android.permission.READ_EXTERNAL_STORAGE",
-        "android.permission.WRITE_EXTERNAL_STORAGE"
+        "android.permission.WRITE_EXTERNAL_STORAGE",
+        "android.permission.ACCESS_WIFI_STATE",
+        "android.permission.READ_PHONE_STATE"
       ]
     },
     "extra": {
