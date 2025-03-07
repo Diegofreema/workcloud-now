@@ -1,50 +1,25 @@
-import { useRouter } from 'expo-router';
-import { useState } from 'react';
 import { StyleSheet, View } from 'react-native';
 import Modal from 'react-native-modal';
-import { toast } from 'sonner-native';
 
 import { HStack } from '../HStack';
-import { InputComponent } from '../InputComponent';
 import { MyButton } from '../Ui/MyButton';
 import { MyText } from '../Ui/MyText';
 
 import { useToken } from '~/hooks/useToken';
-import { supabase } from '~/lib/supabase';
 
-export const AddToCall = (): JSX.Element => {
-  const { isOpen, onClose, workspaceId } = useToken();
-  const [value, setValue] = useState('');
-  const router = useRouter();
-  const leaveRoom = async () => {
-    const { error } = await supabase.from('waitList').delete().eq('id', workspaceId);
-    if (!error) {
-      toast('Hope to see you again', {
-        description: 'Do have a nice day',
-      });
+export const AddToCall = () => {
+  const { isOpen, onClose } = useToken();
 
-      onClose();
-      router.replace('/');
-      setValue('');
-    }
-  };
-  const joinCall = () => {
-    onClose();
-    // router.replace(`/video/call/${value}`);
-    setValue('');
-  };
   return (
-    <View>
+    <View style={styles.centeredView}>
       <Modal hasBackdrop={false} onDismiss={onClose} animationIn="slideInDown" isVisible={isOpen}>
-        <View style={styles.centeredView}>
+        <View>
           <MyText poppins="Medium" fontSize={15} style={{ marginBottom: 30 }}>
             Type the correct code below to join the call
           </MyText>
 
-          <InputComponent placeholder="Code" value={value} onChangeText={setValue} />
           <HStack width="100%" justifyContent="space-between" gap={10} mt={20}>
             <MyButton
-              onPress={leaveRoom}
               style={{
                 flex: 1,
                 backgroundColor: 'transparent',
@@ -57,7 +32,6 @@ export const AddToCall = (): JSX.Element => {
             </MyButton>
 
             <MyButton
-              onPress={joinCall}
               style={{
                 flex: 1,
                 backgroundColor: 'transparent',

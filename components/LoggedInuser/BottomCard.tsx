@@ -3,16 +3,12 @@ import { FontAwesome } from '@expo/vector-icons';
 import { Image } from 'expo-image';
 import { router } from 'expo-router';
 import { Pressable, ScrollView, View } from 'react-native';
-import { StreamChat } from 'stream-chat';
 
 import { colors } from '../../constants/Colors';
 import { HStack } from '../HStack';
 import { MyText } from '../Ui/MyText';
 import VStack from '../Ui/VStack';
 
-import { chatApiKey } from '~/chatConfig';
-
-const chatClient = StreamChat.getInstance(chatApiKey);
 type Props = {
   workId?: any;
 };
@@ -26,7 +22,6 @@ export const BottomCard = ({ workId }: Props): JSX.Element => {
   const { signOut } = useAuth();
 
   const logout = async () => {
-    chatClient.disconnectUser();
     signOut();
   };
   const onPress = () => {

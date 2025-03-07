@@ -6,19 +6,8 @@ import { ImagePickerAsset } from 'expo-image-picker';
 import * as MediaLibrary from 'expo-media-library';
 import { toast } from 'sonner-native';
 
-import { supabase } from './supabase';
-
 import { ChatDateGroup, DataType } from '~/constants/types';
 import { Id } from '~/convex/_generated/dataModel';
-
-type User = {
-  email: string;
-  userId: string;
-  name: string;
-  phoneNumber: string;
-  streamToken: string;
-  avatar: string;
-};
 
 export const downloadAndSaveImage = async (imageUrl: string) => {
   const fileUri = FileSystem.documentDirectory + `${new Date().getTime()}.jpg`;
@@ -134,27 +123,6 @@ export const createToken = async (userId: string) => {
     return axiosData.streamToken;
   } catch (error) {
     console.log(JSON.stringify(error, null, 1));
-  }
-};
-export const checkIfUserExistsFn = async (email: string) => {
-  try {
-    const { data: dt } = await supabase.from('user').select().eq('email', email).single();
-
-    return dt;
-  } catch (error: any) {
-    console.log(error);
-
-    return null;
-  }
-};
-
-export const createUser = async (user: User) => {
-  try {
-    const { data } = await supabase.from('user').insert(user).select().single();
-    return data;
-  } catch (error) {
-    console.log(error);
-    return null;
   }
 };
 

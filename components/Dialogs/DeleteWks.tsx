@@ -1,9 +1,8 @@
 import { useAuth } from '@clerk/clerk-expo';
 import { Button } from '@rneui/themed';
 import { useQueryClient } from '@tanstack/react-query';
-import React, { useState } from 'react';
-import { StyleSheet, View , Modal} from 'react-native';
-
+import { useState } from 'react';
+import { Modal, StyleSheet, View } from 'react-native';
 import { toast } from 'sonner-native';
 
 import { HStack } from '../HStack';
@@ -12,7 +11,6 @@ import { MyText } from '../Ui/MyText';
 import { colors } from '~/constants/Colors';
 import { useDarkMode } from '~/hooks/useDarkMode';
 import { useDeleteWks } from '~/hooks/useDeleteWks';
-import { supabase } from '~/lib/supabase';
 
 export const DeleteWksSpaceModal = () => {
   const { onClose, id, isOpen } = useDeleteWks();
@@ -23,18 +21,6 @@ export const DeleteWksSpaceModal = () => {
   const deleteWks = async () => {
     setDeleting(true);
     try {
-      const { error } = await supabase.from('workspace').delete().eq('id', id);
-      if (!error) {
-        toast.success('Workspace deleted successfully');
-        queryClient.invalidateQueries({ queryKey: ['personal', userId] });
-      }
-
-      if (error) {
-        console.log(error);
-
-        toast.error('Something went wrong');
-      }
-
       onClose();
     } catch (error) {
       console.log(error);
@@ -45,11 +31,7 @@ export const DeleteWksSpaceModal = () => {
   };
   return (
     <View>
-      <Modal
-        onDismiss={onClose} animationType="slide"
-        visible={isOpen}
-        onRequestClose={onClose}
-        >
+      <Modal onDismiss={onClose} animationType="slide" visible={isOpen} onRequestClose={onClose}>
         <View
           style={[
             styles.centeredView,

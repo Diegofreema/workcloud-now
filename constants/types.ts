@@ -1,5 +1,4 @@
 import { Doc, Id } from '~/convex/_generated/dataModel';
-import { Database } from '~/supabase';
 
 export type ReviewType = Doc<'reviews'> & {
   user: Doc<'users'> | null;
@@ -80,7 +79,6 @@ export type WorkSpace = {
 };
 
 export type WorkspaceWithoutOrganization = Omit<WorkSpace, 'organization'>;
-export type TopSearch = Database['public']['Tables']['organization']['Row'];
 
 export type Connection = {
   id: Id<'connections'>;

@@ -2,11 +2,8 @@ import { useAuth } from '@clerk/clerk-expo';
 import { Icon } from '@rneui/themed';
 import { useQuery } from 'convex/react';
 import { useLocalSearchParams } from 'expo-router';
-import React from 'react';
 import { Pressable, StyleSheet, View } from 'react-native';
-import { StreamChat } from 'stream-chat';
 
-import { chatApiKey } from '~/chatConfig';
 import { HStack } from '~/components/HStack';
 import { HeaderNav } from '~/components/HeaderNav';
 import { LogOutSvg } from '~/components/LockSvg';
@@ -20,8 +17,6 @@ import { api } from '~/convex/_generated/api';
 import { Id } from '~/convex/_generated/dataModel';
 import { useDarkMode } from '~/hooks/useDarkMode';
 
-const chatClient = StreamChat.getInstance(chatApiKey);
-
 const ProfileEdit = () => {
   const { signOut } = useAuth();
   const { id } = useLocalSearchParams<{ id: string }>();
@@ -34,7 +29,6 @@ const ProfileEdit = () => {
   }
 
   const logout = async () => {
-    await chatClient.disconnectUser();
     await signOut();
   };
 

@@ -1,21 +1,15 @@
-import { useAuth } from '@clerk/clerk-expo';
 import { FontAwesome } from '@expo/vector-icons';
 import { Divider } from '@rneui/themed';
-import { useQueryClient } from '@tanstack/react-query';
-import { useRouter } from 'expo-router';
-import React, { useEffect, useState } from 'react';
+import { useEffect } from 'react';
 import { FlatList, Pressable, StyleSheet, View } from 'react-native';
 import Modal from 'react-native-modal';
-import { toast } from 'sonner-native';
 
 import { HStack } from '../HStack';
 import { MyText } from '../Ui/MyText';
 
 import { colors } from '~/constants/Colors';
-import { Profile } from '~/constants/types';
 import { useDarkMode } from '~/hooks/useDarkMode';
 import { useSelectNewRow } from '~/hooks/useSelectNewRow';
-import { supabase } from '~/lib/supabase';
 
 const roles = [
   'Manager',
@@ -58,31 +52,11 @@ const roles = [
 export const SelectNewRow = ({ id }: { id: string }) => {
   const { isOpen, onClose } = useSelectNewRow();
 
-  const { userId } = useAuth();
   const { darkMode } = useDarkMode();
-  const [profile, setProfile] = useState<Profile | null>(null);
-
-  const queryClient = useQueryClient();
 
   useEffect(() => {
     const getFn = async () => {
       try {
-        const getProfile = async () => {
-          const { data } = await supabase
-            .from('user')
-            .select(`name, avatar, streamToken, email, userId, organizationId (*), workerId (*)`)
-            .eq('userId', userId!)
-            .single();
-          // @ts-ignore
-          setProfile(data);
-          return data;
-        };
-        const res = await queryClient.fetchQuery({
-          queryKey: ['profile', userId],
-          queryFn: getProfile,
-        });
-
-        return res;
       } catch (error) {
         console.log(error);
         return {};
@@ -91,34 +65,7 @@ export const SelectNewRow = ({ id }: { id: string }) => {
     getFn();
   }, [id]);
 
-  const router = useRouter();
-
-  const navigate = async (item: string) => {
-    if (!profile) return;
-
-    const { data, error } = await supabase
-      .from('workspace')
-      .insert({
-        ownerId: userId,
-        role: item,
-        organizationId: profile.organizationId?.id,
-      })
-      .select()
-      .single();
-
-    if (!error) {
-      onClose();
-      // getData({ role:item, workspaceId: data?.id, profile?.organizationId?.id });
-      router.push(`/allStaffs`);
-    }
-    if (error) {
-      console.log(error, 'dnfkjnjsd');
-      onClose();
-      toast.error('Error', {
-        description: 'Something went wrong',
-      });
-    }
-  };
+  const navigate = async (item: string) => {};
 
   return (
     <View>

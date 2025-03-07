@@ -7,8 +7,6 @@ import { Plus } from 'lucide-react-native';
 import { useEffect, useState } from 'react';
 import { FlatList, Pressable, StyleSheet, View } from 'react-native';
 import { toast } from 'sonner-native';
-import { Channel as ChannelType } from 'stream-chat';
-
 
 import { AuthHeader } from './AuthHeader';
 import { HStack } from './HStack';
@@ -19,7 +17,6 @@ import VStack from './Ui/VStack';
 import { colors } from '~/constants/Colors';
 import { useDarkMode } from '~/hooks/useDarkMode';
 import { ChatMember, useMembers } from '~/hooks/useMembers';
-import { supabase } from '~/lib/supabase';
 
 export const GroupDetail = (): JSX.Element => {
   const members = useMembers((state) => state.members);
@@ -30,13 +27,11 @@ export const GroupDetail = (): JSX.Element => {
   const [close, setClose] = useState(false);
 
   const { userId } = useAuth();
-  const [channel, setChannel] = useState<ChannelType | null>(null);
+
   console.log(chatId);
 
   useEffect(() => {
-    const fetchChannel = async () => {
-
-    };
+    const fetchChannel = async () => {};
     fetchChannel();
   }, [chatId]);
   const admin = members.find((m) => m.role === 'owner');
@@ -51,28 +46,6 @@ export const GroupDetail = (): JSX.Element => {
   const onCloseGroup = async () => {
     setIsDeleting(true);
     try {
-      const { error } = await supabase
-        .from('organization')
-        .update({ has_group: false })
-        .eq('ownerId', userId!);
-      if (error) {
-        toast.error('Something went wrong', {
-          description: 'Failed to delete group',
-        });
-      }
-      if (!error) {
-        const destroy = await channel?.delete();
-        toast.success('Group has been deleted successfully', {
-          description: 'Group deleted successfully',
-        });
-        console.log(destroy, 'bdsbbhd');
-
-        if (destroy) {
-          setMembers([]);
-          setClose(false);
-          router.replace('/messages');
-        }
-      }
     } catch (error) {
       console.log(error);
 
@@ -102,9 +75,7 @@ export const GroupDetail = (): JSX.Element => {
       </MyText>
       <FlatList
         data={formattedArray}
-        renderItem={({ item }) => (
-          <MemberItem member={item} isAdmin={isAdmin} chatId={chatId} channel={channel} />
-        )}
+        renderItem={({ item }) => <MemberItem member={item} isAdmin={isAdmin} chatId={chatId} />}
         contentContainerStyle={{ gap: 15, flexGrow: 1 }}
         showsVerticalScrollIndicator={false}
         ListFooterComponentStyle={{ marginTop: 'auto', marginBottom: 20 }}
@@ -147,12 +118,12 @@ export const GroupDetail = (): JSX.Element => {
 const MemberItem = ({
   member,
   isAdmin,
-  channel,
+
   chatId,
 }: {
   member: ChatMember;
   isAdmin: boolean;
-  channel: ChannelType | null;
+
   chatId: string;
 }) => {
   const admin = member.role === 'owner';
@@ -160,21 +131,9 @@ const MemberItem = ({
   const [removing, setRemoving] = useState(false);
   const setMembers = useMembers((state) => state.getMembers);
   const handleRemove = async () => {
-    if (!member?.user?.id || !channel) return;
+    if (!member?.user?.id) return;
     setRemoving(true);
     try {
-      const mb = await channel.removeMembers([member.user.id]);
-      const newMembers = await channel.queryMembers({});
-      const formattedMembers = Object.values(newMembers);
-
-      if (newMembers) {
-        setMembers(formattedMembers[0] as ChatMember[]);
-      }
-      if (mb) {
-        toast.success('Success', {
-          description: 'Member removed successfully',
-        });
-      }
     } catch (error) {
       console.log(error);
 

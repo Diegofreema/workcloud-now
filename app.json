@@ -6,11 +6,16 @@
     "scheme": "workcloud",
     "web": {
       "bundler": "metro",
-      "output": "static",
+      "output": "server",
       "favicon": "./assets/favicon.png"
     },
     "plugins": [
-      "expo-router",
+      [
+        "expo-router",
+        {
+          "origin": "http://localhost:8081/"
+        }
+      ],
       [
         "expo-dev-launcher",
         {
@@ -33,7 +38,7 @@
           }
         }
       ],
-      "@stream-io/video-react-native-sdk",
+      "@videosdk.live/expo-config-plugin",
       [
         "@config-plugins/react-native-webrtc",
         {
@@ -93,9 +98,8 @@
       "package": "com.diegodark.workcloud",
       "runtimeVersion": "1.0.1",
       "permissions": [
-        "android.permission.BLUETOOTH",
+        "android.permission.FOREGROUND_SERVICE",
         "android.permission.BLUETOOTH_CONNECT",
-        "android.permission.BLUETOOTH_ADMIN",
         "android.permission.ACCESS_NETWORK_STATE",
         "android.permission.CAMERA",
         "android.permission.INTERNET",
@@ -103,10 +107,7 @@
         "android.permission.RECORD_AUDIO",
         "android.permission.SYSTEM_ALERT_WINDOW",
         "android.permission.WAKE_LOCK",
-        "android.permission.READ_EXTERNAL_STORAGE",
-        "android.permission.WRITE_EXTERNAL_STORAGE",
-        "android.permission.ACCESS_WIFI_STATE",
-        "android.permission.READ_PHONE_STATE"
+        "android.permission.BLUETOOTH"
       ]
     },
     "extra": {

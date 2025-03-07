@@ -13,6 +13,7 @@ export const User = {
   date_of_birth: v.optional(v.string()),
   isOnline: v.optional(v.boolean()),
   lastSeen: v.optional(v.string()),
+  streamToken: v.optional(v.string()),
 };
 
 export const Organization = {

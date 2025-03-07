@@ -1,7 +1,6 @@
 import { useUser } from '@clerk/clerk-expo';
 import { ErrorBoundaryProps, Redirect, Stack, useSegments } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
-import React from 'react';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 
 import { ErrorComponent } from '~/components/Ui/ErrorComponent';

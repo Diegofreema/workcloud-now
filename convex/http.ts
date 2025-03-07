@@ -4,8 +4,10 @@ import { internal } from '~/convex/_generated/api';
 import { httpAction } from '~/convex/_generated/server';
 
 const http = httpRouter();
+
 export const createOrUpdateUserToDb = httpAction(async (ctx, request) => {
   const { data, type } = await request.json();
+
   switch (type) {
     case 'user.created':
       await ctx.runMutation(internal.users.createUser, {

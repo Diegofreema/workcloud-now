@@ -1,7 +1,7 @@
 import BottomSheet, { BottomSheetView } from '@gorhom/bottom-sheet';
 import { Button } from '@rneui/themed';
 import { useMutation } from 'convex/react';
-import React, { forwardRef, useMemo, useState } from 'react';
+import { forwardRef, useMemo, useState } from 'react';
 import { StyleSheet } from 'react-native';
 import { toast } from 'sonner-native';
 

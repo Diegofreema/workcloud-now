@@ -1,31 +1,39 @@
-import { usePaginatedQuery } from 'convex/react';
-import React from 'react';
+import { useRouter } from 'expo-router';
+import React, { useContext, useMemo } from 'react';
+import { AscDesc, Channel } from 'stream-chat';
+import { ChannelList } from 'stream-chat-expo';
 
-import { ChatPreviewSkeleton } from '~/components/ChatPreviewSkeleton';
-import { Conversations } from '~/components/Conversations';
+import { chatUserId } from '~/chatConfig';
+import { AppContext } from '~/components/AppContext';
 import { SearchHeader } from '~/components/SearchHeader';
 import { Container } from '~/components/Ui/Container';
-import { api } from '~/convex/_generated/api';
 import { useGetUserId } from '~/hooks/useGetUserId';
+
+const filters = {
+  members: { $in: [chatUserId] },
+  type: 'messaging',
+};
+const sort = { last_updated: -1 as AscDesc };
+const options = {
+  state: true,
+  watch: true,
+};
 
 const Messages = () => {
   const { id } = useGetUserId();
-  const { results, status, loadMore, isLoading } = usePaginatedQuery(
-    api.conversation.getConversations,
-    {
-      userId: id!,
-      type: 'all',
-    },
-    { initialNumItems: 20 }
-  );
-
-  if (isLoading) {
-    return <ChatPreviewSkeleton length={15} />;
-  }
+  console.log({ id });
+  const memoizedFilters = useMemo(() => filters, []);
+  const router = useRouter();
+  const { setChannel } = useContext(AppContext);
+  const onPress = (channel: Channel) => {
+    setChannel(channel);
+    // @ts-ignore
+    router.push(`/channel/${channel.cid}`);
+  };
   return (
     <Container noPadding>
       <SearchHeader placeholder="Search by name" />
-      <Conversations conversations={results} status={status} loadMore={loadMore} />
+      <ChannelList filters={memoizedFilters} options={options} sort={sort} onSelect={onPress} />
     </Container>
   );
 };

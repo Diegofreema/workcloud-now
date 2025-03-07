@@ -1,8 +1,15 @@
 import { v } from 'convex/values';
 
 import { User } from '~/constants/types';
+import { internal } from '~/convex/_generated/api';
 import { Id } from '~/convex/_generated/dataModel';
-import { internalMutation, mutation, query, QueryCtx } from '~/convex/_generated/server';
+import {
+  internalAction,
+  internalMutation,
+  mutation,
+  query,
+  QueryCtx,
+} from '~/convex/_generated/server';
 import { getImageUrl } from '~/convex/organisation';
 
 export const getAllUsers = query({
@@ -21,9 +28,37 @@ export const createUser = internalMutation({
     isOnline: v.boolean(),
   },
   handler: async (ctx, args) => {
-    return await ctx.db.insert('users', {
+    const id = await ctx.db.insert('users', {
       ...args,
     });
+    console.log('User created');
+    await ctx.scheduler.runAfter(0, internal.users.createStreamToken, { id });
+  },
+});
+export const createStreamToken = internalAction({
+  args: {
+    id: v.id('users'),
+  },
+  handler: async (ctx, { id }) => {
+    const response = await fetch(`https://afe3-102-90-101-209.ngrok-free.app/user/${id}`);
+    const { token } = await response.json();
+    console.log({ token });
+    await ctx.scheduler.runAfter(0, internal.users.createToken, { id, streamToken: token });
+  },
+});
+
+export const createToken = internalMutation({
+  args: {
+    id: v.id('users'),
+    streamToken: v.string(),
+  },
+  handler: async (ctx, args) => {
+    const user = await ctx.db.get(args.id);
+    if (user) {
+      await ctx.db.patch(user?._id, {
+        streamToken: args.streamToken,
+      });
+    }
   },
 });
 // export const setOnline = internalMutation({

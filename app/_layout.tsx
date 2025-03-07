@@ -18,6 +18,8 @@ import { Toaster } from 'sonner-native';
 
 import { LoadingComponent } from '~/components/Ui/LoadingComponent';
 import { useDarkMode } from '~/hooks/useDarkMode';
+import { ChatWrapper } from '~/components/ChatWrapper';
+import { AppProvider } from '~/components/AppContext';
 
 const convex = new ConvexReactClient(process.env.EXPO_PUBLIC_CONVEX_URL!, {
   unsavedChangesWarning: false,
@@ -157,7 +159,11 @@ export default function RootLayout() {
                   flex: 1,
                   backgroundColor: darkMode === 'dark' ? 'black' : 'white',
                 }}>
-                <InitialRouteLayout />
+                <ChatWrapper>
+                  <AppProvider>
+                    <InitialRouteLayout />
+                  </AppProvider>
+                </ChatWrapper>
               </SafeAreaView>
               <Toaster />
             </GestureHandlerRootView>
