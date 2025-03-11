@@ -8,6 +8,7 @@ import { toast } from 'sonner-native';
 
 import { ChatDateGroup, DataType } from '~/constants/types';
 import { Id } from '~/convex/_generated/dataModel';
+import { Channel } from 'stream-chat';
 
 export const downloadAndSaveImage = async (imageUrl: string) => {
   const fileUri = FileSystem.documentDirectory + `${new Date().getTime()}.jpg`;
@@ -310,4 +311,28 @@ export const calculateRatingStats = (reviews: { stars: number; count: number }[]
     totalRatings,
     ratingPercentages,
   };
+};
+
+export const filterChannels = async (channels: Channel[], query: string) => {
+  if (!query) return []; // Return all channels if no query is provided
+
+  // Use Promise.all to handle async operations
+  const filteredChannels = await Promise.all(
+    channels.map(async (channel) => {
+      // Query members for the channel
+      const memberResponse = await channel.queryMembers({});
+
+      // Check if the channel name or member name matches the query
+      const isNameMatch = channel.data?.name?.includes(query);
+      const isMemberMatch = memberResponse.members.some((member) =>
+        member.user?.name?.includes(query)
+      );
+
+      // Return the channel if it matches the query
+      return isNameMatch || isMemberMatch ? channel : null;
+    })
+  );
+
+  // Filter out null values (channels that didn't match the query)
+  return filteredChannels.filter((channel) => channel !== null) as Channel[];
 };

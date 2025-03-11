@@ -27,18 +27,14 @@
         {
           "android": {
             "enableProguardInReleaseBuilds": true,
-            "extraProguardRules": "-keep class **.zego.**  { *; }",
             "allowBackup": false,
             "enableShrinkResourcesInReleaseBuilds": true,
-            "versionCode": 5,
-            "compileSdkVersion": 34,
-            "targetSdkVersion": 34,
-            "buildToolsVersion": "34.0.0",
-            "kotlinVersion": "1.6.10"
+            "versionCode": 5
+
           }
         }
       ],
-      "@videosdk.live/expo-config-plugin",
+
       [
         "@config-plugins/react-native-webrtc",
         {

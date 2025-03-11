@@ -1,6 +1,6 @@
 import { router } from 'expo-router';
-import { SearchIcon } from 'lucide-react-native';
-import { StyleSheet, TextInput, TouchableOpacity } from 'react-native';
+import { ArrowLeft, SearchIcon, X } from 'lucide-react-native';
+import { StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
 
 import { colors } from '~/constants/Colors';
 import { useDarkMode } from '~/hooks/useDarkMode';
@@ -10,23 +10,39 @@ type Props = {
   search?: boolean;
   query?: string;
   handleChange?: (value: string) => void;
+  onPress?: () => void;
+  onClear?: () => void;
+  back?: boolean;
 };
-export const SearchHeader = ({ placeholder, search, query, handleChange }: Props) => {
+export const SearchHeader = ({
+  placeholder,
+  query,
+  handleChange,
+  search = true,
+  onPress,
+  onClear,
+  back = false,
+}: Props) => {
   const { darkMode } = useDarkMode();
   const color = darkMode === 'dark' ? colors.white : colors.black;
-  return (
-    <TouchableOpacity
-      activeOpacity={search ? 1 : 0.5}
-      disabled={search}
-      onPress={() => router.push('/search-chat')}
-      style={styles.textInputContainer}>
+  return search ? (
+    <View style={[styles.textInputContainer, { height: 50 }]}>
+      {back && !query && (
+        <TouchableOpacity onPress={() => router.back()} hitSlop={10}>
+          <ArrowLeft size={30} color={color} strokeWidth={1.5} onPress={onClear} />
+        </TouchableOpacity>
+      )}
       <TextInput
         style={styles.textInput}
         value={query}
         onChangeText={handleChange}
-        editable={false}
         placeholder={placeholder}
       />
+      {query && <X size={30} color={color} strokeWidth={1.5} onPress={onClear} />}
+    </View>
+  ) : (
+    <TouchableOpacity style={styles.textInputContainer} onPress={onPress}>
+      <Text style={styles.textInput}>{placeholder}</Text>
       <SearchIcon size={30} color={color} strokeWidth={1.5} />
     </TouchableOpacity>
   );
@@ -44,6 +60,5 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     padding: 10,
-    marginHorizontal: 15,
   },
 });

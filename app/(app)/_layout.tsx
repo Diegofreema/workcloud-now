@@ -3,6 +3,8 @@ import { ErrorBoundaryProps, Redirect, Stack, useSegments } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 
+import { AppProvider } from '~/components/AppContext';
+import { ChatWrapper } from '~/components/ChatWrapper';
 import { ErrorComponent } from '~/components/Ui/ErrorComponent';
 import { useDarkMode } from '~/hooks/useDarkMode';
 
@@ -26,8 +28,11 @@ export default function AppLayout() {
         style={darkMode === 'dark' ? 'light' : 'dark'}
         backgroundColor={darkMode === 'dark' ? 'black' : 'white'}
       />
-
-      <Stack screenOptions={{ headerShown: false }} />
+      <ChatWrapper>
+        <AppProvider>
+          <Stack screenOptions={{ headerShown: false }} />
+        </AppProvider>
+      </ChatWrapper>
     </GestureHandlerRootView>
   );
 }

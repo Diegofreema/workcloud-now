@@ -9,6 +9,7 @@ import { useLocalSearchParams, useRouter } from 'expo-router';
 import React, { useState } from 'react';
 import { ScrollView, View } from 'react-native';
 import { toast } from 'sonner-native';
+import { useChatContext } from 'stream-chat-expo';
 
 import { HStack } from '~/components/HStack';
 import { HeaderNav } from '~/components/HeaderNav';
@@ -36,7 +37,7 @@ export const formattedSkills = (text: string) => {
 
 const Profile = () => {
   const { profileId } = useLocalSearchParams<{ profileId: Id<'workers'> }>();
-
+  const { client } = useChatContext();
   const { user } = useUser();
   const { id } = useGetUserId();
   const { darkMode } = useDarkMode();
@@ -72,7 +73,11 @@ const Profile = () => {
   const isInPending = !!pendingData;
 
   const onMessage = async () => {
-    router.push(`/chat/${data?.user?._id!}`);
+    const channel = client.channel('messaging', {
+      members: [id!, data?.user?._id!],
+    });
+    await channel.watch();
+    router.push(`/channel/${channel.cid}`);
   };
 
   const cancelRequest = async () => {
