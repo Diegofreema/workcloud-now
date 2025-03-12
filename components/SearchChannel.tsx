@@ -6,6 +6,7 @@ import { Channel, ChannelMemberAPIResponse } from 'stream-chat';
 import { Skeleton } from 'stream-chat-expo';
 
 import { AvatarPile } from '~/components/AvatarPile';
+import { EmptyText } from '~/components/EmptyText';
 import { SearchHeader } from '~/components/SearchHeader';
 import { Container } from '~/components/Ui/Container';
 import { LoadingComponent } from '~/components/Ui/LoadingComponent';
@@ -43,6 +44,9 @@ export const SearchChannel = ({
         data={filterChannels}
         renderItem={({ item }) => <CustomMessage channel={item} onPress={onPress} />}
         style={{ marginTop: 20 }}
+        showsVerticalScrollIndicator={false}
+        contentContainerStyle={{ gap: 10 }}
+        ListEmptyComponent={query ? <EmptyText text="No user found" /> : null}
       />
     </Container>
   );
@@ -66,6 +70,7 @@ const CustomMessage = ({
         const members = await channel.queryMembers({});
         setMember(members);
       };
+      // eslint-disable-next-line no-void
       void fetchOtherMembers();
     } catch (error) {
       console.log(error);

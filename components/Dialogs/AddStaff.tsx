@@ -3,15 +3,16 @@ import { Divider } from '@rneui/themed';
 import { useMutation } from 'convex/react';
 import { useRouter } from 'expo-router';
 import React from 'react';
-import { FlatList, Pressable, StyleSheet, View } from 'react-native';
-import Modal from 'react-native-modal';
+import { FlatList, Modal, Pressable, StyleSheet, View } from 'react-native';
 import { toast } from 'sonner-native';
+import { useChatContext } from 'stream-chat-expo';
 
 import { HStack } from '../HStack';
 import { MyText } from '../Ui/MyText';
 
 import { colors } from '~/constants/Colors';
 import { api } from '~/convex/_generated/api';
+import { Id } from '~/convex/_generated/dataModel';
 import { useAddStaff } from '~/hooks/useAddStaff';
 import { useDarkMode } from '~/hooks/useDarkMode';
 import { useHandleStaff } from '~/hooks/useHandleStaffs';
@@ -30,13 +31,7 @@ export const AddStaff = () => {
 
   return (
     <View>
-      <Modal
-        hasBackdrop={false}
-        onDismiss={onClose}
-        animationIn="slideInDown"
-        isVisible={isOpen}
-        onBackButtonPress={onClose}
-        onBackdropPress={onClose}>
+      <Modal visible={isOpen} onRequestClose={onClose} onDismiss={onClose} animationType="slide">
         <View style={styles.centeredView}>
           <MyText poppins="Medium" fontSize={15}>
             Add Staff
@@ -89,12 +84,15 @@ type Props = {
   setIsVisible: (value: boolean) => void;
   array: ({ icon: React.ComponentProps<typeof FontAwesome>['name']; text: string } | undefined)[];
   onBottomOpen: () => void;
+  bossId: Id<'users'>;
 };
 
-export const Menu = ({ isVisible, setIsVisible, array, onBottomOpen }: Props) => {
+export const Menu = ({ isVisible, setIsVisible, array, onBottomOpen, bossId }: Props) => {
   const { onOpen } = useRemoveUser();
   const toggleWorkspace = useMutation(api.workspace.toggleWorkspace);
   const router = useRouter();
+  const { client } = useChatContext();
+
   const { item } = useHandleStaff();
   const { darkMode } = useDarkMode();
   const onClose = () => {
@@ -111,8 +109,12 @@ export const Menu = ({ isVisible, setIsVisible, array, onBottomOpen }: Props) =>
   };
 
   const onSendMessage = async () => {
-    router.push(`/chat/${item?.user._id}`);
     onClose();
+    const channel = client.channel('messaging', {
+      members: [bossId!, item?.userId!],
+    });
+    await channel.watch();
+    router.push(`/channel/${channel.cid}`);
   };
 
   const onUnlockWorkspace = async () => {
@@ -151,76 +153,83 @@ export const Menu = ({ isVisible, setIsVisible, array, onBottomOpen }: Props) =>
     }
   };
   return (
-    <View>
-      <Modal
-        hasBackdrop
-        onDismiss={onClose}
-        animationIn="slideInDown"
-        isVisible={isVisible}
-        onBackButtonPress={onClose}
-        onBackdropPress={onClose}
-        style={{ alignItems: 'center', justifyContent: 'center' }}>
-        <View
+    <Modal
+      onDismiss={onClose}
+      animationType="slide"
+      visible={isVisible}
+      transparent
+      onRequestClose={onClose}>
+      <Pressable
+        onPress={onClose}
+        style={[
+          styles.centeredView,
+          {
+            backgroundColor: darkMode === 'dark' ? 'black' : 'rgba(255,255,255, 0.3)',
+            shadowColor: darkMode === 'dark' ? '#fff' : '#000',
+          },
+        ]}>
+        <Pressable
+          onPress={(e) => e.stopPropagation()}
           style={[
-            styles.centeredView,
+            styles.modalView,
             {
               backgroundColor: darkMode === 'dark' ? 'black' : 'white',
               shadowColor: darkMode === 'dark' ? '#fff' : '#000',
             },
           ]}>
-          <View style={{ marginTop: 20, width: '100%', gap: 14 }}>
-            {array.map((item, index) =>
-              item?.text ? (
-                <Pressable
-                  key={index}
-                  style={({ pressed }) => [{ opacity: pressed ? 0.5 : 1 }]}
-                  onPress={() => handlePress(item?.text!)}>
-                  <HStack gap={15} alignItems="center" p={10}>
-                    {item?.icon && (
-                      <FontAwesome
-                        name={item?.icon}
-                        size={28}
-                        color={
+          {array.map((item, index) =>
+            item?.text ? (
+              <Pressable
+                key={index}
+                style={({ pressed }) => [{ opacity: pressed ? 0.5 : 1 }]}
+                onPress={() => handlePress(item?.text!)}>
+                <HStack gap={15} alignItems="center" p={10}>
+                  {item?.icon && (
+                    <FontAwesome
+                      name={item?.icon}
+                      size={28}
+                      color={
+                        item?.text === 'Remove staff'
+                          ? 'red'
+                          : darkMode === 'dark'
+                            ? '#fff'
+                            : 'black'
+                      }
+                    />
+                  )}
+                  {item?.text && (
+                    <MyText
+                      poppins="Medium"
+                      fontSize={13}
+                      style={{
+                        color:
                           item?.text === 'Remove staff'
                             ? 'red'
                             : darkMode === 'dark'
                               ? '#fff'
-                              : 'black'
-                        }
-                      />
-                    )}
-                    {item?.text && (
-                      <MyText
-                        poppins="Medium"
-                        fontSize={13}
-                        style={{
-                          color:
-                            item?.text === 'Remove staff'
-                              ? 'red'
-                              : darkMode === 'dark'
-                                ? '#fff'
-                                : 'black',
-                        }}>
-                        {item?.text}
-                      </MyText>
-                    )}
-                  </HStack>
-                </Pressable>
-              ) : null
-            )}
-          </View>
-        </View>
-      </Modal>
-    </View>
+                              : 'black',
+                      }}>
+                      {item?.text}
+                    </MyText>
+                  )}
+                </HStack>
+              </Pressable>
+            ) : null
+          )}
+        </Pressable>
+      </Pressable>
+    </Modal>
   );
 };
 
 const styles = StyleSheet.create({
   centeredView: {
     backgroundColor: 'white',
-    width: 200,
+    flex: 1,
     paddingVertical: 10,
+    width: '100%',
     alignItems: 'center',
+    justifyContent: 'center',
     shadowColor: '#000',
     shadowOffset: {
       width: 0,
@@ -267,5 +276,21 @@ const styles = StyleSheet.create({
     padding: 10,
     borderRadius: 10,
     borderStyle: 'dashed',
+  },
+  modalView: {
+    margin: 10,
+    gap: 14,
+    backgroundColor: 'white',
+    borderRadius: 10,
+    padding: 35,
+    alignItems: 'center',
+    shadowColor: '#000',
+    shadowOffset: {
+      width: 0,
+      height: 2,
+    },
+    shadowOpacity: 0.25,
+    shadowRadius: 4,
+    elevation: 5,
   },
 });

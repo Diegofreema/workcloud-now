@@ -8,7 +8,11 @@ type Props = {
 
 export const CustomPressable = ({ children, onPress, style }: PropsWithChildren<Props>) => {
   return (
-    <TouchableOpacity onPress={onPress} style={[{ padding: 5 }, style]} activeOpacity={0.5}>
+    <TouchableOpacity
+      onPress={onPress}
+      style={[{ padding: 5 }, style]}
+      hitSlop={15}
+      activeOpacity={0.5}>
       {children}
     </TouchableOpacity>
   );

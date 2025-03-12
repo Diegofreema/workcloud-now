@@ -56,8 +56,7 @@ const Role = () => {
       router.back();
       getData({ orgId: organizationId!, role: item, workspaceId });
       toast.success('Success', {
-        // eslint-disable-next-line no-useless-concat
-        description: personal ? 'Personal' : '' + ' workspace created',
+        description: personal ? 'Personal workspace created' : 'Workspace created',
       });
       setPersonal(false);
     } catch (e) {

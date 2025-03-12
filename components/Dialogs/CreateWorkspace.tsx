@@ -19,8 +19,7 @@ import { useCreate } from '~/hooks/useCreate';
 import { useDarkMode } from '~/hooks/useDarkMode';
 import { useDetailsToAdd } from '~/hooks/useDetailsToAdd';
 
-export const CreateWorkspaceModal = ({ workspace }: { workspace: Wks }) => {
-  const { isOpen, onClose } = useCreate();
+export const CreateWorkspaceModal = ({ workspace }: { workspace: Wks }) => {const { isOpen, onClose } = useCreate();
   const { setPersonal } = useDetailsToAdd();
   const deleteWorkspace = useMutation(api.workspace.deleteWorkspace);
   const [deleteMode, setDeleteMode] = useState(false);

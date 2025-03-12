@@ -1,11 +1,13 @@
 import { FontAwesome } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
-import { Pressable, StyleProp, View, ViewStyle } from 'react-native';
+import { StyleProp, View, ViewStyle } from 'react-native';
 
-import { colors } from '../constants/Colors';
-import { useDarkMode } from '../hooks/useDarkMode';
 import { MyText } from './Ui/MyText';
 import VStack from './Ui/VStack';
+
+import { CustomPressable } from '~/components/Ui/CustomPressable';
+import { colors } from '~/constants/Colors';
+import { useDarkMode } from '~/hooks/useDarkMode';
 
 type Props = {
   title: string;
@@ -19,7 +21,9 @@ export const HeaderNav = ({ title, RightComponent, subTitle, style }: Props): JS
   const { darkMode } = useDarkMode();
 
   const onGoBack = () => {
-    router.back();
+    if (router.canGoBack()) {
+      router.back();
+    }
   };
   return (
     <View
@@ -33,7 +37,7 @@ export const HeaderNav = ({ title, RightComponent, subTitle, style }: Props): JS
         style,
       ]}>
       <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
-        <Pressable
+        <CustomPressable
           onPress={onGoBack}
           style={{
             paddingVertical: 5,
@@ -44,7 +48,7 @@ export const HeaderNav = ({ title, RightComponent, subTitle, style }: Props): JS
             color={darkMode === 'dark' ? 'white' : 'black'}
             size={30}
           />
-        </Pressable>
+        </CustomPressable>
         <VStack>
           <MyText
             poppins="Bold"

@@ -1,5 +1,4 @@
-import { StyleSheet, View } from 'react-native';
-import Modal from 'react-native-modal';
+import { Modal, Pressable, StyleSheet } from 'react-native';
 
 import { HStack } from '../HStack';
 import { MyButton } from '../Ui/MyButton';
@@ -11,9 +10,9 @@ export const AddToCall = () => {
   const { isOpen, onClose } = useToken();
 
   return (
-    <View style={styles.centeredView}>
-      <Modal hasBackdrop={false} onDismiss={onClose} animationIn="slideInDown" isVisible={isOpen}>
-        <View>
+    <Modal onRequestClose={onClose} animationType="slide" visible={isOpen}>
+      <Pressable style={styles.centeredView} onPress={onClose}>
+        <Pressable onPress={(e) => e.stopPropagation()}>
           <MyText poppins="Medium" fontSize={15} style={{ marginBottom: 30 }}>
             Type the correct code below to join the call
           </MyText>
@@ -42,9 +41,9 @@ export const AddToCall = () => {
               Join call
             </MyButton>
           </HStack>
-        </View>
-      </Modal>
-    </View>
+        </Pressable>
+      </Pressable>
+    </Modal>
   );
 };
 

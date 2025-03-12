@@ -105,7 +105,7 @@ const Workspace = ({ item }: { item: WorkSpace }) => {
       });
       return;
     }
-    router.replace(`/wk/${item?._id}`);
+    router.push(`/wk/${item?._id}`);
   };
 
   // const imgUrl = item?.personal ? item?.ownerId?.avatar : item?.organizationId?.avatar;

@@ -4,8 +4,6 @@ import { Redirect, router, useLocalSearchParams } from 'expo-router';
 import { useCallback, useMemo, useState } from 'react';
 import { ScrollView, StyleSheet, Text, View } from 'react-native';
 import { toast } from 'sonner-native';
-
-import { AddToCall } from '~/components/Dialogs/AddToCall';
 import { WaitListModal } from '~/components/Dialogs/WaitListModal';
 import { HeaderNav } from '~/components/HeaderNav';
 import { BottomActive } from '~/components/Ui/BottomActive';
@@ -16,7 +14,6 @@ import { UserPreview } from '~/components/Ui/UserPreview';
 import { Waitlists } from '~/components/Ui/Waitlists';
 import { WorkspaceButtons } from '~/components/Ui/WorkspaceButtons';
 import { colors } from '~/constants/Colors';
-import { WaitList } from '~/constants/types';
 import { api } from '~/convex/_generated/api';
 import { Id } from '~/convex/_generated/dataModel';
 import { useGetUserId } from '~/hooks/useGetUserId';
@@ -32,7 +29,7 @@ const Work = () => {
   const [customerToRemove, setCustomerToRemove] = useState<Id<'users'> | null>(null);
   const [isVisible, setIsVisible] = useState(false);
   const [loading, setLoading] = useState(false);
-  const [isLoading, setIsLoading] = useState(false);
+  const [isLoading,] = useState(false);
   const updateWaitlistType = useMutation(api.workspace.attendToCustomer);
 
   const data = useQuery(api.workspace.getWorkspaceWithWaitingList, { workspaceId: id });
@@ -186,7 +183,6 @@ const Work = () => {
 
   return (
     <>
-      <AddToCall />
       <WaitListModal
         showMenu={showMenu}
         onClose={onHideWaitList}

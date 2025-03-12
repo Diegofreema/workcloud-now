@@ -24,6 +24,7 @@ import { api } from '~/convex/_generated/api';
 import { Id } from '~/convex/_generated/dataModel';
 import { useDarkMode } from '~/hooks/useDarkMode';
 import { useHandleStaff } from '~/hooks/useHandleStaffs';
+import { ActionButton } from '~/components/ActionButton';
 
 const Staffs = () => {
   const { id } = useLocalSearchParams<{ id: Id<'users'> }>();
@@ -69,6 +70,10 @@ const Staffs = () => {
   const showMenu = (item: WorkType) => {
     setIsVisible(true);
     getItem(item);
+  };
+  const onCreate = () => {
+    onHideBottom();
+    router.push('/role');
   };
 
   const array = [
@@ -137,6 +142,7 @@ const Staffs = () => {
         setIsVisible={setIsVisible}
         // @ts-ignore
         array={array}
+        bossId={id}
       />
       <SelectNewRow id={id} />
       <AuthHeader path="Staffs" />
@@ -215,6 +221,9 @@ const Staffs = () => {
         isVisible={showBottom}>
         <FlatList
           style={{ marginTop: 30 }}
+          ListHeaderComponent={() => (
+            <ActionButton onPress={onCreate} style={{ marginBottom: 5 }} />
+          )}
           showsVerticalScrollIndicator={false}
           ItemSeparatorComponent={() => (
             <Divider
@@ -238,6 +247,7 @@ const Staffs = () => {
           )}
           scrollEnabled={false}
           ListEmptyComponent={() => <EmptyText text="No empty workspaces found" />}
+          contentContainerStyle={{ gap: 15 }}
         />
       </BottomSheet>
     </Container>

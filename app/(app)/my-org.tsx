@@ -28,7 +28,7 @@ const MyOrg = () => {
   const data = useQuery(api.organisation.getOrganizationWithOwnerAndWorkspaces, {
     ownerId: id as Id<'users'>,
   });
-  console.log(data?.owner?.organizationId);
+
   const { onOpen } = useCreate();
   const { darkMode } = useDarkMode();
 
