@@ -15,7 +15,11 @@ type WaitlistsProps = {
   waitlists: WaitlistType[];
   isWorker: boolean;
   onLongPress: (customerId: Id<'users'>) => void;
-  onAddToCall: (currentUser: Id<'waitlists'>, nextUser: Id<'waitlists'>) => void;
+  onAddToCall: (
+    currentUser: Id<'waitlists'>,
+    nextUser: Id<'waitlists'>,
+    customerId: Id<'users'>
+  ) => void;
   isLoading: boolean;
 };
 export const Waitlists = ({
@@ -26,11 +30,11 @@ export const Waitlists = ({
   isLoading,
 }: WaitlistsProps) => {
   const { darkMode } = useDarkMode();
-  const getIdsToUpdate = (id: Id<'waitlists'>) => {
+  const getIdsToUpdate = (id: Id<'waitlists'>, customerId: Id<'users'>) => {
     const userToAttendTo = waitlists.findIndex((user) => user._id === id);
     if (userToAttendTo === -1) return;
     const isNextUser = waitlists[userToAttendTo + 1]?._id;
-    onAddToCall(id, isNextUser);
+    onAddToCall(id, isNextUser, customerId);
   };
   const usersToAttendTo = waitlists.filter((u) => u.type === 'attending' || u.type === 'next');
   const filteredWaitlists = waitlists.filter((u) => u.type === 'waiting');

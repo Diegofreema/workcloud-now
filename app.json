@@ -29,12 +29,15 @@
             "enableProguardInReleaseBuilds": true,
             "allowBackup": false,
             "enableShrinkResourcesInReleaseBuilds": true,
-            "versionCode": 5
-
+            "versionCode": 5,
+            "minSdkVersion": 24,
+            "extraMavenRepos": [
+              "../../node_modules/@notifee/react-native/android/libs"
+            ]
           }
         }
       ],
-
+      "@stream-io/video-react-native-sdk",
       [
         "@config-plugins/react-native-webrtc",
         {

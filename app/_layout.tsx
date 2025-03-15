@@ -158,8 +158,8 @@ export default function RootLayout() {
                   backgroundColor: darkMode === 'dark' ? 'black' : 'white',
                 }}>
                 <InitialRouteLayout />
+                <Toaster />
               </SafeAreaView>
-              <Toaster />
             </GestureHandlerRootView>
           </QueryClientProvider>
         </ConvexProviderWithClerk>

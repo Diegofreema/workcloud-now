@@ -4,27 +4,34 @@ import { Chat, OverlayProvider } from 'stream-chat-expo';
 
 import { LoadingComponent } from '~/components/Ui/LoadingComponent';
 import { useGetUserId } from '~/hooks/useGetUserId';
+import { useUnread } from '~/hooks/useUnread';
 
 const client = StreamChat.getInstance(process.env.EXPO_PUBLIC_STREAM_API_KEY!);
 export const ChatWrapper = ({ children }: PropsWithChildren) => {
   const { user, id, isLoading } = useGetUserId();
   const [isReady, setIsReady] = useState(false);
-
+  const { getUnread } = useUnread();
   useEffect(() => {
-    if (!id || !user) {
+    if (!id || !user.name || !user.image || !user.streamToken) {
       return;
     }
 
     const connect = async () => {
-      await client.connectUser(
-        {
-          id,
-          name: user.name,
-          image: user.image,
-        },
-        user.streamToken
-      );
-      setIsReady(true);
+      try {
+        await client.connectUser(
+          {
+            id,
+            name: user.name,
+            image: user.image,
+          },
+          user.streamToken
+        );
+
+        getUnread(0);
+        setIsReady(true);
+      } catch (e) {
+        console.log(e);
+      }
     };
 
     connect();
@@ -33,8 +40,10 @@ export const ChatWrapper = ({ children }: PropsWithChildren) => {
       if (isReady) {
         client.disconnectUser();
       }
-      setIsReady(false);};
-  }, [id, user.name, user.image]);
+      setIsReady(false);
+    };
+  }, [id, user.name, user.image, user.streamToken]);
+
   if (isLoading || !isReady) {
     return <LoadingComponent />;
   }

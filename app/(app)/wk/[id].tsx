@@ -1,9 +1,13 @@
+import { MemberRequest } from '@stream-io/video-client';
+import { useStreamVideoClient } from '@stream-io/video-react-bindings';
 import { useMutation, useQuery } from 'convex/react';
 import { format } from 'date-fns';
+import * as Crypto from 'expo-crypto';
 import { Redirect, router, useLocalSearchParams } from 'expo-router';
 import { useCallback, useMemo, useState } from 'react';
 import { ScrollView, StyleSheet, Text, View } from 'react-native';
 import { toast } from 'sonner-native';
+
 import { WaitListModal } from '~/components/Dialogs/WaitListModal';
 import { HeaderNav } from '~/components/HeaderNav';
 import { BottomActive } from '~/components/Ui/BottomActive';
@@ -29,7 +33,7 @@ const Work = () => {
   const [customerToRemove, setCustomerToRemove] = useState<Id<'users'> | null>(null);
   const [isVisible, setIsVisible] = useState(false);
   const [loading, setLoading] = useState(false);
-  const [isLoading,] = useState(false);
+  const [isLoading] = useState(false);
   const updateWaitlistType = useMutation(api.workspace.attendToCustomer);
 
   const data = useQuery(api.workspace.getWorkspaceWithWaitingList, { workspaceId: id });
@@ -41,6 +45,7 @@ const Work = () => {
   });
   const isLocked = useMemo(() => data?.workspace.locked || false, [data?.workspace.locked]);
   const isWorker = data?.worker?._id === loggedInUser;
+  const videoClient = useStreamVideoClient();
   const isActive = useMemo(() => {
     if (!data || !data?.workspace?.active) return false;
     return data?.workspace?.active;
@@ -156,10 +161,23 @@ const Work = () => {
     setIsVisible(false);
   };
 
-  const onAddToCall = async (currentUser: Id<'waitlists'>, nextUser: Id<'waitlists'>) => {
+  const onAddToCall = async (
+    currentUser: Id<'waitlists'>,
+    nextUser: Id<'waitlists'>,
+    customerId: Id<'users'>
+  ) => {
+    if (!videoClient) return;
     setLoading(true);
+    const members = [{ user_id: loggedInUser }!, { user_id: customerId }] as MemberRequest[];
     try {
       await updateWaitlistType({ waitlistId: currentUser, nextWaitListId: nextUser });
+      const call = videoClient.call('default', Crypto.randomUUID());
+      await call.getOrCreate({
+        ring: true,
+        data: {
+          members,
+        },
+      });
     } catch (error) {
       console.log(error);
       toast.error('Something went wrong', {

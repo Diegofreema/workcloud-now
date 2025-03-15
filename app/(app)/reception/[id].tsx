@@ -17,6 +17,7 @@ import {
 } from 'react-native';
 import Carousel from 'react-native-reanimated-carousel';
 import { toast } from 'sonner-native';
+import { useChatContext } from 'stream-chat-expo';
 
 import { EmptyText } from '~/components/EmptyText';
 import { HStack } from '~/components/HStack';
@@ -33,7 +34,7 @@ import { api } from '~/convex/_generated/api';
 import { Id } from '~/convex/_generated/dataModel';
 import { useDarkMode } from '~/hooks/useDarkMode';
 import { useGetUserId } from '~/hooks/useGetUserId';
-import { now } from '~/lib/helper';
+import { useWaitlistId } from '~/hooks/useWaitlistId';
 
 export function ErrorBoundary({ retry }: ErrorBoundaryProps) {
   return <ErrorComponent refetch={retry} />;
@@ -215,11 +216,13 @@ const Representatives = ({ data }: { data: WorkerWithWorkspace[] }) => {
 const RepresentativeItem = ({ item }: { item: WorkerWithWorkspace }) => {
   const router = useRouter();
   const { userId: id } = useAuth();
+  const { client } = useChatContext();
   const { id: customerId } = useGetUserId();
   const handleWaitlist = useMutation(api.workspace.handleWaitlist);
+  const { setId } = useWaitlistId();
   const { workspace, user } = item;
   const handlePress = async () => {
-    if (id === item.user?.clerkId) return;
+    if (id === user?.clerkId) return;
     if (!workspace?.active || workspace?.leisure) {
       toast.info('This workspace is currently inactive', {
         description: 'Please try joining another workspace',
@@ -228,12 +231,14 @@ const RepresentativeItem = ({ item }: { item: WorkerWithWorkspace }) => {
     }
 
     try {
-      console.log(now);
-      await handleWaitlist({
+      const waitlistId = await handleWaitlist({
         customerId: customerId!,
         workspaceId: workspace._id,
         joinedAt: format(Date.now(), 'dd/MM/yyyy, HH:mm:ss'),
       });
+      if (waitlistId) {
+        setId(waitlistId);
+      }
       toast.success('Welcome', {
         description: 'Please be in a quite environment',
       });
@@ -247,7 +252,11 @@ const RepresentativeItem = ({ item }: { item: WorkerWithWorkspace }) => {
   };
 
   const onMessage = async () => {
-    router.push(`/chat/${user?._id}`);
+    const channel = client.channel('messaging', {
+      members: [customerId!, user?._id!],
+    });
+    await channel.watch();
+    router.push(`/channel/${channel.cid}`);
   };
 
   return (

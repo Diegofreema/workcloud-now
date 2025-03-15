@@ -93,18 +93,16 @@ export const handleWaitlist = mutation({
       )
       .first();
     if (isInWaitlist) {
-      console.log('isInWaitlist', isInWaitlist._id, joinedAt);
       await ctx.db.patch(isInWaitlist._id, {
         joinedAt,
       });
     } else {
-      const id = await ctx.db.insert('waitlists', {
+      return await ctx.db.insert('waitlists', {
         customerId,
         workspaceId,
         joinedAt,
         type: 'waiting',
       });
-      console.log('Created new waitlist', id, joinedAt);
     }
   },
 });
@@ -241,6 +239,15 @@ export const attendToCustomer = mutation({
     await ctx.db.patch(nextWaitListId, {
       type: 'next',
     });
+  },
+});
+
+export const removeFromWaitlist = mutation({
+  args: {
+    waitlistId: v.id('waitlists'),
+  },
+  handler: async (ctx, args) => {
+    await ctx.db.delete(args.waitlistId);
   },
 });
 export const addStaffToWorkspace = mutation({

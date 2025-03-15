@@ -3,9 +3,10 @@ import { ErrorBoundaryProps, Redirect, Stack, useSegments } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 
-import { AppProvider } from '~/components/AppContext';
+import CallProvider from '~/components/CallProvider';
 import { ChatWrapper } from '~/components/ChatWrapper';
 import { ErrorComponent } from '~/components/Ui/ErrorComponent';
+import VideoProvider from '~/components/VideoProvider';
 import { useDarkMode } from '~/hooks/useDarkMode';
 
 export function ErrorBoundary({ retry }: ErrorBoundaryProps) {
@@ -29,9 +30,11 @@ export default function AppLayout() {
         backgroundColor={darkMode === 'dark' ? 'black' : 'white'}
       />
       <ChatWrapper>
-        <AppProvider>
-          <Stack screenOptions={{ headerShown: false }} />
-        </AppProvider>
+        <VideoProvider>
+          <CallProvider>
+            <Stack screenOptions={{ headerShown: false }} />
+          </CallProvider>
+        </VideoProvider>
       </ChatWrapper>
     </GestureHandlerRootView>
   );

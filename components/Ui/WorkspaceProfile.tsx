@@ -14,7 +14,7 @@ export const Profile = ({
   isLoading,
 }: {
   item: WaitList;
-  onAddToCall: (id: Id<'waitlists'>) => void;
+  onAddToCall: (id: Id<'waitlists'>, customerId: Id<'users'>) => void;
   onLongPress: () => void;
   isLoading: boolean;
 }) => {
@@ -24,7 +24,7 @@ export const Profile = ({
     <Pressable
       disabled={isLoading}
       style={{ width: '30%' }}
-      onPress={() => onAddToCall(item?._id)}
+      onPress={() => onAddToCall(item?._id, item?.customerId)}
       onLongPress={onLongPress}>
       <VStack flex={1} alignItems="center" justifyContent="center">
         <Avatar rounded size={50} source={{ uri: item?.customer?.imageUrl! }} />

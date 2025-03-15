@@ -4,7 +4,7 @@ import { Text } from '@rneui/themed';
 import { useQuery } from 'convex/react';
 import { Tabs } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { View } from 'react-native';
 
 import { UnreadCount } from '~/components/Unread';
@@ -12,6 +12,8 @@ import { fontFamily } from '~/constants';
 import { colors } from '~/constants/Colors';
 import { api } from '~/convex/_generated/api';
 import { useDarkMode } from '~/hooks/useDarkMode';
+import { useChatContext } from 'stream-chat-expo';
+import { useGetUserId } from '~/hooks/useGetUserId';
 
 /**
  * You can explore the built-in icon families and icons on the web at https://icons.expo.fyi/
@@ -30,13 +32,24 @@ export const unstable_settings = {
 
 export default function TabLayout() {
   const { darkMode } = useDarkMode();
-  const { userId: id } = useAuth();
-  const data = useQuery(api.conversation.getUnreadAllMessages, {
-    clerkId: id!,
-    type: 'single',
-  });
 
-  const showUnreadCount = data && data > 0;
+  const { id, isLoading } = useGetUserId();
+  const [unreadCount, setUnreadCount] = useState(0);
+  const { client } = useChatContext();
+  useEffect(() => {
+    if (client || id || !isLoading) {
+      // const getUnreadCount = async () => {
+      //   const response = await client.getUnreadCount(id);
+      //   setUnreadCount(response.total_unread_count);
+      // };
+      // getUnreadCount();
+      client.on((event) => {
+        if (event.total_unread_count !== undefined) {
+          setUnreadCount(event.total_unread_count);
+        }
+      });
+    }
+  }, [client, isLoading, id]);
 
   return (
     <>
@@ -93,8 +106,11 @@ export default function TabLayout() {
                   color={focused ? colors.buttonBlue : colors.grayText}
                   size={size}
                 />
-                {showUnreadCount ? (
-                  <UnreadCount unread={data} style={{ position: 'absolute', top: -5, right: -8 }} />
+                {unreadCount > 0 ? (
+                  <UnreadCount
+                    unread={unreadCount}
+                    style={{ position: 'absolute', top: -5, right: -8 }}
+                  />
                 ) : null}
               </View>
             ),
