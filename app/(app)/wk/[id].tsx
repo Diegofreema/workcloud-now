@@ -3,7 +3,7 @@ import { useStreamVideoClient } from '@stream-io/video-react-bindings';
 import { useMutation, useQuery } from 'convex/react';
 import { format } from 'date-fns';
 import * as Crypto from 'expo-crypto';
-import { Redirect, router, useLocalSearchParams } from 'expo-router';
+import { Redirect, router, useLocalSearchParams, usePathname } from 'expo-router';
 import { useCallback, useMemo, useState } from 'react';
 import { ScrollView, StyleSheet, Text, View } from 'react-native';
 import { toast } from 'sonner-native';
@@ -21,10 +21,13 @@ import { colors } from '~/constants/Colors';
 import { api } from '~/convex/_generated/api';
 import { Id } from '~/convex/_generated/dataModel';
 import { useGetUserId } from '~/hooks/useGetUserId';
+import { useGetWaitlistIdForCustomer } from '~/hooks/useGetWorkspaceIdForCustomer';
+import { useWaitlistId } from '~/hooks/useWaitlistId';
 
 const today = format(new Date(), 'dd-MM-yyyy');
 
 const Work = () => {
+  const videoClient = useStreamVideoClient();
   const { id } = useLocalSearchParams<{ id: Id<'workspaces'> }>();
   const [showMenu, setShowMenu] = useState(false);
   const { id: loggedInUser } = useGetUserId();
@@ -33,19 +36,23 @@ const Work = () => {
   const [customerToRemove, setCustomerToRemove] = useState<Id<'users'> | null>(null);
   const [isVisible, setIsVisible] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [addingToCall, setAddingToCall] = useState(false);
   const [isLoading] = useState(false);
   const updateWaitlistType = useMutation(api.workspace.attendToCustomer);
-
+  const setId = useWaitlistId((state) => state.setId);
   const data = useQuery(api.workspace.getWorkspaceWithWaitingList, { workspaceId: id });
   const leaveLobby = useMutation(api.workspace.existLobby);
   const handleAttendance = useMutation(api.workspace.handleAttendance);
+
   const checkIfSignedInToday = useQuery(api.workspace.checkIfWorkerSignedInToday, {
     workerId: loggedInUser!,
     today,
   });
+
+  const customerWaitlistId = data?.waitlist?.find((w) => w?.customerId === loggedInUser)?._id;
   const isLocked = useMemo(() => data?.workspace.locked || false, [data?.workspace.locked]);
   const isWorker = data?.worker?._id === loggedInUser;
-  const videoClient = useStreamVideoClient();
+  useGetWaitlistIdForCustomer({ isWorker, waitlistId: customerWaitlistId });
   const isActive = useMemo(() => {
     if (!data || !data?.workspace?.active) return false;
     return data?.workspace?.active;
@@ -166,11 +173,10 @@ const Work = () => {
     nextUser: Id<'waitlists'>,
     customerId: Id<'users'>
   ) => {
-    if (!videoClient) return;
-    setLoading(true);
+    if (!videoClient || !isWorker || addingToCall) return;
+    setAddingToCall(true);
     const members = [{ user_id: loggedInUser }!, { user_id: customerId }] as MemberRequest[];
     try {
-      await updateWaitlistType({ waitlistId: currentUser, nextWaitListId: nextUser });
       const call = videoClient.call('default', Crypto.randomUUID());
       await call.getOrCreate({
         ring: true,
@@ -178,13 +184,15 @@ const Work = () => {
           members,
         },
       });
+      await updateWaitlistType({ waitlistId: currentUser, nextWaitListId: nextUser });
+      setId(currentUser, isWorker);
     } catch (error) {
       console.log(error);
       toast.error('Something went wrong', {
         description: 'Please try again later',
       });
     } finally {
-      setLoading(false);
+      setAddingToCall(false);
     }
   };
   const handleExit = async () => {

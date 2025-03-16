@@ -41,4 +41,5 @@ export const colors = {
   lightBlueButton: '#DFE8FF',
   otherChatBubble: '#DAE4FF',
   time: '#B3B3B3',
+  callButtonBlue: '#8faeff',
 };
